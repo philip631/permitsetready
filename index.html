@@ -40,7 +40,8 @@ header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdro
 nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}
 .logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--navy);font-size:21px;letter-spacing:-0.02em}
 .logo b{font-weight:800}.logo span{font-weight:400}
-.logo svg{width:34px;height:34px}
+.logo img{width:34px;height:34px;border-radius:8px}
+footer .logo img{width:26px;height:26px}
 .menu{display:flex;align-items:center;gap:26px;font-size:15px;font-weight:500}
 .menu a{color:var(--ink);text-decoration:none}.menu a:hover{color:var(--navy)}
 .menu .btn{padding:10px 18px;font-size:15px}
@@ -160,7 +161,7 @@ footer .logo{color:#fff;font-size:18px}
 <div class="wrap">
 <nav aria-label="Main">
   <a class="logo" href="#top" aria-label="Permit Set Ready home">
-    <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#1F3A5F"/><path d="M16 18h32v26H16z M16 44h14v6h-6 M30 44h18" fill="none" stroke="#E0A030" stroke-width="4" stroke-linejoin="round"/><path d="M22 36c4-6 8-9 12-10 3 1 4 4 4 6H22z" fill="#E0A030"/><path d="M28 52h8M28 56h8" stroke="#E0A030" stroke-width="2.5" stroke-linecap="round"/></svg>
+    <img src="img/logo-icon.svg" alt="" width="34" height="34">
     <span><b>PermitSet</b>Ready</span>
   </a>
   <button class="burger" aria-expanded="false" aria-controls="menu" onclick="const m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">Menu</button>
@@ -367,7 +368,7 @@ footer .logo{color:#fff;font-size:18px}
 
 <footer>
 <div class="wrap">
-  <a class="logo" href="#top"><svg viewBox="0 0 64 64" width="26" height="26" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#E0A030"/><path d="M16 18h32v26H16z M16 44h14v6h-6 M30 44h18" fill="none" stroke="#1F3A5F" stroke-width="4" stroke-linejoin="round"/><path d="M22 36c4-6 8-9 12-10 3 1 4 4 4 6H22z" fill="#1F3A5F"/></svg><span><b>PermitSet</b>Ready</span></a>
+  <a class="logo" href="#top"><img src="img/logo-icon.svg" alt="" width="26" height="26"><span><b>PermitSet</b>Ready</span></a>
   <span>Ontario residential, Part 9 · Serving Mississauga, Caledon, Halton, York and Durham</span>
   <a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a>
 </div>
