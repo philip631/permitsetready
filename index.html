@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://permitsetready.ca/">
 <meta property="og:title" content="Permit Set Ready — permit drawings, drafted in Revit">
 <meta property="og:description" content="Fixed price per job, drafted to your standards, delivered in 7–10 business days. Serving the GTA.">
-<meta property="og:image" content="https://permitsetready.ca/img/hero-house.jpg">
+<meta property="og:image" content="https://permitsetready.ca/img/hero-stock.jpg">
 <meta property="og:url" content="https://permitsetready.ca/">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,7 +55,7 @@ footer .logo img{width:26px;height:26px}
 
 /* hero */
 .hero{position:relative;color:#fff;overflow:hidden;background:var(--navy-ink);padding:0}
-.hero .bg{position:absolute;inset:0;background:url(img/hero-house.jpg) center 40%/cover no-repeat;opacity:.7}
+.hero .bg{position:absolute;inset:0;background:url(img/hero-stock.jpg) center 45%/cover no-repeat;opacity:.7}
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,31,54,.96) 0%,rgba(14,31,54,.88) 42%,rgba(14,31,54,.25) 75%,rgba(14,31,54,.1) 100%),linear-gradient(180deg,rgba(14,31,54,0) 60%,rgba(14,31,54,.9) 100%)}
 .hero .wrap{position:relative;z-index:1;padding-top:104px;padding-bottom:110px;max-width:var(--max)}
 .hero .eyebrow{color:#F3C978}.hero .eyebrow::before{background:#F3C978}
@@ -129,14 +129,14 @@ section{padding:84px 0}
 .gallery{display:grid;grid-template-columns:1.4fr 1fr;grid-auto-rows:260px;gap:16px}
 .gallery figure{margin:0;position:relative;border-radius:14px;overflow:hidden;background:#1F3A5F;border:1px solid rgba(255,255,255,.1)}
 .gallery figure img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .5s}
-.gallery figure.fit{background:#fff}.gallery figure.fit img{object-fit:contain;padding:10px}
+.gallery figure.fit{background:#fff}.gallery figure.fit img{object-fit:contain;padding:12px 12px 44px}.gallery figure.fit figcaption{background:#F6F1E8;color:#1F3A5F;border-top:1px solid #E8E0D2;padding:10px 14px}
 .gallery figure:hover img{transform:scale(1.03)}
 .gallery figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 16px;font-size:13px;color:#fff;background:linear-gradient(180deg,rgba(14,31,54,0),rgba(14,31,54,.85))}
 .gallery .tall{grid-row:span 2}
 .specs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;margin:36px 0 0;padding:0;list-style:none;font-size:15px;color:#D6DEE9}
 .specs li{padding-left:22px;position:relative}
 .specs li::before{content:"";position:absolute;left:0;top:9px;width:10px;height:3px;background:var(--amber);border-radius:2px}
-@media (max-width:860px){.gallery{grid-template-columns:1fr;grid-auto-rows:220px}.gallery .tall{grid-row:auto}.specs{grid-template-columns:1fr 1fr}}
+@media (max-width:860px){.gallery{grid-template-columns:1fr;grid-auto-rows:250px}.gallery figure.fit img{padding-bottom:60px}.gallery .tall{grid-row:auto}.specs{grid-template-columns:1fr 1fr}}
 
 /* about */
 .about .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
@@ -315,11 +315,11 @@ footer .logo{color:#fff;font-size:18px}
 <div class="wrap">
 <div class="section-head"><p class="eyebrow">The work</p><h2 class="serif">Drawn the way an examiner expects to read it.</h2><p>Real insulation, standard hatching, all-caps leader notes and the details a Part 9 set needs. Modelled in Revit, so elevations, sections and schedules all agree.</p></div>
 <div class="gallery">
-  <figure class="tall"><img src="img/work-modern.jpg" alt="Front perspective of a modern two-storey house, Revit model"><figcaption>New two-storey, contemporary — front perspective from the permit model</figcaption></figure>
-  <figure class="fit"><img src="img/deck-section.jpg" alt="Attached deck section with notes and dimensions"><figcaption>Attached deck section, OBC 9.8.8 and 9.12.2</figcaption></figure>
-  <figure><img src="img/work-traditional.jpg" alt="Front perspective of a traditional house with turret, Revit model"><figcaption>Second-storey addition — model view used for the elevations</figcaption></figure>
-  <figure class="fit"><img src="img/work-elevation.jpg" alt="Front elevation sheet with level markers and dimensions"><figcaption>Front elevation, as issued for permit</figcaption></figure>
+  <figure class="fit tall"><img src="img/deck-section.jpg" alt="Attached deck section with guard, ledger and footing notes"><figcaption>Attached deck section — guard, ledger and footing, OBC 9.8.8 and 9.12.2</figcaption></figure>
   <figure class="fit"><img src="img/egress-section.jpg" alt="Basement bedroom egress window and window well section"><figcaption>Egress window and window well, OBC 9.9.10.1</figcaption></figure>
+  <figure class="fit"><img src="img/fire-separation.jpg" alt="Fire separation wall and ceiling assembly between dwelling units"><figcaption>Second-unit fire separation assemblies, OBC 9.10.9</figcaption></figure>
+  <figure class="fit"><img src="img/bge-section.jpg" alt="Below-grade entrance stair and areaway section"><figcaption>Below-grade entrance — stair, areaway and drainage</figcaption></figure>
+  <figure class="fit"><img src="img/garage-detail.jpg" alt="Detached garage wall section at the lot line"><figcaption>Detached garage, wall section at the lot line</figcaption></figure>
 </div>
 <ul class="specs">
   <li>Footings and foundation details</li>
@@ -403,7 +403,7 @@ footer .logo{color:#fff;font-size:18px}
       <a class="btn btn-line" href="https://permitready.lemonsqueezy.com/checkout/buy/f091900b-7226-460b-8305-c25e2d422423">Get the $59 guide</a>
     </div>
   </div>
-  <figure><img src="img/work-outdoor.jpg" alt="Covered outdoor dining area and patio, Revit model"></figure>
+  <figure><img src="img/home-deck.jpg" alt="Two-storey house with a covered deck and pergola"></figure>
 </div>
 </section>
 
