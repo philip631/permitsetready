@@ -8,7 +8,7 @@
 <link rel="canonical" href="https://permitsetready.ca/">
 <meta property="og:title" content="Permit Set Ready — permit drawings, drafted in Revit">
 <meta property="og:description" content="Fixed price per job, drafted to your standards, delivered in 7–10 business days. Serving the GTA.">
-<meta property="og:image" content="https://permitsetready.ca/img/hero-stock.jpg">
+<meta property="og:image" content="https://permitsetready.ca/img/hero-sketch.jpg">
 <meta property="og:url" content="https://permitsetready.ca/">
 <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -55,8 +55,8 @@ footer .logo img{width:26px;height:26px}
 
 /* hero */
 .hero{position:relative;color:#fff;overflow:hidden;background:var(--navy-ink);padding:0}
-.hero .bg{position:absolute;inset:0;background:url(img/hero-stock.jpg) center 45%/cover no-repeat;opacity:.7}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,31,54,.96) 0%,rgba(14,31,54,.88) 42%,rgba(14,31,54,.25) 75%,rgba(14,31,54,.1) 100%),linear-gradient(180deg,rgba(14,31,54,0) 60%,rgba(14,31,54,.9) 100%)}
+.hero .bg{position:absolute;inset:0;background:url(img/hero-sketch.jpg) right center/cover no-repeat;opacity:.95}
+.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,31,54,.96) 0%,rgba(14,31,54,.9) 40%,rgba(14,31,54,.35) 62%,rgba(14,31,54,.08) 100%),linear-gradient(180deg,rgba(14,31,54,0) 60%,rgba(14,31,54,.9) 100%)}
 .hero .wrap{position:relative;z-index:1;padding-top:104px;padding-bottom:110px;max-width:var(--max)}
 .hero .eyebrow{color:#F3C978}.hero .eyebrow::before{background:#F3C978}
 .hero h1{font-size:clamp(38px,5.4vw,64px);font-weight:600;max-width:12ch;line-height:1.05}
@@ -101,6 +101,7 @@ section{padding:84px 0}
 .step .when{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber-deep)}
 .step h3{font-size:20px;margin:6px 0 8px;font-weight:700}
 .step p{margin:0;font-size:15px;color:var(--muted)}
+@media (max-width:860px){.hero .bg{background-position:58% center}.hero::after{background:linear-gradient(180deg,rgba(14,31,54,.82) 0%,rgba(14,31,54,.7) 55%,rgba(14,31,54,.92) 100%)}}
 @media (max-width:860px){.timeline{grid-template-columns:1fr;gap:22px;padding-left:52px;margin-top:4px}.timeline::before{left:17px;right:auto;top:6px;bottom:6px;width:3px;height:auto}.step{padding-top:0;padding-bottom:6px}.step .dot{left:-52px;top:0}}
 
 /* pricing */
