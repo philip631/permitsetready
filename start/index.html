@@ -1,0 +1,682 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My project · PermitSetReady</title>
+<meta name="description" content="Start a permit drawing project with PermitSetReady, or follow the one you have.">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+<style>body{margin:0}[hidden]{display:none!important}img{max-width:100%}</style>
+<style>
+/* Layout: one-page app; a slim top nav, screens swapped by state; forms in a 3:2 main/aside grid; admin in a list/detail grid. */
+:root{
+  --bg:#FFFFFF; --bg2:#F6F1E8; --fg:#0E1F36; --fg2:#4A5A6E; --muted:#5B6B7F; --line:#E8E0D2; --line2:#D6CCB8;
+  --ink:#0E1F36; --ink-fg:#FFFFFF; --ink-muted:#AEBBCD; --ink-line:#2A3B55;
+  --accent:#1F3A5F; --accent-bg:#FBF5E8; --accent-line:#F3C978; --ok:#2F7A55; --ok-bg:#E6F2EC;
+  --warn:#A8670A; --warn-bg:#FBF0D9; --bad:#A33A2B; --bad-bg:#F8E4E0;
+  --amber:#E0A030; --amber-2:#F3C978; --amber-deep:#B9832A;
+  --sans:"Inter",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"Inter",system-ui,sans-serif; --display:"Fraunces",Georgia,serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--sans);font-size:15px;line-height:1.5}
+a{color:var(--accent)}
+h1,h2,h3{margin:0;text-wrap:balance;letter-spacing:-.02em}
+p{margin:0}ul,ol{margin:0;padding-left:18px}
+button{font:inherit}
+.hide{display:none!important}
+.hdr{padding:14px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);background:var(--bg);position:sticky;top:env(safe-area-inset-top,0px);z-index:10}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:18px;color:var(--fg);background:none;border:0;padding:0;cursor:pointer}
+.brand .mk{width:30px;height:30px;border-radius:8px;background:var(--ink);display:flex;align-items:center;justify-content:center}
+.hdr nav{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.nb{background:none;border:0;padding:8px 12px;border-radius:8px;color:var(--fg);font-weight:500;cursor:pointer;min-height:40px}
+.nb.on{background:var(--bg2)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none;font-weight:600;border-radius:10px;padding:13px 20px;min-height:44px;border:0;cursor:pointer;color:#fff;background:var(--accent)}
+.btn.dark{background:var(--ink);color:var(--ink-fg)}
+.btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line2)}
+.btn.sm{padding:9px 14px;font-size:14px;min-height:38px;border-radius:8px}
+.btn:disabled{opacity:.5;cursor:default}
+.lnk{background:none;border:0;padding:0;color:var(--accent);font-weight:600;cursor:pointer;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:24px}
+.sec{padding-block:52px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.eyebrow.q{color:var(--muted)}
+.sub{color:var(--muted);font-size:14px}
+.card{background:var(--bg);border:1px solid var(--line);border-radius:14px;padding:22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.g2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.g4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.g5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}
+.side{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:26px;align-items:start}
+.adm{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);gap:22px;align-items:start}
+@media (max-width:820px){.g2,.g3,.g4,.side,.adm{grid-template-columns:1fr}.g5{grid-template-columns:repeat(2,minmax(0,1fr))}.hero h1{font-size:34px}}
+.hero{padding-block:56px 44px}
+.hero h1{font-size:48px;line-height:1.08;font-weight:700}
+.hero p.lead{font-size:18px;color:var(--fg2)}
+.stat{display:flex;flex-direction:column}.stat b{font-size:24px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0;display:inline-block}
+.dot.w{background:var(--warn)}.dot.b{background:var(--bad)}.dot.g{background:var(--line2)}
+.tier{border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px;position:relative;min-width:0}
+.tier.pop{border:2px solid var(--accent)}
+.tier .pill{position:absolute;top:-12px;left:22px;background:var(--accent);color:#fff;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px}
+.tier .price{font-size:28px;font-weight:700}.tier ul{line-height:1.8;font-size:14px}.tier p{font-size:14px;color:var(--fg2)}
+.band{background:var(--bg2)}.band.dark{background:var(--ink);color:var(--ink-fg)}.band.dark p,.band.dark .sub{color:var(--ink-muted)}
+footer{padding:18px 24px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;font-size:13px;color:var(--muted)}
+label.l{font-size:14px;font-weight:600}
+.f{display:flex;flex-direction:column;gap:7px;min-width:0}
+input[type=text],input[type=email],input[type=tel],input[type=url],input[type=date],select,textarea{font:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);color:var(--fg);width:100%;min-height:44px}
+textarea{min-height:90px;resize:vertical}
+.opt{border:1px solid var(--line2);border-radius:10px;padding:13px;display:flex;gap:12px;align-items:flex-start;cursor:pointer;min-width:0}
+.opt.on{border:2px solid var(--accent);background:var(--accent-bg)}
+.opt input{margin-top:4px}.opt small{display:block;color:var(--muted);font-size:13px}
+.ack{display:flex;gap:12px;align-items:flex-start;font-size:14px;cursor:pointer}.ack input{margin-top:4px}
+.up{border:1px dashed var(--line2);border-radius:10px;padding:14px;display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center;font-size:13px;cursor:pointer;min-height:96px;justify-content:center}
+.up.done{border-color:var(--accent);background:var(--accent-bg)}
+.up input{display:none}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}
+.thumb{position:relative;width:72px;height:72px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--bg2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--muted);text-align:center;padding:4px}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb button{position:absolute;top:2px;right:2px;width:22px;height:22px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:12px;cursor:pointer;line-height:1}
+.steps{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;flex-wrap:wrap}
+.steps .n{width:26px;height:26px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
+.steps .n.off{background:var(--bg);border:2px solid var(--line2);color:var(--muted)}
+.steps .bar{flex:1;min-width:14px;height:2px;background:var(--accent)}.steps .bar.off{background:var(--line2)}
+.steps .t.off{color:var(--muted);font-weight:500}
+@media (max-width:640px){.steps .t{display:none}}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:11px 13px;background:var(--accent-bg);border-radius:10px;font-size:14px;min-width:0}
+.chk.w{background:var(--warn-bg)}.chk.b{background:var(--bad-bg)}
+.chk .i{flex-shrink:0;margin-top:2px;width:16px;height:16px;border-radius:50%;background:var(--accent)}
+.chk.w .i{background:var(--warn)}.chk.b .i{background:var(--bad)}
+.big{width:44px;height:44px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.big.w{background:var(--warn)}.big.b{background:var(--bad)}
+.quote{background:var(--ink);color:var(--ink-fg);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.quote .row{display:flex;justify-content:space-between;gap:12px;font-size:14px;color:var(--ink-muted)}
+.quote .tot{border-top:1px solid var(--ink-line);padding-top:14px;display:flex;flex-direction:column;gap:6px}
+.quote .tot b{color:var(--ink-fg);font-size:26px}
+.note{color:var(--ink-muted);font-size:12px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--ink-fg);padding:12px 18px;border-radius:10px;font-size:14px;z-index:30;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:92vw}
+.status{display:inline-flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:7px 13px;font-size:13px;font-weight:600}
+.prog{display:flex;flex-direction:column;gap:6px}.prog .b{height:6px;border-radius:3px;background:var(--line)}.prog .b.done{background:var(--accent)}.prog .b.now{background:var(--warn)}
+.prog b{font-size:14px}.prog span{font-size:13px;color:var(--muted)}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.row2:last-child{border-bottom:0}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);gap:6px 12px;font-size:14px}.kv dt{color:var(--muted)}.kv dd{margin:0}
+.ilist{display:flex;flex-direction:column;gap:8px}
+.irow{border:1px solid var(--line);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:4px;cursor:pointer;background:var(--bg)}
+.irow.on{border-color:var(--accent);background:var(--accent-bg)}
+.irow .t{display:flex;justify-content:space-between;gap:8px;align-items:center}
+.tag{font-size:12px;font-weight:600;padding:3px 9px;border-radius:999px;background:var(--bg2);color:var(--fg2);white-space:nowrap}
+.tag.a{background:var(--accent-bg);color:var(--accent)}.tag.w{background:var(--warn-bg);color:var(--warn)}.tag.b{background:var(--bad-bg);color:var(--bad)}
+.banner{background:var(--warn-bg);border:1px solid var(--warn);border-radius:10px;padding:12px 14px;font-size:14px}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid var(--ink-muted);border-top-color:transparent;border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.mono{font-family:var(--mono);font-size:12px}
+@media (prefers-reduced-motion:no-preference){.screen{animation:in .2s ease}}
+@keyframes in{from{opacity:.5;transform:translateY(4px)}to{opacity:1;transform:none}}
+</style>
+<style>
+/* PermitSetReady brand layer */
+body{background:var(--bg2)}
+h1,h2{font-family:var(--display);font-weight:600;letter-spacing:-.015em}
+.btn{background:var(--amber);color:var(--ink);font-weight:700}
+.btn:hover{background:var(--amber-2)}
+.btn.dark{background:var(--accent);color:#fff}.btn.dark:hover{background:var(--ink)}
+.btn.ghost{background:transparent;color:var(--accent);border:2px solid var(--accent)}
+.quote .btn.ghost{color:#fff;border-color:var(--ink-line)}
+.eyebrow{font-family:var(--sans);font-weight:700;letter-spacing:.14em;color:var(--amber-deep)}
+.eyebrow.q{color:var(--muted)}
+.tier.pop{border-color:var(--amber)}.tier .pill{background:var(--amber);color:var(--ink)}
+.opt.on{border-color:var(--amber);background:var(--accent-bg)}
+.up.done{border-color:var(--amber);background:var(--accent-bg)}
+.chk{background:var(--ok-bg)}.chk .i{background:var(--ok)}
+.dot{background:var(--ok)}.big{background:var(--ok)}
+.steps .n{background:var(--accent)}.steps .bar{background:var(--accent)}
+.quote{background:var(--ink)}
+.site-hdr{background:var(--ink);padding:12px 24px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;position:sticky;top:env(safe-area-inset-top,0px);z-index:10}
+.site-hdr .logo{display:flex;align-items:center;gap:10px;color:#fff;text-decoration:none;font-size:20px}
+.site-hdr .logo b{font-weight:700}.site-hdr .logo img{width:32px;height:32px}
+.site-hdr .logo .badge{margin-left:4px;padding:3px 9px;border-radius:999px;background:rgba(243,201,120,.16);color:var(--amber-2);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.site-hdr nav{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.site-hdr .nb{color:#D3DCE8;font-weight:600}.site-hdr .nb.on{background:rgba(255,255,255,.1);color:#fff}
+.site-hdr #who{color:#8FA0B6;font-size:13px}
+.site-ftr{background:var(--ink);color:#AEBBCD;padding:24px;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;font-size:14px;border:0}
+.site-ftr a{color:var(--amber-2);text-decoration:none}
+.login{max-width:460px;margin:56px auto;display:flex;flex-direction:column;gap:16px}
+.login h1{font-size:32px;line-height:1.1}
+.tl{display:flex;flex-direction:column;gap:0}
+.tl .st{display:flex;gap:12px;align-items:flex-start;padding:8px 0}
+.tl .st .b{width:14px;height:14px;border-radius:50%;border:2px solid var(--line2);background:#fff;flex-shrink:0;margin-top:4px}
+.tl .st.done .b{background:var(--ok);border-color:var(--ok)}
+.tl .st.now .b{background:var(--amber);border-color:var(--amber);box-shadow:0 0 0 4px rgba(224,160,48,.2)}
+.tl .st.later{color:var(--muted)}
+.tl .st b{font-size:15px}.tl .st span{display:block;font-size:13px;color:var(--muted)}
+input[type=number]{font:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line2);border-radius:8px;background:var(--bg);color:var(--fg);width:100%;min-height:44px}
+</style>
+<script src="/assets/config.js"></script>
+<script src="/assets/portal-api.js"></script>
+</head>
+<body>
+<header class="site-hdr">
+  <a class="logo" href="/" aria-label="PermitSetReady home"><img src="/img/logo-icon-amber.svg" alt=""><span><b>PermitSet</b>Ready</span><span class="badge">My project</span></a>
+  <nav id="nav">
+    <button type="button" class="nb hide" data-go="projects" id="nb-projects">My projects</button>
+    <button type="button" class="nb hide" data-go="intake" id="nb-new">New project</button>
+    <button type="button" class="nb hide" data-go="admin" id="nb-admin">Admin</button>
+    <span id="who" style="padding-left:8px"></span>
+    <button type="button" class="nb hide" id="nb-logout">Log out</button>
+    <a class="nb" href="/" style="text-decoration:none">permitsetready.ca</a>
+  </nav>
+</header>
+
+<div id="offline" class="banner hide" style="margin:16px 24px">The client portal is being set up. To start a project now, email admin@permitsetready.ca.</div>
+
+<!-- LANDING: login and welcome -->
+<section class="screen" id="s-landing"><div class="wrap">
+  <div class="login" id="login-box">
+    <span class="eyebrow">Client portal</span>
+    <h1>Start or follow your project</h1>
+    <p class="sub" style="font-size:15px;color:var(--fg2)">Enter your email and we'll send you a 6-digit code. No password needed. Use the same email each time to see all your projects.</p>
+    <div id="login-step1" class="f"><label class="l" for="lg_email">Email</label><input id="lg_email" type="email" autocomplete="email" placeholder="you@example.com"><button type="button" class="btn" id="lg_send" style="margin-top:8px">Email me a code</button></div>
+    <div id="login-step2" class="f hide"><label class="l" for="lg_code">6-digit code</label><input id="lg_code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="123456"><button type="button" class="btn" id="lg_verify" style="margin-top:8px">Log in</button><button type="button" class="lnk" id="lg_back" style="margin-top:6px">Use a different email</button></div>
+    <p class="sub" id="lg_msg" role="status"></p>
+    <p class="sub">Questions? <a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a></p>
+  </div>
+  <div class="login hide" id="welcome-box">
+    <span class="eyebrow">Welcome back</span>
+    <h1>What would you like to do?</h1>
+    <div style="display:flex;flex-wrap:wrap;gap:10px"><button type="button" class="btn" id="wb-new">Start a new project</button><button type="button" class="btn ghost" data-go="projects">My projects</button></div>
+  </div>
+  <div class="hide"><div id="tier-cards"></div><span id="area-txt"></span><span id="area-faq"></span></div>
+</div></section>
+
+<!-- INTAKE WIZARD -->
+<section class="screen hide" id="s-intake" style="background:var(--bg2);min-height:80vh">
+  <div class="wrap side" style="padding-block:32px 60px">
+    <div style="display:flex;flex-direction:column;gap:18px;min-width:0">
+      <div class="steps" id="wiz-steps"></div>
+      <form class="card" style="padding:26px;gap:22px" id="wiz" autocomplete="on">
+
+        <div data-step="1" style="display:flex;flex-direction:column;gap:20px">
+          <div><h1 style="font-size:24px">You and the property</h1><p class="sub" style="margin-top:4px">We save as you go. You can come back any time from "My projects".</p></div>
+          <div class="g2">
+            <div class="f"><label class="l" for="c_name">Your name</label><input id="c_name" type="text" data-k="contact.name"></div>
+            <div class="f"><label class="l" for="c_phone">Phone</label><input id="c_phone" type="tel" data-k="contact.phone"></div>
+            <div class="f" style="grid-column:1/-1"><label class="l" for="c_email">Email</label><input id="c_email" type="email" data-k="contact.email"></div>
+            <div class="f" style="grid-column:1/-1"><label class="l" for="p_addr">Property address</label><input id="p_addr" type="text" placeholder="Street address, City" data-k="property.address"><span class="sub" id="addr-hint"></span></div>
+            <div class="f"><label class="l" for="p_muni">Municipality</label><select id="p_muni" data-k="property.municipality"><option value="">Choose</option><option>Mississauga</option><option>Brampton</option><option>Caledon</option><option>Oakville</option><option>Burlington</option><option>Milton</option><option>Halton Hills</option><option>Vaughan</option><option>Markham</option><option>Richmond Hill</option><option>Aurora</option><option>Newmarket</option><option>Pickering</option><option>Ajax</option><option>Whitby</option><option>Oshawa</option><option>Toronto</option><option>Hamilton</option><option>Innisfil</option><option>Barrie</option><option>Guelph</option><option>Kitchener</option><option>Other</option></select></div>
+            <div class="f"><label class="l" for="p_type">House type</label><select id="p_type" data-k="property.houseType"><option>Detached</option><option>Semi-detached</option><option>Townhouse</option></select></div>
+            <div class="f"><label class="l" for="p_year">Year built</label><select id="p_year" data-k="property.yearBuilt"><option>Before 1970</option><option>1970 to 1995</option><option>1995 to 2010</option><option>After 2010</option><option>Not sure</option></select></div>
+            <div class="f"><label class="l" for="p_park">Parking on the lot</label><select id="p_park" data-k="property.parking"><option>1 space</option><option>2 spaces</option><option>3 or more</option><option>None</option></select></div>
+          </div>
+        </div>
+
+        <div data-step="2" class="hide" style="display:flex;flex-direction:column;gap:20px">
+          <div><h1 style="font-size:24px">The project</h1><p class="sub" style="margin-top:4px">Rough answers are fine. Anything that matters gets confirmed before drawing.</p></div>
+          <div class="f"><span class="l">What do you want to build? Pick everything that applies.</span><span class="sub">One permit set can cover a combination, for example a second unit with a new below-grade entrance and a deck over it.</span>
+            <div class="g2" style="gap:12px" id="scope-opts">
+              <label class="opt"><input type="checkbox" name="scope" value="unit"><span><b>Legal second unit</b><small>Separate kitchen, bath and entrance. Rentable.</small></span></label>
+              <label class="opt"><input type="checkbox" name="scope" value="finish"><span><b>Finished basement</b><small>Rec room, bedroom, bathroom. No separate unit.</small></span></label>
+              <label class="opt"><input type="checkbox" name="scope" value="bge"><span><b>Below-grade entrance</b><small>New exterior stair and door into the basement.</small></span></label>
+              <label class="opt"><input type="checkbox" name="scope" value="deck"><span><b>Deck</b><small>Attached or freestanding, any height.</small></span></label>
+              <label class="opt"><input type="checkbox" name="scope" value="garage"><span><b>Detached garage</b><small>New garage or workshop in the yard.</small></span></label>
+              <label class="opt"><input type="checkbox" name="scope" value="shed"><span><b>Shed or cabana</b><small>Storage shed, pool cabana, studio. Over 15 m² needs a permit.</small></span></label>
+            </div></div>
+          <div id="bge-block" class="hide" style="display:flex;flex-direction:column;gap:12px"><span class="eyebrow q">Below-grade entrance</span><div class="g2">
+              <div class="f"><label class="l" for="e_where">Where on the house</label><select id="e_where" data-k="bge.where"><option>Side wall</option><option>Rear wall</option><option>Front wall</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="e_side">Distance from that wall to the lot line</label><select id="e_side" data-k="bge.sideClear"><option>Under 4 ft (1.2 m)</option><option>4 to 6 ft</option><option>Over 6 ft (1.8 m)</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="e_exist">What is there now</label><select id="e_exist" data-k="bge.existing"><option>Blank wall</option><option>A basement window</option><option>A window well</option><option>Gas meter, AC unit or hose bib</option></select></div>
+              <div class="f"><label class="l" for="e_drop">Grade at that spot</label><select id="e_drop" data-k="bge.grade"><option>Flat</option><option>Slopes away from the house</option><option>Slopes toward the house</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="e_drain">Drainage</label><select id="e_drain" data-k="bge.drain"><option>Not sure, advise me</option><option>Floor drain to the weeping tile or sump</option><option>Catch basin to storm</option></select></div>
+              <div class="f"><label class="l" for="e_cover">Cover over the stair</label><select id="e_cover" data-k="bge.cover"><option>Open</option><option>Deck or landing above</option><option>Small roof or canopy</option></select></div>
+            </div></div>
+          <div id="deck-block" class="hide" style="display:flex;flex-direction:column;gap:12px"><span class="eyebrow q">Deck</span><div class="g2">
+              <div class="f"><label class="l" for="k_w">Deck width (ft)</label><input id="k_w" type="text" inputmode="decimal" placeholder="e.g. 12" data-k="deck.width"></div>
+              <div class="f"><label class="l" for="k_l">Deck length (ft)</label><input id="k_l" type="text" inputmode="decimal" placeholder="e.g. 16" data-k="deck.length"></div>
+              <div class="f"><label class="l" for="k_h">Height of the deck floor above the ground</label><select id="k_h" data-k="deck.height"><option>Under 24 in (0.6 m)</option><option>24 in to 6 ft</option><option>Over 6 ft (1.8 m)</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="k_att">Attached to the house?</label><select id="k_att" data-k="deck.attached"><option>Yes, ledger on the house</option><option>Freestanding</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="k_stair">Stairs</label><select id="k_stair" data-k="deck.stairs"><option>One stair to grade</option><option>Two stairs</option><option>No stairs</option></select></div>
+              <div class="f"><label class="l" for="k_set">Distance to the nearest lot line</label><select id="k_set" data-k="deck.setback"><option>Under 2 ft (0.6 m)</option><option>2 to 4 ft</option><option>Over 4 ft (1.2 m)</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="k_extra">Extras</label><select id="k_extra" data-k="deck.extras"><option>None</option><option>Hot tub</option><option>Roof or pergola over part of it</option><option>Privacy screen over 6 ft</option></select></div>
+              <div class="f"><label class="l" for="k_over">Does it sit over a walkout or entrance?</label><select id="k_over" data-k="deck.overEntrance"><option>No</option><option>Yes, over a below-grade entrance</option><option>Yes, over a walkout</option></select></div>
+            </div></div>
+          <div id="out-block" class="hide" style="display:flex;flex-direction:column;gap:12px"><span class="eyebrow q">Garage, shed or cabana</span>
+            <div class="g2">
+              <div class="f"><label class="l" for="o_w">Footprint width (ft)</label><input id="o_w" type="text" inputmode="decimal" placeholder="e.g. 20" data-k="out.width"></div>
+              <div class="f"><label class="l" for="o_l">Footprint length (ft)</label><input id="o_l" type="text" inputmode="decimal" placeholder="e.g. 22" data-k="out.length"></div>
+              <div class="f"><label class="l" for="o_h">Height</label><select id="o_h" data-k="out.height"><option>Single storey, under 15 ft (4.5 m) to the peak</option><option>Single storey with loft or storage above</option><option>Over 15 ft or two storeys</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_roof">Roof</label><select id="o_roof" data-k="out.roof"><option>Gable</option><option>Hip</option><option>Flat or single slope</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_where">Where in the yard</label><select id="o_where" data-k="out.where"><option>Rear yard</option><option>Side yard</option><option>Rear corner</option><option>Front or beside the house</option></select></div>
+              <div class="f"><label class="l" for="o_rear">Distance to the rear lot line</label><select id="o_rear" data-k="out.rearSetback"><option>Under 2 ft (0.6 m)</option><option>2 to 4 ft</option><option>Over 4 ft (1.2 m)</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_side">Distance to the side lot line</label><select id="o_side" data-k="out.sideSetback"><option>Under 2 ft (0.6 m)</option><option>2 to 4 ft</option><option>Over 4 ft (1.2 m)</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_house">Distance to the house</label><select id="o_house" data-k="out.houseGap"><option>Under 4 ft (1.2 m)</option><option>4 to 10 ft</option><option>Over 10 ft</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_lot">Approximate lot size</label><select id="o_lot" data-k="out.lotSize"><option>Under 30 ft wide</option><option>30 to 50 ft wide</option><option>Over 50 ft wide</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_corner">Corner lot?</label><select id="o_corner" data-k="out.corner"><option>No</option><option>Yes</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_elec">Electrical</label><select id="o_elec" data-k="out.electrical"><option>None</option><option>Lights and outlets</option><option>Sub-panel (workshop, EV charger)</option></select></div>
+              <div class="f"><label class="l" for="o_plumb">Plumbing</label><select id="o_plumb" data-k="out.plumbing"><option>None</option><option>Hose bib or sink only</option><option>Bathroom or shower</option></select></div>
+              <div class="f" id="f_drive"><label class="l" for="o_drive">Driveway access</label><select id="o_drive" data-k="out.driveway"><option>Existing driveway reaches it</option><option>Driveway to be extended</option><option>Rear lane</option><option>No vehicle access, workshop only</option></select></div>
+              <div class="f"><label class="l" for="o_exist">Existing structure in the way?</label><select id="o_exist" data-k="out.existing"><option>No</option><option>Old shed or garage to demolish</option><option>Pool, deck or patio nearby</option><option>Mature trees nearby</option></select></div>
+              <div class="f"><label class="l" for="o_survey">Do you have a survey of the lot?</label><select id="o_survey" data-k="out.hasSurvey"><option>Yes, I can upload it</option><option>No</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="o_when">When do you want to build?</label><select id="o_when" data-k="out.timing"><option>Within 3 months</option><option>3 to 6 months</option><option>Just exploring</option></select></div>
+            </div>
+          </div>
+          <div id="base-block" class="g2"><span class="eyebrow q" style="grid-column:1/-1">The basement</span>
+            <div class="f"><label class="l" for="b_h1">Ceiling height, floor to joists</label><select id="b_h1" data-k="basement.heightJoists"><option>Under 6'5" (1.95 m)</option><option>6'5" to 7'0"</option><option>7'0" to 7'6"</option><option>Over 7'6"</option><option>Not sure</option></select></div>
+            <div class="f"><label class="l" for="b_h2">Height under the beam or ducts</label><select id="b_h2" data-k="basement.heightBeam"><option>Under 6'5"</option><option>6'5" to 7'0"</option><option>Over 7'0"</option><option>Not sure</option></select></div>
+            <div class="f"><label class="l" for="b_state">Finished today?</label><select id="b_state" data-k="basement.finished"><option>Unfinished</option><option>Partly finished</option><option>Fully finished</option></select></div>
+            <div class="f"><label class="l" for="b_ent">How do you get into the basement?</label><select id="b_ent" data-k="basement.entrance"><option>Side door with stairs down</option><option>Walkout at grade</option><option>Only through the main house</option><option>Garage door into basement</option></select></div>
+            <div class="f"><label class="l" for="b_win">Largest window in the planned bedroom</label><select id="b_win" data-k="basement.bedroomWindow"><option>Over 24" tall and wide, opens fully</option><option>Smaller than that</option><option>No window in that room</option><option>Not sure</option></select></div>
+            <div class="f"><label class="l" for="b_well">Window wells today</label><select id="b_well" data-k="basement.wells"><option>None</option><option>Yes, basic</option><option>Yes, with ladders or steps</option></select></div>
+            <div class="f"><label class="l" for="b_furn">Furnace room</label><select id="b_furn" data-k="basement.furnaceRoom"><option>Own room with a door</option><option>Open in the basement</option><option>In a closet</option></select></div>
+            <div class="f"><label class="l" for="b_mech">Furnace and electrical panel</label><select id="b_mech" data-k="basement.mechTogether"><option>Together in one room</option><option>In different places</option><option>Not sure</option></select></div>
+            <div class="f"><label class="l" for="b_when">When do you want to start?</label><select id="b_when" data-k="basement.timing"><option>Within 3 months</option><option>3 to 6 months</option><option>Just exploring</option></select></div>
+          </div>
+        </div>
+
+        <div data-step="3" class="hide" style="display:flex;flex-direction:column;gap:20px">
+          <div><h1 style="font-size:24px">How much do you want us to do?</h1><p class="sub" style="margin-top:4px">You can change this after the result.</p></div>
+          <div class="f"><div class="g3" style="gap:12px">
+            <label class="opt"><input type="radio" name="tier" value="t1" data-k="tier"><span><b>Guide</b><small>I'll draw and file it. $59.</small></span></label>
+            <label class="opt"><input type="radio" name="tier" value="t2" data-k="tier"><span><b>Draft-to-Scale</b><small>My sketch, your drawing. From $450.</small></span></label>
+            <label class="opt"><input type="radio" name="tier" value="t3" data-k="tier"><span><b>Designed for you</b><small>You design it and a registered designer signs. From $750.</small></span></label>
+          </div></div>
+          <div id="brief" class="hide" style="display:flex;flex-direction:column;gap:20px;border-top:1px solid var(--line);padding-top:18px">
+            <div><b style="font-size:16px">Design brief</b><p class="sub" style="margin-top:4px">We draw the layout, so we need more about the house. Anything you skip we confirm at the measuring visit.</p></div>
+            <div id="brief-out" class="f hide"><span class="eyebrow q">What you want</span><div class="g2">
+              <div class="f"><label class="l" for="g_use">Main use</label><select id="g_use" data-k="brief.use"><option>Parking</option><option>Workshop</option><option>Storage</option><option>Studio or office</option><option>Pool cabana</option></select></div>
+              <div class="f"><label class="l" for="g_doors">Doors</label><select id="g_doors" data-k="brief.doors"><option>One overhead door and a man door</option><option>Two overhead doors</option><option>Man door only</option><option>Sliding or French doors</option></select></div>
+              <div class="f"><label class="l" for="g_match">Exterior finish</label><select id="g_match" data-k="brief.exterior"><option>Match the house</option><option>Siding</option><option>Board and batten</option><option>Brick or stone accent</option></select></div>
+              <div class="f"><label class="l" for="g_floor">Floor</label><select id="g_floor" data-k="brief.floor"><option>Concrete slab</option><option>Slab with floor drain</option><option>Wood floor on piers (shed)</option></select></div>
+              <div class="f"><label class="l" for="g_heat">Heating or insulation</label><select id="g_heat" data-k="brief.heat"><option>None, unheated</option><option>Insulated, no heat yet</option><option>Insulated and heated</option></select></div>
+              <div class="f"><label class="l" for="g_found">Foundation preference</label><select id="g_found" data-k="brief.foundationType"><option>Advise me</option><option>Thickened slab</option><option>Frost wall</option><option>Piers or deck blocks (shed)</option></select></div>
+              <div class="f" style="grid-column:1/-1"><label class="l" for="g_notes">Anything else about the design?</label><input id="g_notes" type="text" placeholder="Window on the north side, matching trim, loft ladder" data-k="brief.designNotes"></div>
+            </div></div>
+            <div id="brief-base" style="display:flex;flex-direction:column;gap:20px">
+            <div class="f"><span class="eyebrow q">What you want</span><div class="g2">
+              <div class="f"><label class="l" for="d_who">Who will live there?</label><select id="d_who" data-k="brief.who"><option>Tenant</option><option>Family member</option><option>Us, extra living space</option></select></div>
+              <div class="f"><label class="l" for="d_bed">Bedrooms</label><select id="d_bed" data-k="brief.bedrooms"><option>1</option><option>2</option><option>None, open plan</option></select></div>
+              <div class="f"><label class="l" for="d_bath">Bathrooms</label><select id="d_bath" data-k="brief.baths"><option>1 full</option><option>1 full + powder</option><option>Shower only</option></select></div>
+              <div class="f"><label class="l" for="d_kit">Kitchen</label><select id="d_kit" data-k="brief.kitchen"><option>Full kitchen</option><option>Kitchenette</option><option>None</option></select></div>
+              <div class="f"><label class="l" for="d_laun">Laundry</label><select id="d_laun" data-k="brief.laundry"><option>Separate for the unit</option><option>Shared with main house</option><option>None</option></select></div>
+              <div class="f"><label class="l" for="d_fin">Finish level</label><select id="d_fin" data-k="brief.finish"><option>Basic rental</option><option>Standard</option><option>Premium</option></select></div>
+              <div class="f" style="grid-column:1/-1"><label class="l" for="d_keep">Anything to keep as is?</label><input id="d_keep" type="text" placeholder="Cold cellar, workshop, storage for you" data-k="brief.keep"></div>
+            </div></div>
+            <div class="f"><span class="eyebrow q">The basement today</span><div class="g2">
+              <div class="f"><label class="l" for="d_found">Foundation walls</label><select id="d_found" data-k="brief.foundation"><option>Poured concrete</option><option>Concrete block</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="d_ceil">Ceiling construction</label><select id="d_ceil" data-k="brief.ceiling"><option>Exposed joists</option><option>Drywall</option><option>Drop ceiling tiles</option></select></div>
+              <div class="f"><label class="l" for="d_drain">Floor drain and sump</label><select id="d_drain" data-k="brief.drain"><option>Floor drain, no sump</option><option>Sump pit present</option><option>Both</option><option>Neither / not sure</option></select></div>
+              <div class="f"><label class="l" for="d_stair">Will the stair be shared with the main house?</label><select id="d_stair" data-k="brief.sharedStair"><option>No, unit has its own</option><option>Yes, shared</option><option>Not sure</option></select></div>
+              <div class="f" style="grid-column:1/-1"><span class="l">Existing items</span><div class="g3" style="gap:8px;font-size:14px">
+                <label class="ack"><input type="checkbox" data-k="brief.ex.roughIn"><span>Bathroom rough-in in the slab</span></label>
+                <label class="ack"><input type="checkbox" data-k="brief.ex.beam"><span>Steel beam with posts</span></label>
+                <label class="ack"><input type="checkbox" data-k="brief.ex.soffits"><span>Duct soffits across rooms</span></label>
+                <label class="ack"><input type="checkbox" data-k="brief.ex.stack"><span>Plumbing stack in a corner</span></label>
+                <label class="ack"><input type="checkbox" data-k="brief.ex.damp"><span>Water or dampness history</span></label>
+                <label class="ack"><input type="checkbox" data-k="brief.ex.priorPermit"><span>Previous permit on the basement</span></label>
+              </div></div>
+            </div></div>
+            <div class="f"><span class="eyebrow q">Fire safety, mechanical, electrical</span><div class="g2">
+              <div class="f"><label class="l" for="d_hvac">Heating for the unit</label><select id="d_hvac" data-k="brief.hvac"><option>Share the house furnace</option><option>Separate system (ductless)</option><option>Not sure, advise me</option></select></div>
+              <div class="f"><label class="l" for="d_gas">Gas appliances</label><select id="d_gas" data-k="brief.gas"><option>Furnace and water heater</option><option>Furnace only</option><option>None, all electric</option></select></div>
+              <div class="f"><label class="l" for="d_panel">Electrical panel</label><select id="d_panel" data-k="brief.panel"><option>100 A</option><option>200 A</option><option>Not sure, will photograph</option></select></div>
+              <div class="f"><label class="l" for="d_alarm">Smoke and CO alarms</label><select id="d_alarm" data-k="brief.alarms"><option>Interconnected (hardwired)</option><option>Battery, not connected</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="d_wh">Water heater</label><select id="d_wh" data-k="brief.waterHeater"><option>Tank, rented</option><option>Tank, owned</option><option>Tankless</option></select></div>
+              <div class="f"><label class="l" for="d_side">Side yard width (for a new entrance)</label><select id="d_side" data-k="brief.sideYard"><option>Under 1.2 m (4 ft)</option><option>1.2 to 1.8 m</option><option>Over 1.8 m</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="d_grade">Ground slopes toward the house?</label><select id="d_grade" data-k="brief.gradeToHouse"><option>No</option><option>Yes</option><option>Not sure</option></select></div>
+              <div class="f"><label class="l" for="d_meas">Measure-up visit</label><select id="d_meas" data-k="brief.measureWhen"><option>Weekday daytime</option><option>Weekday evening</option><option>Weekend</option></select></div>
+            </div></div>
+            </div>
+          </div>
+        </div>
+
+        <div data-step="4" class="hide" style="display:flex;flex-direction:column;gap:20px">
+          <div><h1 style="font-size:24px">Documents</h1><p class="sub" style="margin-top:4px">Photos are resized on your device before upload. PDFs up to 230 KB; larger plans can be photographed or exported as images.</p></div>
+          <div class="g3" style="gap:12px" id="uploads">
+            <label class="up" data-kind="plan"><input type="file" accept="image/*,application/pdf" multiple><b>Existing floor plan</b><small class="sub">builder plans, realtor plan, old permit set</small></label>
+            <label class="up" data-kind="sketch"><input type="file" accept="image/*,application/pdf" multiple><b>Your sketch</b><small class="sub">rooms named, window and entrance marked</small></label>
+            <label class="up" data-kind="photo"><input type="file" accept="image/*" multiple><b>Room photos</b><small class="sub">each room, ceiling, panel, furnace, windows with a tape</small></label>
+            <label class="up" data-kind="survey"><input type="file" accept="image/*,application/pdf" multiple><b>Survey</b><small class="sub" id="survey-hint">only if adding an entrance or window well</small></label>
+            <label class="up" data-kind="other"><input type="file" accept="image/*,application/pdf" multiple><b>Anything else</b><small class="sub">previous permits, condo rules, quotes</small></label>
+          </div>
+          <div class="thumbs" id="thumbs"></div>
+          <div class="card" id="meas-box" style="gap:12px;background:var(--bg2)"><div><b style="font-size:16px">No drawings of your house as it is today?</b><p class="sub" style="margin-top:4px">Our measuring partner can measure it. Answer two quick questions for an estimate; measuring is quoted separately from the drawings.</p></div><label class="ack"><input type="checkbox" data-k="measure.want"><span>I'd like a measuring visit</span></label><div class="f"><label class="l" for="m_sqft">Size of the house (sq ft, all floors)</label><input id="m_sqft" type="number" min="0" step="50" inputmode="numeric" placeholder="e.g. 2,200" data-k="measure.sqft"></div><div class="f"><span class="l">What else is on the property?</span><div style="display:flex;flex-wrap:wrap;gap:8px 16px"><label class="ack" style="flex:0 0 auto"><input type="checkbox" data-k="measure.feat.shed"><span>Shed</span></label><label class="ack" style="flex:0 0 auto"><input type="checkbox" data-k="measure.feat.deck"><span>Deck</span></label><label class="ack" style="flex:0 0 auto"><input type="checkbox" data-k="measure.feat.patio"><span>Patio</span></label><label class="ack" style="flex:0 0 auto"><input type="checkbox" data-k="measure.feat.pool"><span>Pool</span></label><label class="ack" style="flex:0 0 auto"><input type="checkbox" data-k="measure.feat.garage"><span>Detached garage</span></label><label class="ack" style="flex:0 0 auto"><input type="checkbox" data-k="measure.feat.other"><span>Other structures</span></label></div></div><div class="sub" id="meas-est" aria-live="polite"></div></div>
+          <div class="f"><label class="l" for="d_link">Or paste a link to a shared folder</label><input id="d_link" type="url" placeholder="Google Drive, Dropbox, iCloud link" data-k="docs.link"></div>
+          <div class="f"><label class="l" for="d_notes">Anything we should know?</label><textarea id="d_notes" data-k="docs.notes" placeholder="Permits in the past, a contractor already chosen, deadlines"></textarea></div>
+        </div>
+
+        <div data-step="5" class="hide" style="display:flex;flex-direction:column;gap:20px">
+          <div><h1 style="font-size:24px">Run the pre-screen</h1><p class="sub" style="margin-top:4px">We check zoning for your municipality, your ceiling height and egress answers, and whether your documents are enough to draw from. Takes about a minute.</p></div>
+          <div class="card" style="background:var(--bg2);gap:8px" id="review"></div>
+          <div class="banner hide" id="run-note"></div>
+          <div id="run-out" class="hide" style="display:flex;flex-direction:column;gap:8px"><span class="sub"><span class="spin"></span> Reading your answers and documents…</span><pre id="run-text" style="white-space:pre-wrap;font:13px/1.5 var(--sans);color:var(--fg2);margin:0;max-height:160px;overflow:auto"></pre></div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;border-top:1px solid var(--line);padding-top:18px">
+          <button type="button" class="lnk" style="color:var(--muted);font-weight:500" id="wiz-back">Back</button>
+          <div style="display:flex;gap:10px;align-items:center"><span class="sub" id="save-state"></span><button type="submit" class="btn" id="wiz-next">Continue</button></div>
+        </div>
+      </form>
+    </div>
+    <aside style="display:flex;flex-direction:column;gap:14px">
+      <div class="card"><b>What happens next</b><div style="display:flex;flex-direction:column;gap:8px;font-size:14px;color:var(--fg2)">
+        <div style="display:flex;gap:10px"><span class="eyebrow">01</span><span>Zoning for your municipality is checked against your answers.</span></div>
+        <div style="display:flex;gap:10px"><span class="eyebrow">02</span><span>Your plans and sketch are checked for legibility and completeness.</span></div>
+        <div style="display:flex;gap:10px"><span class="eyebrow">03</span><span>You get a result and a fixed price. No obligation.</span></div></div></div>
+      <div class="card"><b>Sketch tips</b><ul style="font-size:14px;line-height:1.8;color:var(--fg2)"><li>Draw every room and name it</li><li>Mark the bedroom window</li><li>Show where the furnace and panel are</li><li>Mark the entrance you will use</li></ul></div>
+    </aside>
+  </div>
+</section>
+
+<!-- RESULT -->
+<section class="screen hide" id="s-result" style="background:var(--bg2);min-height:80vh"><div class="wrap side" style="padding-block:32px 60px" id="result-root"></div></section>
+
+<!-- PROJECTS LIST -->
+<section class="screen hide" id="s-projects" style="background:var(--bg2);min-height:80vh"><div class="wrap" style="padding-block:32px 60px" id="projects-root"></div></section>
+
+<!-- PROJECT -->
+<section class="screen hide" id="s-project" style="background:var(--bg2);min-height:80vh"><div class="wrap" style="padding-block:32px 60px" id="project-root"></div></section>
+
+<!-- ADMIN -->
+<section class="screen hide" id="s-admin" style="background:var(--bg2);min-height:80vh"><div class="wrap" style="padding-block:28px 60px;display:flex;flex-direction:column;gap:18px" id="admin-root"></div></section>
+
+<footer class="site-ftr"><a href="/" style="color:#fff;font-weight:700;text-decoration:none">PermitSetReady</a><span>Ontario residential permit drawings</span><span><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a> · <a href="https://instagram.com/permitsetready" target="_blank" rel="noopener">@permitsetready</a></span></footer>
+<script>
+(function(){
+'use strict';
+// ---------- constants ----------
+var PRICES={t1:{finish:59,unit:59,garage:59,shed:59,deck:59,bge:59},t2:{finish:900,unit:1600,garage:700,shed:500,deck:450,bge:600},t3:{finish:1400,unit:2800,unitNew:3800,garage:1200,shed:900,deck:750,bge:950},measure:350,addonRate:0.6};
+// Measuring (existing drawings) estimate: Philip's GDG Package Fee formula, 20% markup, travel from Hwy 403 & Hurontario (one-way km, approx.)
+var MEAS={base:820,freeSqft:2000,perSqft:0.2,elev:125,roof:60,perKm:0.85,site:400,markup:0.2};
+var MEAS_KM={'Mississauga':10,'Brampton':20,'Caledon':40,'Oakville':20,'Burlington':35,'Milton':30,'Halton Hills':35,'Vaughan':35,'Markham':50,'Richmond Hill':45,'Aurora':55,'Newmarket':60,'Pickering':60,'Ajax':65,'Whitby':75,'Oshawa':85,'Toronto':30,'Hamilton':55,'Innisfil':95,'Barrie':105,'Guelph':70,'Kitchener':90,'Other':60};
+var SCOPES={unit:'Legal second unit',finish:'Basement finish',garage:'Detached garage',shed:'Shed or cabana',bge:'Below-grade entrance',deck:'Deck'};
+var SCOPE_ORDER=['unit','finish','garage','shed','bge','deck'];
+var TIERS={t1:{name:'Permit Guide',short:'Guide'},t2:{name:'Draft-to-Scale',short:'Draft-to-Scale'},t3:{name:'Designed for you',short:'Designed'}};
+var STATUS=[['draft','Draft'],['screened','Submitted, awaiting deposit'],['confirmed','Deposit received'],['measuring','Measuring visit'],['drafting','Drafting'],['review','In review'],['consultant','With consultant'],['ready','Ready, balance due'],['delivered','Delivered'],['revising','Revising for City comments'],['declined','Not eligible']];
+var DEFAULT_SETTINGS={excluded:[],area:'Mississauga, Toronto, Oakville, Burlington, Brampton, Halton Hills, Innisfil, Barrie, Guelph, Kitchener, Hamilton and many more',pay:{},payProvider:'Wave'};
+var state={screen:'landing',db:null,user:null,me:null,sample:null,uid:null,isAdmin:false,intake:null,pid:null,index:{projects:[]},files:[],settings:DEFAULT_SETTINGS,wiz:1,unsub:[],admin:{list:[],sel:null,files:[],unsub:null}};
+var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function money(n){return '$'+Number(n||0).toLocaleString('en-CA');}
+function toast(msg,ms){var t=document.createElement('div');t.className='toast';t.textContent=msg;document.body.appendChild(t);setTimeout(function(){t.remove();},ms||2200);}
+function get(o,k){return k.split('.').reduce(function(a,b){return a==null?undefined:a[b];},o);}
+function set(o,k,v){var p=k.split('.'),x=o;for(var i=0;i<p.length-1;i++){if(typeof x[p[i]]!=='object'||x[p[i]]===null)x[p[i]]={};x=x[p[i]];}x[p[p.length-1]]=v;}
+function now(){return new Date().toISOString();}
+function fmtDate(iso){if(!iso)return '';var d=new Date(iso);return d.toLocaleDateString('en-CA',{month:'short',day:'numeric'});}
+function statusLabel(s){var f=STATUS.filter(function(x){return x[0]===s;})[0];return f?f[1]:s;}
+
+// ---------- pricing ----------
+function scopesOf(it){var a=Array.isArray(it&&it.scopes)?it.scopes.slice():(it&&it.scope?[it.scope]:[]);return SCOPE_ORDER.filter(function(k){return a.indexOf(k)>=0;});}
+function has(it,k){return scopesOf(it).indexOf(k)>=0;}
+function priceLines(it){var t=it.tier||'t2',sc=scopesOf(it),p=PRICES[t]||PRICES.t2,lines=[];if(t==='t1'){lines.push({label:'Permit Guide ('+sc.map(function(k){return SCOPES[k];}).join(' + ')+')',amount:(PRICES.t1[sc[0]]||59)});return lines;}
+  sc.forEach(function(k,i){var base=p[k]||0;if(k==='unit'&&t==='t3'&&!has(it,'bge')&&it.basement&&it.basement.entrance==='Only through the main house')base=PRICES.t3.unitNew;var amt=i===0?base:Math.round(base*PRICES.addonRate/50)*50;lines.push({label:SCOPES[k]+(i===0?'':' (add-on)'),amount:amt});});return lines;}
+function sheetList(it){var parts=[];if(isBase(it))parts.push('existing and proposed plans, section, notes');if(has(it,'bge'))parts.push('entrance plan, section and drainage');if(has(it,'deck'))parts.push('deck framing plan and guard detail');if(isOut(it))parts.push('foundation plan, elevations, section');if(needsSurvey(it)||has(it,'unit'))parts.push('site plan');return parts.join('; ');}
+function priceFor(it){return priceLines(it).reduce(function(a,l){return a+l.amount;},0);}
+function scopeName(it){return scopesOf(it).map(function(k){return SCOPES[k];}).join(' + ')||'Project';}
+function packageName(it){var t=TIERS[it.tier||'t2'].name;return t+' · '+scopeName(it);}
+function isOut(it){return has(it,'garage')||has(it,'shed');}
+function measElev(it){return (has(it,'bge')?1:0)+(has(it,'deck')?1:0);}
+function measSite(it){var f=(it.measure&&it.measure.feat)||{};return needsSurvey(it)||!!(f.shed||f.deck||f.patio||f.pool||f.garage||f.other);}
+function measWant(it){return !!(it&&it.measure&&it.measure.want);}
+function measEst(it){var m=(it&&it.measure)||{},sq=Number(m.sqft)||0;if(!(sq>0))return 0;var km=MEAS_KM[(it.property||{}).municipality]||60;var sub=MEAS.base+Math.max(0,sq-MEAS.freeSqft)*MEAS.perSqft+measElev(it)*MEAS.elev+MEAS.roof+km*2*MEAS.perKm+(measSite(it)?MEAS.site:0);return Math.ceil(sub*(1+MEAS.markup)/100)*100;}
+function measHint(){var el=document.getElementById('meas-est'),box=document.getElementById('meas-box');if(!el||!state.intake)return;if(box)box.classList.toggle('hide',state.intake.tier==='t1');var e=measEst(state.intake);el.innerHTML=e?'Estimated measuring fee: <b>'+money(e)+'</b> + HST, quoted separately from the drawings. We confirm it before booking the visit.':'Enter the size of the house to see an estimate.';}
+function isBase(it){return has(it,'finish')||has(it,'unit');}
+function needsSurvey(it){return isOut(it)||has(it,'bge')||has(it,'deck');}
+
+// ---------- navigation ----------
+function go(id){state.screen=id;['landing','intake','result','projects','project','admin'].forEach(function(k){var s=$('#s-'+k);s.classList.toggle('hide',k!==id);});$$('.nb').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-go')===id);});try{history.replaceState(null,'','#'+id);}catch(e){}window.scrollTo(0,0);
+  if(id==='intake'){renderWiz();measHint();}if(id==='result')renderResult();if(id==='projects')renderProjects();if(id==='project')renderProject();if(id==='admin')renderAdmin();}
+document.addEventListener('click',function(e){var t=e.target.closest('[data-go]');if(t){e.preventDefault();var id=t.getAttribute('data-go');if((id==='intake'||id==='project'||id==='projects')&&!state.db){toast('Please log in to start a project.');return;}if(id==='intake'){if(!state.intake||(state.intake.status&&state.intake.status!=='draft')){startNewProject();return;}}go(id);}});
+function startNewProject(){state.intake=blankIntake();state.files=[];state.pid=state.intake.id;if(state.me&&state.me.name)state.intake.contact.name=state.me.name;if(state.index&&state.index.projects&&state.index.projects.length){var last=state.index.projects[0];if(last.contactName)state.intake.contact.name=last.contactName;}state.wiz=1;go('intake');}
+function openProject(pid){var pr=(state.index.projects||[]).filter(function(x){return x.id===pid;})[0];if(!pr)return;state.db.doc(projPath(state.uid,pid)).get().then(function(d){if(!d.exists){toast('Project not found');return;}state.intake=normalize(d.data());state.pid=pid;try{localStorage.setItem('pr_pid',pid);}catch(e){}return loadFiles(state.uid,pid).then(function(fs){state.files=fs;go(state.intake.screen?'project':'intake');});});}
+function normalize(x){x=JSON.parse(JSON.stringify(x));['contact','property','basement','out','bge','deck','docs','ack','payment','admin','measure'].forEach(function(k){if(!x[k])x[k]={};});if(!x.brief)x.brief={ex:{}};if(!x.brief.ex)x.brief.ex={};if(!Array.isArray(x.scopes))x.scopes=x.scope?[x.scope]:[];if(!x.id)x.id=newPid();return x;}
+
+// ---------- landing ----------
+function renderTiers(){if(!document.getElementById('tier-cards'))return;$('#tier-cards').innerHTML=
+ '<div class="tier"><span class="eyebrow q">Tier 1</span><b style="font-size:21px">Permit Guide</b><span class="price">$59</span><p>You draw and file it yourself. We give you the step-by-step guide for your project type, the code and zoning checklist for your municipality, a sketch template and the submission walkthrough.</p><ul><li>OBC and zoning checklist</li><li>Sketch template to scale</li><li>What to put on each sheet</li><li>Credited toward Tier 2 or 3</li></ul></div>'+
+ '<div class="tier pop"><span class="pill">Most popular</span><span class="eyebrow q">Tier 2</span><b style="font-size:21px">Draft-to-Scale</b><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="price">$500+</span><span class="sub">shed · $450 deck · $600 entrance · $700 garage · $900 finish · $1,600 unit</span></div><p>Your design, drawn properly. Send us your sketch, existing plans or survey; we redraw them to scale and complete, in the format the City requires. You file as owner-designer.</p><ul><li>Existing and proposed plans</li><li>Notes, sections and site plan as required</li><li>Code checklist applied by you before we draw</li><li>5 business days</li></ul></div>'+
+ '<div class="tier"><span class="eyebrow q">Tier 3</span><b style="font-size:21px">Designed for you</b><div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="price">$900+</span><span class="sub">shed · $750 deck · $950 entrance · $1,200 garage · $1,400 finish · $2,800 unit</span></div><p>We design it, check it against the Ontario Building Code and zoning, and sign the designer schedule. Includes a measuring visit where needed (quoted separately).</p><ul><li>Full design and OBC data matrix</li><li>Fire separation, egress, HVAC schematic</li><li>Schedule 1 signed by a BCIN designer</li><li>Measuring visit quoted from your house size</li></ul></div>';}
+renderTiers();
+
+// ---------- intake model ----------
+function newPid(){return 'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function projPath(uid,pid){return 'intakes/'+uid+'/projects/'+pid;}
+function summary(it){return {id:it.id,address:it.property&&it.property.address||'',municipality:it.property&&it.property.municipality||'',scopeName:scopeName(it),tier:it.tier||'',status:it.status||'draft',updatedAt:it.updatedAt||now(),contactName:it.contact&&it.contact.name||''};}
+function blankIntake(){return {id:newPid(),owner:state.uid,createdAt:now(),updatedAt:now(),status:'draft',step:1,contact:{},property:{},scope:'',tier:'',scopes:[],basement:{},out:{},bge:{},deck:{},brief:{ex:{}},docs:{},fileIndex:[],screen:null,ack:{},payment:{},admin:{}};}
+var saveTimer=null,saving=false;
+function queueSave(){if(!state.db||!state.intake)return;$('#save-state').textContent='Saving…';clearTimeout(saveTimer);saveTimer=setTimeout(saveNow,700);}
+function saveNow(){if(!state.db||!state.intake||saving)return Promise.resolve();saving=true;state.intake.updatedAt=now();state.pid=state.intake.id;var body=JSON.parse(JSON.stringify(state.intake));var idx=state.index||{projects:[]};var list=(idx.projects||[]).filter(function(x){return x.id!==body.id;});list.push(summary(body));list.sort(function(a,b){return a.updatedAt<b.updatedAt?1:-1;});state.index={owner:state.uid,updatedAt:now(),projects:list};return state.db.doc(projPath(state.uid,body.id)).set(body).then(function(){return state.db.doc('intakes/'+state.uid).set(JSON.parse(JSON.stringify(state.index)));}).then(function(){$('#save-state').textContent='Saved';try{localStorage.setItem('pr_pid',body.id);}catch(e){}}).catch(function(e){$('#save-state').textContent='Not saved';if(e&&e.code==='invalid_argument')toast('Your access level cannot save data here. Ask the owner to make you a Contributor.');}).finally(function(){saving=false;});}
+
+function bindForm(){$$('#wiz [data-k]').forEach(function(el){var k=el.getAttribute('data-k');var ev=el.type==='checkbox'||el.type==='radio'||el.tagName==='SELECT'?'change':'input';el.addEventListener(ev,function(){if(!state.intake)return;var v=el.type==='checkbox'?el.checked:el.value;if(el.type==='radio'&&!el.checked)return;set(state.intake,k,v);if(k==='tier')syncBrief();if(k==='tier')markOpts();if(k==='property.address')addrHint();if(k.indexOf('measure.')===0||k==='property.municipality'||k==='tier')measHint();queueSave();});});}
+function fillForm(){var it=state.intake;var sc=scopesOf(it);$$('#scope-opts input').forEach(function(i){i.checked=sc.indexOf(i.value)>=0;});$$('#wiz [data-k]').forEach(function(el){var k=el.getAttribute('data-k'),v=get(it,k);if(el.type==='checkbox')el.checked=!!v;else if(el.type==='radio')el.checked=(v===el.value);else if(v!=null)el.value=v;});markOpts();syncBrief();addrHint();}
+function markOpts(){$$('.opt').forEach(function(o){var i=o.querySelector('input');o.classList.toggle('on',!!(i&&i.checked));});}
+function readScopes(){var it=state.intake;var sel=$$('#scope-opts input').filter(function(i){return i.checked;}).map(function(i){return i.value;});it.scopes=SCOPE_ORDER.filter(function(k){return sel.indexOf(k)>=0;});it.scope=it.scopes[0]||'';}
+$$('#scope-opts input').forEach(function(i){i.addEventListener('change',function(){if(!state.intake)return;readScopes();markOpts();syncBrief();queueSave();});});
+function syncBrief(){var it=state.intake;$('#brief').classList.toggle('hide',!(it&&it.tier==='t3'));var out=isOut(it),base=isBase(it);$('#brief-out').classList.toggle('hide',!out);$('#brief-base').classList.toggle('hide',!base);$('#out-block').classList.toggle('hide',!out);$('#base-block').classList.toggle('hide',!base);$('#bge-block').classList.toggle('hide',!has(it,'bge'));$('#deck-block').classList.toggle('hide',!has(it,'deck'));$('#f_drive').classList.toggle('hide',!has(it,'garage'));var sh=$('#survey-hint');if(sh)sh.textContent=needsSurvey(it)?'required: the site plan is drawn from it':'only if adding an entrance or window well';var up=$('#uploads [data-kind=plan] b');if(up)up.textContent=base?'Existing floor plan':'Existing site plan or house drawings';}
+function addrHint(){var h=$('#addr-hint'),it=state.intake;if(!it)return;var m=it.property&&it.property.municipality;var a=(it.property&&it.property.address||'').toLowerCase();if(!m){var found=['Mississauga','Brampton','Caledon','Oakville','Burlington','Milton','Vaughan','Markham','Richmond Hill','Pickering','Ajax','Whitby','Oshawa','Toronto','Hamilton','Innisfil','Barrie','Guelph','Kitchener'].filter(function(x){return a.indexOf(x.toLowerCase())>=0;})[0];if(found){it.property.municipality=found;$('#p_muni').value=found;m=found;}}
+  if(m&&state.settings.excluded.indexOf(m)>=0){h.innerHTML='<span style="color:var(--bad)">We are not taking projects in '+esc(m)+' at the moment.</span>';}else if(m){h.textContent='Service area: '+state.settings.area+'.';}else h.textContent='';}
+
+function wizSteps(){var names=['You','Basement','Tier','Documents','Run'];var h='';names.forEach(function(n,i){var s=i+1,on=s<=state.wiz;h+='<span class="n'+(on?'':' off')+'">'+s+'</span><span class="t'+(on?'':' off')+'">'+n+'</span>'+(i<names.length-1?'<span class="bar'+(s<state.wiz?'':' off')+'"></span>':'');});$('#wiz-steps').innerHTML=h;
+  $$('#wiz [data-step]').forEach(function(d){d.classList.toggle('hide',Number(d.getAttribute('data-step'))!==state.wiz);});$('#wiz-back').classList.toggle('hide',state.wiz===1);$('#wiz-next').textContent=state.wiz===5?'Run my pre-screen':'Continue';if(state.wiz===4)renderThumbs();if(state.wiz===5)renderReview();}
+function renderWiz(){if(!state.intake){state.intake=blankIntake();state.pid=state.intake.id;}state.wiz=Math.min(Math.max(state.intake.step||1,1),5);fillForm();wizSteps();}
+function validateStep(){var it=state.intake;if(state.wiz===1){if(!it.contact.name||!it.contact.email||!it.property.address||!it.property.municipality){toast('Name, email, address and municipality are needed.');return false;}}
+  if(state.wiz===2&&!scopesOf(it).length){toast('Pick at least one project type.');return false;}if(state.wiz===2&&isOut(it)&&(!(Number(it.out&&it.out.width)>0)||!(Number(it.out&&it.out.length)>0))){toast('Enter the garage or shed footprint in feet.');return false;}if(state.wiz===2&&has(it,'deck')&&(!(Number(it.deck&&it.deck.width)>0)||!(Number(it.deck&&it.deck.length)>0))){toast('Enter the deck size in feet.');return false;}if(state.wiz===3&&!it.tier){toast('Pick a tier.');return false;}
+  if(state.wiz===4){var kinds=state.files.map(function(f){return f.kind;});if(needsSurvey(it)&&it.tier!=='t1'&&kinds.indexOf('survey')<0&&!it.docs.link){toast('This project needs the survey for the site plan. Upload it or paste a link.');return false;}if(isBase(it)&&it.tier!=='t1'&&kinds.indexOf('plan')<0&&!it.docs.link&&it.tier!=='t3'&&!measWant(it)){toast('Upload an existing floor plan, paste a link, or ask for a measuring visit.');return false;}if(measWant(it)&&!(Number(it.measure.sqft)>0)){toast('Enter the size of the house for the measuring estimate.');return false;}if(it.tier==='t2'&&kinds.indexOf('sketch')<0){toast('Draft-to-Scale needs your sketch.');return false;}}return true;}
+$('#wiz').addEventListener('submit',function(e){e.preventDefault();if(!validateStep())return;if(state.wiz<5){state.wiz++;state.intake.step=state.wiz;queueSave();wizSteps();}else runScreen();});
+$('#wiz-back').addEventListener('click',function(){if(state.wiz>1){state.wiz--;state.intake.step=state.wiz;wizSteps();}});
+bindForm();
+
+// ---------- files ----------
+function resizeImage(file,maxPx,maxBytes){return new Promise(function(res,rej){var img=new Image();var url=URL.createObjectURL(file);img.onload=function(){URL.revokeObjectURL(url);var w=img.width,h=img.height,s=Math.min(1,maxPx/Math.max(w,h));var c=document.createElement('canvas');c.width=Math.round(w*s);c.height=Math.round(h*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);var q=0.82,d=c.toDataURL('image/jpeg',q);while(d.length>maxBytes*1.37&&q>0.4){q-=0.1;d=c.toDataURL('image/jpeg',q);}if(d.length>maxBytes*1.37){s=0.7;c.width=Math.round(c.width*s);c.height=Math.round(c.height*s);c.getContext('2d').drawImage(img,0,0,c.width,c.height);d=c.toDataURL('image/jpeg',0.6);}res(d);};img.onerror=function(){URL.revokeObjectURL(url);rej(new Error('unreadable'));};img.src=url;});}
+function readPdf(file){return new Promise(function(res,rej){if(file.size>230*1024)return rej(new Error('PDF is '+Math.round(file.size/1024)+' KB; limit 230 KB. Export the pages as images or photograph them.'));var r=new FileReader();r.onload=function(){res(r.result);};r.onerror=function(){rej(new Error('unreadable'));};r.readAsDataURL(file);});}
+function addFiles(kind,list){if(!state.db||!state.uid){toast('Sign in to upload.');return;}var files=Array.prototype.slice.call(list);var col=state.db.doc(projPath(state.uid,state.intake.id)).collection('files');
+  files.reduce(function(p,file){return p.then(function(){var conv=file.type==='application/pdf'?readPdf(file):resizeImage(file,1400,180*1024);return conv.then(function(dataUrl){var ref=col.doc();var rec={kind:kind,name:file.name,type:file.type==='application/pdf'?'application/pdf':'image/jpeg',size:dataUrl.length,createdAt:now(),dataUrl:dataUrl};return ref.set(rec).then(function(){state.files.push({id:ref.id,kind:kind,name:file.name,type:rec.type,size:rec.size,createdAt:rec.createdAt,dataUrl:dataUrl});state.intake.fileIndex=state.files.map(function(f){return {id:f.id,kind:f.kind,name:f.name,type:f.type};});renderThumbs();queueSave();});}).catch(function(e){toast(file.name+': '+(e.message||'could not upload'),3500);});});},Promise.resolve());}
+$$('#uploads input[type=file]').forEach(function(inp){inp.addEventListener('change',function(){var kind=inp.closest('.up').getAttribute('data-kind');addFiles(kind,inp.files);inp.value='';});});
+function renderThumbs(){var kinds={};state.files.forEach(function(f){kinds[f.kind]=(kinds[f.kind]||0)+1;});$$('#uploads .up').forEach(function(u){var k=u.getAttribute('data-kind'),n=kinds[k]||0;u.classList.toggle('done',n>0);var sm=u.querySelector('small');if(n>0){sm.textContent=n+' file'+(n>1?'s':'')+' uploaded';sm.classList.remove('sub');}});
+  $('#thumbs').innerHTML=state.files.map(function(f){return '<div class="thumb" title="'+esc(f.name)+'">'+(f.type==='application/pdf'?'<span>PDF<br>'+esc(f.name.slice(0,14))+'</span>':'<img src="'+f.dataUrl+'" alt="'+esc(f.name)+'">')+'<button type="button" aria-label="Remove" data-rm="'+f.id+'">×</button></div>';}).join('');}
+$('#thumbs').addEventListener('click',function(e){var b=e.target.closest('[data-rm]');if(!b)return;var id=b.getAttribute('data-rm');state.db.doc(projPath(state.uid,state.intake.id)+'/files/'+id).delete().then(function(){state.files=state.files.filter(function(f){return f.id!==id;});state.intake.fileIndex=state.files.map(function(f){return {id:f.id,kind:f.kind,name:f.name,type:f.type};});renderThumbs();queueSave();});});
+function loadFiles(uid,pid){return state.db.collection(projPath(uid,pid)+'/files').get().then(function(q){return q.docs.map(function(d){var x=d.data();x.id=d.id;return x;});}).catch(function(){return [];});}
+
+// ---------- review + pre-screen ----------
+function renderReview(){var it=state.intake;var kinds={};state.files.forEach(function(f){kinds[f.kind]=(kinds[f.kind]||0)+1;});
+  $('#review').innerHTML='<dl class="kv"><dt>Property</dt><dd>'+esc(it.property.address)+' · '+esc(it.property.municipality)+'</dd><dt>Scope</dt><dd>'+esc(scopeName(it))+'</dd><dt>Tier</dt><dd>'+esc(TIERS[it.tier].name)+'</dd>'+(isOut(it)?'<dt>Footprint</dt><dd>'+esc(it.out.width)+' × '+esc(it.out.length)+' ft ('+outArea(it)+' m²) · '+esc(it.out.height||'')+'</dd><dt>Setbacks</dt><dd>rear '+esc(it.out.rearSetback||'')+' · side '+esc(it.out.sideSetback||'')+' · to house '+esc(it.out.houseGap||'')+'</dd>':'')+(isBase(it)?'<dt>Ceiling</dt><dd>'+esc(it.basement.heightJoists||'')+' · under beam '+esc(it.basement.heightBeam||'')+'</dd><dt>Entrance</dt><dd>'+esc(it.basement.entrance||'')+'</dd><dt>Bedroom window</dt><dd>'+esc(it.basement.bedroomWindow||'')+'</dd>':'')+(has(it,'bge')?'<dt>New entrance</dt><dd>'+esc(it.bge.where||'')+' · lot line '+esc(it.bge.sideClear||'')+' · '+esc(it.bge.existing||'')+'</dd>':'')+(has(it,'deck')?'<dt>Deck</dt><dd>'+esc(it.deck.width)+' × '+esc(it.deck.length)+' ft · '+esc(it.deck.height||'')+' · '+esc(it.deck.attached||'')+'</dd>':'')+'<dt>Documents</dt><dd>'+(Object.keys(kinds).map(function(k){return kinds[k]+' '+k;}).join(', ')||'none')+(it.docs.link?' · link provided':'')+'</dd></dl>';
+  var n=$('#run-note');if(!state.sample){n.classList.remove('hide');n.textContent='The AI document check is not available in this view, so the pre-screen will use your answers only. A designer reviews every file before drawing.';}else n.classList.add('hide');}
+
+function outArea(it){var w=Number(it.out&&it.out.width)||0,l=Number(it.out&&it.out.length)||0;return Math.round(w*l*0.0929*10)/10;}
+function deckArea(it){var w=Number(it.deck&&it.deck.width)||0,l=Number(it.deck&&it.deck.length)||0;return Math.round(w*l*0.0929*10)/10;}
+function ruleScreen(it){var flags=[],ok=[];var excl=state.settings.excluded.indexOf(it.property.municipality)>=0;
+  if(excl)flags.push({sev:'bad',item:'Service area',text:'We are not taking projects in '+it.property.municipality+' right now.'});else ok.push('Inside the service area ('+it.property.municipality+').');
+  var kinds={};state.files.forEach(function(f){kinds[f.kind]=(kinds[f.kind]||0)+1;});
+  if(isBase(it)){
+    if(/Under 6'5/.test(it.basement.heightJoists||''))flags.push({sev:'bad',item:'Ceiling height',text:'Under 1.95 m to the joists is below what the Building Code allows for living space. A finished basement is not feasible without lowering the floor.'});
+    else if(/Under 6'5/.test(it.basement.heightBeam||''))flags.push({sev:'warn',item:'Beam clearance',text:'Under 1.95 m beneath the beam or ducts. Allowed over a small area only; the layout must keep rooms clear of it.'});
+    else ok.push('Ceiling height workable.');
+    if(has(it,'unit')){if(/No window/.test(it.basement.bedroomWindow||''))flags.push({sev:'warn',item:'Bedroom egress',text:'A bedroom needs an escape window or a second exit. Plan a new window with a well, or locate the bedroom where one exists.'});else if(/Smaller/.test(it.basement.bedroomWindow||''))flags.push({sev:'warn',item:'Bedroom egress',text:'The bedroom window looks smaller than the escape minimum (0.35 m² clear, no side under 380 mm). Decide whether to enlarge it.'});else if(/Over 24/.test(it.basement.bedroomWindow||''))ok.push('Bedroom window likely meets egress.');
+      if(/Only through/.test(it.basement.entrance||'')){if(has(it,'bge'))ok.push('New below-grade entrance gives the unit its own door.');else flags.push({sev:'warn',item:'Entrance',text:'A second unit needs its own entrance or a shared, fire-separated stair. Consider adding a below-grade entrance to this request; it is drawn in the same set.'});}else ok.push('Existing entrance can serve the unit.');
+      if(/None/.test(it.property.parking||''))flags.push({sev:'warn',item:'Parking',text:'Most municipalities ask for one space for the unit; confirm the zoning rule for your street.'});
+      if(/Open in the basement|closet/.test(it.basement.furnaceRoom||''))flags.push({sev:'warn',item:'Furnace room',text:'The furnace will need a fire-separated room or closet with its own door.'});}
+    if(it.tier!=='t1'&&!kinds.plan&&!it.docs.link&&it.tier!=='t3'&&!measWant(it))flags.push({sev:'warn',item:'Existing plan',text:'No existing floor plan. Upload one, or ask for a measuring visit in the Documents step.'});if(measWant(it))ok.push('Measuring visit requested'+(measEst(it)?' (estimate '+money(measEst(it))+' + HST, quoted separately).':'.'));
+    if(it.tier!=='t1'&&!kinds.photo)flags.push({sev:'warn',item:'Photos',text:'Room photos help us confirm the answers before drawing.'});}
+  if(has(it,'bge')){var b=it.bge||{};
+    if(/Under 4 ft/.test(b.sideClear||''))flags.push({sev:'warn',item:'Entrance clearance',text:'Under 1.2 m between the stair and the lot line is below most by-law minimums for a side-yard entrance, and the stair must still leave a path past it. Expect a variance or use the rear wall.'});else if(/Over 6/.test(b.sideClear||''))ok.push('Side yard wide enough for the stair and a walkway.');
+    if(/Gas meter|AC unit/.test(b.existing||''))flags.push({sev:'warn',item:'Services in the way',text:'The gas meter or AC unit must be relocated by the utility or contractor before the stair is cut. Allow for it in budget and timing.'});
+    if(/toward the house/.test(b.grade||''))flags.push({sev:'warn',item:'Drainage',text:'Grade sloping toward the house sends water into the stairwell. The drawings will show a drain and regrading; a sump connection may be needed.'});
+    if(/Front wall/.test(b.where||''))flags.push({sev:'warn',item:'Front yard',text:'Most by-laws prohibit a below-grade entrance in the front yard. Verify before drawing.'});
+    ok.push('Below-grade entrance drawn with the stair, guard, door and drainage detail; structural lintel sized by us or your engineer.');}
+  if(has(it,'deck')){var d=it.deck||{},da=deckArea(it);
+    if(/Under 24/.test(d.height||'')&&/Freestanding/.test(d.attached||'')&&da<=10)flags.push({sev:'warn',item:'Permit may not be needed',text:'A freestanding deck under 0.6 m high and under 10 m² usually needs no building permit; zoning setbacks still apply. The Guide tier covers what to check.'});
+    else ok.push('Deck '+da+' m² at '+(d.height||'')+': a building permit is required; guards and stairs are detailed in the set.');
+    if(/Over 6 ft/.test(d.height||''))flags.push({sev:'warn',item:'Height',text:'Over 1.8 m the guard, post and footing requirements step up and the deck may count toward lot coverage. Zoning to be verified.'});
+    if(/Under 2 ft/.test(d.setback||''))flags.push({sev:'warn',item:'Setback',text:'Under 0.6 m to a lot line is below most by-law minimums for a deck over 0.6 m high.'});
+    if(/Hot tub/.test(d.extras||''))flags.push({sev:'warn',item:'Hot tub',text:'A hot tub adds a large point load; the joists and footings under it are sized for it and an engineer may be required.'});
+    if(/Roof|pergola/.test(d.extras||''))flags.push({sev:'warn',item:'Roof',text:'A roof over the deck makes it a covered structure with its own coverage and height rules.'});
+    if(/Yes, over a below-grade/.test(d.overEntrance||'')&&!has(it,'bge'))flags.push({sev:'warn',item:'Entrance below the deck',text:'The deck sits over an entrance that is not in this request. Add the below-grade entrance so both are coordinated in one set.'});}
+  if(isOut(it)){var a=outArea(it),o=it.out||{};var nm=has(it,'garage')?'garage':'shed';
+    if(a>0&&a<=15)flags.push({sev:'warn',item:'Permit may not be needed',text:'At '+a+' m² (under 15 m²) Ontario does not require a building permit for a detached accessory building, but zoning setbacks and lot coverage still apply. The Guide tier covers what to check.'});
+    else if(a>0)ok.push('Footprint '+a+' m²: a building permit is required and this is a standard Part 9 accessory building.');
+    if(a>55&&nm==='garage')flags.push({sev:'warn',item:'Size',text:'Over 55 m² the garage may need a fire-rated wall where it sits close to a lot line and extra structural detail. Confirm the municipal maximum accessory floor area.'});
+    if(/Over 15 ft|two storeys/.test(o.height||''))flags.push({sev:'warn',item:'Height',text:'Most GTA by-laws cap accessory buildings near 4.5 m; two storeys or a tall loft usually needs a minor variance.'});
+    if(/Under 2 ft/.test(o.rearSetback||'')||/Under 2 ft/.test(o.sideSetback||''))flags.push({sev:'warn',item:'Setback',text:'Under 0.6 m to a lot line is below most by-law minimums and needs a fire-rated wall with no openings. Consider shifting the building or expect a variance.'});
+    if(/Under 4 ft/.test(o.houseGap||''))flags.push({sev:'warn',item:'Distance to the house',text:'Under 1.2 m to the house changes the fire separation; the wall facing the house may need rating.'});
+    if(/Yes/.test(o.corner||''))flags.push({sev:'warn',item:'Corner lot',text:'Corner lots have a second front yard; the building may not be allowed in the yard you chose. Zoning to be verified.'});
+    if(/Under 30/.test(o.lotSize||'')&&a>30)flags.push({sev:'warn',item:'Lot coverage',text:'A '+a+' m² building on a narrow lot may exceed the accessory coverage limit (often 10% of the lot). Lot area to be verified from the survey.'});
+    if(/Bathroom/.test(o.plumbing||''))flags.push({sev:'warn',item:'Plumbing',text:'A bathroom adds a plumbing permit, a drain connection and, in a cabana, questions about use as a dwelling. Allow for it in the drawings.'});
+    if(/Mature trees/.test(o.existing||''))flags.push({sev:'warn',item:'Trees',text:'Building near a protected tree may need a tree permit or arborist report in Toronto, Mississauga and Oakville.'});}
+  if(needsSurvey(it)&&it.tier!=='t1'&&!kinds.survey&&!it.docs.link)flags.push({sev:'warn',item:'Survey',text:'The site plan is drawn from the survey. Order a copy from your lawyer, Land Registry, or a surveyor before drawing starts.'});
+  if(it.tier==='t2'&&!kinds.sketch)flags.push({sev:'bad',item:'Sketch',text:'Draft-to-Scale needs your sketch of the proposed work'+(needsSurvey(it)?' and its position on the lot':'')+'.'});
+  var eligible=!flags.some(function(f){return f.sev==='bad';});
+  if(eligible&&it.tier==='t2'&&flags.some(function(f){return f.sev==='warn'&&/egress|Entrance|Furnace|clearance|Drainage|Hot tub/.test(f.item);}))flags.push({sev:'warn',item:'Design decision needed',text:'One or more items above need a design decision. In Draft-to-Scale you make it and mark it on your sketch; or switch to Designed for you and we make it.'});
+  return {eligible:eligible,flags:flags,ok:ok,tier:it.tier,price:priceFor(it),measure:(measWant(it)||(isBase(it)&&it.tier==='t3'&&!kinds.plan)),measureEst:measEst(it)};}
+
+function runScreen(){var it=state.intake;var base=ruleScreen(it);var out=$('#run-out'),txt=$('#run-text');out.classList.remove('hide');txt.textContent='';$('#wiz-next').disabled=true;
+  var finish=function(ai){it.screen={ranAt:now(),rules:base,ai:ai||null};it.status=base.eligible?'screened':'declined';it.step=5;saveNow().then(function(){$('#wiz-next').disabled=false;out.classList.add('hide');go('result');});};
+  if(!state.sample){finish(null);return;}
+  var imgs=state.files.filter(function(f){return f.type==='image/jpeg'&&(f.kind==='plan'||f.kind==='sketch');}).slice(0,4);
+  var prompt='You are helping a residential design firm in Ontario, Canada pre-screen a homeowner request for permit drawings; the request may combine several scopes (basement finish, second unit, below-grade entrance, deck, detached garage, shed/cabana) in one set. Use general knowledge of the Ontario Building Code (Part 9) and typical GTA zoning for additional residential units. You cannot look anything up, so mark anything municipality-specific as "to be verified by the designer". Do not give legal advice. Be concise and practical.\n\nHomeowner answers (JSON):\n'+JSON.stringify({property:it.property,scopes:scopesOf(it),scopeName:scopeName(it),tier:it.tier,basement:isBase(it)?it.basement:undefined,belowGradeEntrance:has(it,'bge')?it.bge:undefined,deck:has(it,'deck')?Object.assign({areaM2:deckArea(it)},it.deck):undefined,outbuilding:isOut(it)?Object.assign({areaM2:outArea(it)},it.out):undefined,brief:it.tier==='t3'?it.brief:undefined,notes:it.docs.notes||''})+'\n\nRule-based flags already found: '+JSON.stringify(base.flags.map(function(f){return f.item+': '+f.text;}))+'\n\n'+(imgs.length?'Attached images are the homeowner\'s existing floor plan and/or sketch ('+imgs.map(function(f){return f.kind;}).join(', ')+'). Judge whether they are legible and complete enough for a drafter to redraw to scale: for a basement, rooms named, overall dimensions readable, entrance and windows shown; for a garage, shed, deck or new entrance, the footprint and its distances to the lot lines and house shown on a survey or site sketch.':'No plan images were attached.')+'\n\nReply with only JSON: {"summary": string (2 sentences for the homeowner), "zoning": {"likelihood": "likely"|"uncertain"|"unlikely", "note": string}, "documents": {"legible": true|false|null, "complete": true|false|null, "note": string}, "additionalFlags": [{"item": string, "severity": "warn"|"bad", "text": string}], "designerNotes": [string] }';
+  var opts={modelTier:'default',onText:function(u){txt.textContent=u.text.slice(-600);}};
+  var run=function(){return state.sample.json(prompt,opts);};
+  var p=imgs.length?state.sample.limits().then(function(l){if(l&&l.images){return Promise.all(imgs.map(function(f){return fetch(f.dataUrl).then(function(r){return r.blob();});})).then(function(blobs){opts.images=blobs.slice(0,l.images.maxCount||4);return run();});}return run();}).catch(function(){return run();}):run();
+  p.then(function(ai){finish(ai&&typeof ai==='object'?ai:null);}).catch(function(e){var code=e&&e.code;if(code==='not_granted'||code==='sampling_disabled'){toast('AI check not allowed in this view; using your answers only.',3000);}else if(code!=='cancelled'){toast('AI check did not complete ('+code+'); using your answers only.',3000);}finish(null);});}
+
+// ---------- result ----------
+function renderResult(){var it=state.intake,root=$('#result-root');if(!it||!it.screen){root.innerHTML='<div class="card"><p>No result yet.</p><button type="button" class="btn sm" data-go="intake">Start the pre-screen</button></div>';return;}
+  var r=it.screen.rules,ai=it.screen.ai;var flags=r.flags.slice();if(ai&&Array.isArray(ai.additionalFlags))ai.additionalFlags.forEach(function(f){if(f&&f.item)flags.push({sev:f.severity==='bad'?'bad':'warn',item:String(f.item),text:String(f.text||'')});});
+  var eligible=r.eligible&&!flags.some(function(f){return f.sev==='bad';});
+  var price=priceFor(it),dep=Math.round(price*0.4);var t=TIERS[it.tier].name;
+  var head=eligible?'<span class="big"></span><div><h1 style="font-size:24px">You qualify for '+esc(t)+'</h1><span class="sub">'+esc(scopeName(it))+' · '+esc(it.property.address)+'</span></div>':'<span class="big b"></span><div><h1 style="font-size:24px">Not eligible as described</h1><span class="sub">'+esc(it.property.address)+'</span></div>';
+  var chips=function(list,cls){return list.map(function(x){return '<div class="chk '+cls+'"><span class="i"></span><span>'+esc(x)+'</span></div>';}).join('');};
+  var flagHtml=flags.map(function(f){return '<div class="chk '+(f.sev==='bad'?'b':'w')+'"><span class="i"></span><span><b>'+esc(f.item)+':</b> '+esc(f.text)+'</span></div>';}).join('');
+  var aiHtml=ai?'<div class="f"><span class="eyebrow q">AI pre-check</span><p style="font-size:14px;color:var(--fg2)">'+esc(ai.summary||'')+'</p><div class="g2" style="gap:10px"><div class="chk '+(ai.zoning&&ai.zoning.likelihood==='unlikely'?'b':ai.zoning&&ai.zoning.likelihood==='likely'?'':'w')+'"><span class="i"></span><span><b>Zoning:</b> '+esc(ai.zoning&&ai.zoning.note||'to be verified')+'</span></div><div class="chk '+(ai.documents&&ai.documents.legible===false?'w':'')+'"><span class="i"></span><span><b>Documents:</b> '+esc(ai.documents&&ai.documents.note||'')+'</span></div></div><span class="sub" style="font-size:12px">The AI pre-check reads your answers and images; a designer verifies everything before drawing.</span></div>':'';
+  var ackT2='<label class="ack"><input type="checkbox" data-ack="design"><span>The design is mine. PermitSetReady redraws my sketch to scale and does not change or add to the design.</span></label><label class="ack"><input type="checkbox" data-ack="schedule1"><span>I will sign the designer schedule (Schedule 1) as the owner-designer and I am responsible for the design meeting the Ontario Building Code.</span></label><label class="ack"><input type="checkbox" data-ack="city"><span>I will submit the application and be the City\'s contact. If the examiner asks for changes, PermitSetReady revises the drawings once and I resubmit.</span></label><label class="ack"><input type="checkbox" data-ack="checklist"><span>I have read the code checklist and applied it to my sketch, including any flagged items above.</span></label>';
+  var ackT1='<label class="ack"><input type="checkbox" data-ack="design"><span>I am designing and drawing this myself; the guide is reference material, not a design for my house.</span></label><label class="ack"><input type="checkbox" data-ack="city"><span>I will submit the application and deal with the City myself.</span></label>';
+  var ackT3='<label class="ack"><input type="checkbox" data-ack="access"><span>'+(!isBase(it)?'I will provide the survey and site access, and tell you about easements, trees, pools or services near the building location.':'I will give access for the measuring visit and tell you about any known problems (water, structure, previous work without a permit).')+'</span></label><label class="ack"><input type="checkbox" data-ack="city"><span>I will apply for the permit as the owner; the designer signs Schedule 1 for the design.</span></label><label class="ack"><input type="checkbox" data-ack="scope"><span>Structural engineering (if needed, quoted up front) and HVAC design by a licensed contractor are not included.</span></label>';
+  var acks=it.tier==='t1'?ackT1:it.tier==='t3'?ackT3:ackT2;
+  var link='';
+  var paid=it.payment&&it.payment.deposit&&it.payment.deposit.paidAt;var waiting=it.status!=='screened'&&it.status!=='declined'&&!paid;
+  var payBox=eligible?'<div class="quote"><div><span class="eyebrow" style="color:var(--ink-muted)">'+esc(TIERS[it.tier].name)+'</span><div style="font-size:20px;font-weight:700;margin-top:4px">'+esc(scopeName(it))+'</div></div>'+
+    '<div style="display:flex;flex-direction:column;gap:6px">'+(it.tier==='t1'?'<div class="row"><span>Guide, checklist, sketch template</span><span>included</span></div><div class="row"><span>Credit toward Tier 2 or 3</span><span>$59</span></div>':priceLines(it).map(function(l){return '<div class="row"><span>'+esc(l.label)+'</span><span>'+money(l.amount)+'</span></div>';}).join('')+'<div class="row"><span>'+esc(sheetList(it))+'</span><span>included</span></div>'+(r.measure?'<div class="row"><span>Measuring visit (quoted separately)</span><span>'+(measEst(it)?'est. '+money(measEst(it)):'to quote')+'</span></div>':''))+'</div>'+
+    '<div class="tot"><div class="row" style="align-items:baseline"><span>Fixed price</span><b>'+money(price)+'</b></div>'+(it.tier==='t1'?'':'<div class="row" style="align-items:baseline"><span>Due today (40%)</span><b style="font-size:18px">'+money(dep)+'</b></div>')+'<span class="note">'+(it.tier==='t1'?'Pay in full. HST extra.':'Balance on delivery. HST extra. Deposit refunded if we cannot draw from your documents.')+'</span></div>'+
+    (paid?'<div class="chk"><span class="i"></span><span>Deposit received '+fmtDate(paid)+'. Follow every step on your project page.</span></div>':
+    '<div style="display:flex;flex-direction:column;gap:8px"><button type="button" class="btn" id="pay-ls">Pay '+money(it.tier==='t1'?price:dep)+(it.tier==='t1'?'':' deposit')+' securely</button><span class="note">Card payment through Lemon Squeezy. You come straight back here.</span>'+'</div><span class="note" style="text-align:center">By paying you confirm the acknowledgments on the left.</span>')+
+    '</div>':'<div class="card"><b>What you can do</b><p style="font-size:14px;color:var(--fg2)">Items marked in red stop the project as described. Fix them (a lower-floor option, a different municipality, the missing sketch) and re-run, or ask us for a consultation.</p><button type="button" class="btn sm ghost" id="rerun">Edit answers and re-run</button></div>';
+  root.innerHTML='<div style="display:flex;flex-direction:column;gap:18px;min-width:0"><div class="card" style="padding:26px;gap:20px"><div style="display:flex;align-items:center;gap:14px">'+head+'</div>'+
+    (r.ok.length?'<div class="f"><span class="eyebrow q">Looks good</span><div class="g2" style="gap:10px">'+chips(r.ok,'')+'</div></div>':'')+(flags.length?'<div class="f"><span class="eyebrow q">Before we draw</span><div style="display:flex;flex-direction:column;gap:10px">'+flagHtml+'</div></div>':'')+aiHtml+
+    '<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn sm ghost" id="rerun2">Edit answers</button>'+(it.tier!=='t3'&&eligible?'<button type="button" class="btn sm ghost" id="upgrade">Switch to Designed for you</button>':'')+'</div></div>'+
+    (eligible?'<div class="card" style="padding:26px;gap:14px"><h2 style="font-size:19px">Before you pay</h2><p class="sub" style="color:var(--fg2)">'+(it.tier==='t2'?'In Draft-to-Scale you are the designer. Please read and confirm each point.':it.tier==='t1'?'Please confirm.':'Please confirm.')+'</p>'+acks+'</div>':'')+
+    '</div><aside style="display:flex;flex-direction:column;gap:14px">'+payBox+'</aside>';
+  $$('[data-ack]',root).forEach(function(c){c.checked=!!(it.ack&&it.ack[c.getAttribute('data-ack')]);c.addEventListener('change',function(){it.ack=it.ack||{};it.ack[c.getAttribute('data-ack')]=c.checked?now():false;queueSave();});});
+  var rr=function(){it.status='draft';it.screen=null;it.step=1;state.wiz=1;queueSave();go('intake');};if($('#rerun',root))$('#rerun',root).onclick=rr;if($('#rerun2',root))$('#rerun2',root).onclick=rr;
+  if($('#upgrade',root))$('#upgrade',root).onclick=function(){it.tier='t3';it.status='draft';it.screen=null;it.step=3;state.wiz=3;queueSave();go('intake');};
+  var pl=$('#pay-ls',root);if(pl)pl.onclick=function(){var need=$$('[data-ack]',root);if(need.some(function(c){return !c.checked;})){toast('Please confirm every acknowledgment first.');return;}pl.disabled=true;pl.textContent='Opening the payment page…';saveNow().then(function(){return window.PSR.call('pay.checkout',{path:projPath(state.uid,it.id),kind:'deposit'});}).then(function(j){location.href=j.url;}).catch(function(e){pl.disabled=false;pl.textContent='Try again';toast(e.message||'Payment page could not open');});};}
+
+// ---------- projects list ----------
+function renderProjects(){var root=$('#projects-root');var list=(state.index&&state.index.projects)||[];
+  root.innerHTML='<div style="display:flex;flex-direction:column;gap:18px;max-width:760px"><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px"><h1 style="font-size:26px">My projects</h1><button type="button" class="btn sm" id="pj-new">New project</button></div>'+
+   (list.length?'<div class="ilist">'+list.map(function(x){return '<div class="irow" data-open="'+esc(x.id)+'"><div class="t"><b>'+esc(x.address||'(no address yet)')+'</b><span class="tag'+(x.status==='deposit_claimed'?' w':x.status==='declined'?' b':x.status==='drafting'||x.status==='confirmed'?' a':'')+'">'+esc(statusLabel(x.status))+'</span></div><span class="sub">'+esc(x.scopeName||'')+(x.tier?' · '+esc(TIERS[x.tier].short):'')+' · updated '+fmtDate(x.updatedAt)+'</span></div>';}).join('')+'</div>':'<div class="card"><span class="sub">No projects yet. Contractors and homeowners can run as many pre-screens as they have properties.</span></div>')+'</div>';
+  $('#pj-new').onclick=startNewProject;$$('[data-open]',root).forEach(function(r){r.onclick=function(){openProject(r.getAttribute('data-open'));};});}
+
+// ---------- project ----------
+function renderProject(){var it=state.intake,root=$('#project-root');if(!it){go('projects');return;}if(it.status==='draft'&&!it.screen){root.innerHTML='<div class="card" style="max-width:560px"><b>Project in progress</b><p class="sub">Finish the questions to open this project.</p><div style="display:flex;gap:10px"><button type="button" class="btn sm" id="p-cont">Continue</button><button type="button" class="btn sm ghost" data-go="projects">All projects</button></div></div>';$('#p-cont').onclick=function(){go('intake');};return;}
+  var st=it.status,sv=it.server||{},pay=it.payment||{};var price=priceFor(it),dep=Math.round(price*0.4);
+  var steps=[['screened','Submitted','Pre-screen passed '+fmtDate(it.screen&&it.screen.ranAt)],['confirmed','Deposit received',pay.deposit?money(dep)+' paid '+fmtDate(pay.deposit.paidAt):money(dep)+' due']];
+  if(it.measure&&it.measure.want)steps.push(['measuring','Measuring visit','Our measuring partner will call to book']);
+  steps.push(['drafting','Drafting','Drawn to scale, checked against the Building Code and zoning'],['review','Review','A designer checks every sheet']);
+  if(it.admin&&it.admin.needsEngineer)steps.push(['consultant','Engineer review','Review and stamp']);
+  steps.push(['ready','Ready','Balance '+money(price-dep)],['delivered','Delivered','Download your set']);
+  var ord=steps.map(function(x){return x[0];});var cur=ord.indexOf(st);if(st==='revising')cur=ord.length;
+  var tl='<div class="tl">'+steps.map(function(x,i){var c=i<cur||st==='delivered'?'done':i===cur?'now':'later';if(st==='delivered'&&x[0]==='delivered')c='done';return '<div class="st '+c+'"><span class="b"></span><div><b>'+esc(x[1])+'</b><span>'+esc(x[2])+'</span></div></div>';}).join('')+(st==='revising'?'<div class="st now"><span class="b"></span><div><b>Revising for City comments</b><span>We are updating your drawings</span></div></div>':'')+'</div>';
+  root.innerHTML='<div style="display:flex;flex-direction:column;gap:20px"><div><button type="button" class="lnk" data-go="projects">← All projects</button></div><div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-end;gap:12px"><div><span class="eyebrow q">'+esc((sv.psr?sv.psr+' · ':'')+packageName(it))+'</span><h1 style="font-size:28px;margin-top:6px">'+esc(it.property.address)+'</h1></div><span class="status"><span class="dot '+(st==='declined'?'b':st==='delivered'?'':'w')+'"></span>'+esc(statusLabel(st))+(it.admin&&it.admin.eta?' · delivery est. '+esc(it.admin.eta):'')+'</span></div>'+
+   (st==='declined'?'<div class="banner">This request was marked not eligible as described. <button type="button" class="lnk" id="p-edit">Edit answers and re-run</button></div>':'')+
+   (st==='screened'?'<div class="card" style="background:var(--accent-bg);border-color:var(--accent-line)"><b>Next step: pay the deposit</b><p style="font-size:14px;color:var(--fg2)">Drafting starts as soon as your 40% deposit ('+money(dep)+') is in.</p><button type="button" class="btn sm" data-go="result" style="align-self:flex-start">Review and pay</button></div>':'')+
+   (st==='ready'?'<div class="card" style="background:var(--accent-bg);border-color:var(--accent-line)"><b>Your drawings are ready</b><p style="font-size:14px;color:var(--fg2)">Pay the balance ('+money(price-dep)+' + HST) and your download unlocks right away.</p><button type="button" class="btn sm" id="p-balance" style="align-self:flex-start">Pay the balance</button></div>':'')+
+   '<div class="side"><div style="display:flex;flex-direction:column;gap:18px;min-width:0">'+
+   '<div class="card"><b>Progress</b>'+tl+'</div>'+
+   (st==='delivered'||st==='revising'?'<div class="card"><b>Your drawings</b><div id="p-dl"><span class="sub">Loading…</span></div></div>':'')+
+   (it.admin&&it.admin.message?'<div class="card" style="background:var(--accent-bg);border-color:var(--accent-line)"><b>Message from your designer</b><p style="font-size:14px;white-space:pre-wrap">'+esc(it.admin.message)+'</p></div>':'')+
+   '<div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Your documents</b>'+(['screened','confirmed','measuring'].indexOf(st)>=0||st==='draft'?'<button type="button" class="lnk" id="p-docs">Add more</button>':'')+'</div><div>'+(state.files.length?state.files.map(function(f){return '<div class="row2"><span>'+esc(f.name)+'</span><span class="sub">'+esc(f.kind==='comments'?'City comments':f.kind)+' · '+Math.round((f.size||0)/1024)+' KB</span></div>';}).join(''):'<div class="row2"><span class="sub">No files yet</span></div>')+(it.docs.link?'<div class="row2"><span>Shared folder link</span><a href="'+esc(it.docs.link)+'" target="_blank" rel="noopener">open</a></div>':'')+'</div></div>'+
+   (st==='delivered'?'<div class="card"><b>Got comments from the City?</b><p style="font-size:14px;color:var(--fg2)">Upload the examiner\'s comments (PDF or photo). We revise the drawings for you to resubmit; one round is included.</p><label class="btn sm ghost" style="align-self:flex-start;cursor:pointer">Upload comments<input type="file" id="p-comments" accept="image/*,application/pdf" style="display:none"></label></div>':'')+
+   '<div class="card"><b>Result summary</b><p style="font-size:14px;color:var(--fg2)">Your pre-screen passed on your answers; a designer verifies everything before drawing.</p><button type="button" class="lnk" data-go="result">See the full result</button></div></div>'+
+   '<aside style="display:flex;flex-direction:column;gap:14px"><div class="card" style="gap:8px"><b>Payments</b><div style="display:flex;justify-content:space-between;font-size:14px"><span>'+(it.tier==='t1'?'Guide':'Deposit (40%)')+'</span><span style="font-weight:600">'+(pay.deposit?'Paid '+money(dep):money(dep)+' due')+'</span></div>'+(it.tier==='t1'?'':'<div style="display:flex;justify-content:space-between;font-size:14px"><span>Balance when ready</span><b>'+(pay.balance?'Paid ':'')+money(price-dep)+'</b></div>')+'<div style="display:flex;justify-content:space-between;font-size:14px;border-top:1px solid var(--line);padding-top:8px"><span>Total</span><b>'+money(price)+' + HST</b></div>'+((it.measure&&it.measure.want)?'<div style="display:flex;justify-content:space-between;font-size:14px"><span>Measuring visit</span><span>'+(measEst(it)?'est. '+money(measEst(it)):'to quote')+', billed separately</span></div>':'')+'</div>'+
+   '<div class="card" style="gap:8px"><b>After you download</b><ol style="font-size:14px;line-height:1.8;color:var(--fg2)"><li>Fill in the permit application'+(it.tier==='t3'?'':' and Schedule 1 (owner box)')+'</li><li>Submit it on your municipality\'s portal with the drawings</li><li>If the examiner sends comments, upload them here; one revision round is included</li></ol></div>'+
+   '<div class="card" style="gap:6px"><b>Questions?</b><p class="sub">Email <a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a>'+(sv.psr?' with your project number '+esc(sv.psr):'')+'. Replies within one business day.</p></div></aside></div></div>';
+  var pe=$('#p-edit',root);if(pe)pe.onclick=function(){it.status='draft';it.screen=null;it.step=1;state.wiz=1;queueSave();go('intake');};
+  var pdc=$('#p-docs',root);if(pdc)pdc.onclick=function(){state.wiz=4;go('intake');wizSteps();};
+  var pb=$('#p-balance',root);if(pb)pb.onclick=function(){pb.disabled=true;pb.textContent='Opening the payment page…';window.PSR.call('pay.checkout',{path:projPath(state.uid,it.id),kind:'balance'}).then(function(j){location.href=j.url;}).catch(function(e){pb.disabled=false;pb.textContent='Try again';toast(e.message||'Payment page could not open');});};
+  var dl=$('#p-dl',root);if(dl)window.PSR.call('files.deliverables',{path:projPath(state.uid,it.id)}).then(function(j){if(!j.files.length){dl.innerHTML='<span class="sub">Your files are being prepared. Check back shortly.</span>';return;}dl.innerHTML=j.files.map(function(f){return '<div class="row2"><span>'+esc(f.name)+'</span><button type="button" class="lnk" data-dl="'+esc(f.id)+'">Download</button></div>';}).join('');$$('[data-dl]',dl).forEach(function(b){b.onclick=function(){b.textContent='Preparing…';window.PSR.call('files.download',{path:projPath(state.uid,it.id),fileId:b.getAttribute('data-dl')}).then(function(r){var a=document.createElement('a');a.href=r.dataUrl;a.download=r.name;document.body.appendChild(a);a.click();a.remove();b.textContent='Download';}).catch(function(e){b.textContent='Download';toast(e.message);});};});}).catch(function(e){dl.innerHTML='<span class="sub">'+esc(e.message)+'</span>';});
+  var pc=$('#p-comments',root);if(pc)pc.onchange=function(){var file=pc.files[0];if(!file)return;toast('Uploading…');var conv=file.type==='application/pdf'?readPdf(file):resizeImage(file,1600,400*1024);conv.then(function(dataUrl){var rec={kind:'comments',name:file.name,type:file.type==='application/pdf'?'application/pdf':'image/jpeg',size:dataUrl.length,createdAt:now(),dataUrl:dataUrl};return state.db.doc(projPath(state.uid,it.id)).collection('files').doc().set(rec);}).then(function(){toast('Thanks. We have your comments and will revise the drawings.');return state.db.doc(projPath(state.uid,it.id)).get();}).then(function(d){if(d&&d.exists){state.intake=normalize(d.data());}return loadFiles(state.uid,it.id);}).then(function(fs){state.files=fs;renderProject();}).catch(function(e){toast(e.message||'Upload failed');});};}
+
+// ---------- admin ----------
+function renderAdmin(){var root=$('#admin-root');if(!state.isAdmin){root.innerHTML='<div class="card"><p>Admin is for the owner and editors.</p></div>';return;}
+  if(!state.admin.unsub){state.admin.unsub=state.db.collection('intakes').orderBy('updatedAt','desc').limit(500).onSnapshot(function(q){var rows=[];q.docs.forEach(function(d){var x=d.data();if(Array.isArray(x.projects))x.projects.forEach(function(pr){rows.push(Object.assign({uid:d.id,key:d.id+'|'+pr.id},pr));});else if(x.property)rows.push({uid:d.id,key:d.id+'|legacy',id:'legacy',address:x.property.address,municipality:x.property.municipality,scopeName:scopeName(x),tier:x.tier,status:x.status,updatedAt:x.updatedAt,contactName:x.contact&&x.contact.name});});rows.sort(function(a,b){return a.updatedAt<b.updatedAt?1:-1;});state.admin.list=rows;renderAdmin();},function(e){toast('Admin list error: '+e.code);});}
+  var list=state.admin.list,sel=state.admin.doc;
+  var counts={};list.forEach(function(x){counts[x.status]=(counts[x.status]||0)+1;});
+  var s=state.settings;
+  root.innerHTML='<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:12px"><h1 style="font-size:26px">Jobs</h1><div style="display:flex;gap:8px;flex-wrap:wrap">'+STATUS.map(function(x){return counts[x[0]]?'<span class="tag'+(x[0]==='deposit_claimed'?' w':x[0]==='drafting'?' a':'')+'">'+x[1]+' '+counts[x[0]]+'</span>':'';}).join('')+'<button type="button" class="btn sm ghost" id="a-settings">Settings</button></div></div>'+
+   '<div id="a-settings-box" class="card hide"><b>Settings</b><p class="sub">Payments run through Lemon Squeezy and confirm themselves. Reviewers, consultants and email modes are on the Jobs sheet (Reviewers, Consultants and Settings tabs).</p><div class="g2">'+'<div class="f"><label class="l" for="pro_guide">Pro link: Guide (book)</label><input id="pro_guide" type="url" value="'+esc((s.pro||{}).guide||'')+'" placeholder="https://"></div><div class="f"><label class="l" for="guide_dl">Tier 1 guide download link (sent to homeowners on delivery)</label><input id="guide_dl" type="url" value="'+esc(s.guideLink||'')+'" placeholder="https://drive.google.com/..."></div><div class="f"><label class="l" for="pro_pack">Pro link: Review Pack</label><input id="pro_pack" type="url" value="'+esc((s.pro||{}).pack||'')+'" placeholder="https://"></div><div class="f"><label class="l" for="pro_drafting">Pro link: Overflow drafting</label><input id="pro_drafting" type="url" value="'+esc((s.pro||{}).drafting||'')+'" placeholder="https://"></div><div class="f"><label class="l" for="pro_training">Pro link: Training</label><input id="pro_training" type="url" value="'+esc((s.pro||{}).training||'')+'" placeholder="https://"></div><div class="f"><label class="l" for="excl">Excluded municipalities (comma separated)</label><input id="excl" type="text" value="'+esc((s.excluded||[]).join(', '))+'"></div><div class="f" style="grid-column:1/-1"><label class="l" for="area">Service area text</label><input id="area" type="text" value="'+esc(s.area||'')+'"></div></div><div><button type="button" class="btn sm" id="a-save-settings">Save settings</button></div></div>'+
+   '<div class="adm"><div class="ilist">'+(list.length?list.map(function(x){return '<div class="irow'+(x.key===state.admin.sel?' on':'')+'" data-sel="'+esc(x.key)+'"><div class="t"><b>'+esc(x.address||'(no address)')+'</b><span class="tag'+(x.status==='deposit_claimed'?' w':x.status==='declined'?' b':x.status==='drafting'||x.status==='confirmed'?' a':'')+'">'+esc(statusLabel(x.status))+'</span></div><span class="sub">'+esc(x.contactName||'')+' · '+esc(x.tier&&TIERS[x.tier]?TIERS[x.tier].short:'')+' · '+esc(x.scopeName||'')+' · '+fmtDate(x.updatedAt)+'</span></div>';}).join(''):'<div class="card"><span class="sub">No intakes yet.</span></div>')+'</div>'+
+   '<div id="a-detail">'+(sel?adminDetail(sel):'<div class="card"><span class="sub">Select an intake.</span></div>')+'</div></div>';
+  $('#a-settings').onclick=function(){$('#a-settings-box').classList.toggle('hide');};
+  $('#a-save-settings').onclick=function(){var ns={pay:{},guideLink:$('#guide_dl').value.trim(),pro:{guide:$('#pro_guide').value.trim(),pack:$('#pro_pack').value.trim(),drafting:$('#pro_drafting').value.trim(),training:$('#pro_training').value.trim()},excluded:$('#excl').value.split(',').map(function(x){return x.trim();}).filter(Boolean),area:$('#area').value.trim()};state.db.doc('settings/config').set(ns).then(function(){state.settings=Object.assign({},DEFAULT_SETTINGS,ns);toast('Settings saved');applyArea();}).catch(function(e){toast('Could not save: '+e.code);});};
+  $$('[data-sel]',root).forEach(function(r){r.onclick=function(){var key=r.getAttribute('data-sel');state.admin.sel=key;state.admin.doc=null;state.admin.files=[];renderAdmin();var uid=key.split('|')[0],pid=key.split('|')[1];var path=pid==='legacy'?'intakes/'+uid:projPath(uid,pid);state.db.doc(path).get().then(function(d){if(!d.exists)return;var x=normalize(d.data());x.id=pid;x.uid=uid;x.path=path;state.admin.doc=x;renderAdmin();return (pid==='legacy'?state.db.collection('intakes/'+uid+'/files').get().then(function(q){return q.docs.map(function(dd){var f=dd.data();f.id=dd.id;return f;});}):loadFiles(uid,pid)).then(function(fs){state.admin.files=fs;renderAdmin();});});};});
+  if(sel)bindAdminDetail(sel);}
+function adminDetail(x){var r=x.screen&&x.screen.rules,ai=x.screen&&x.screen.ai;var files=state.admin.files;
+  return '<div class="card" style="gap:16px"><div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;align-items:flex-start"><div><h2 style="font-size:20px">'+esc(x.property&&x.property.address||'')+'</h2><span class="sub">'+esc(x.property&&x.property.municipality||'')+' · '+esc(x.property&&x.property.houseType||'')+' · '+esc(x.property&&x.property.yearBuilt||'')+'</span></div><span class="mono sub">'+esc(String(x.id).slice(0,12))+'</span></div>'+
+   '<dl class="kv"><dt>Contact</dt><dd>'+esc(x.contact&&x.contact.name||'')+' · <a href="mailto:'+esc(x.contact&&x.contact.email||'')+'">'+esc(x.contact&&x.contact.email||'')+'</a> · '+esc(x.contact&&x.contact.phone||'')+'</dd><dt>Package</dt><dd>'+esc(x.tier?packageName(x):'')+' · '+money(priceFor(x))+'</dd><dt>Job</dt><dd>'+esc(x.server&&x.server.psr||'not submitted')+(x.server&&x.server.folderUrl?' · <a href="'+esc(x.server.folderUrl)+'" target="_blank" rel="noopener">Drive folder</a>':'')+'</dd><dt>Payments</dt><dd>Deposit: '+(x.payment&&x.payment.deposit?'paid '+fmtDate(x.payment.deposit.paidAt)+(x.payment.deposit.manual?' (marked by hand)':''):'not paid')+' · Balance: '+(x.payment&&x.payment.balance?'paid '+fmtDate(x.payment.balance.paidAt):'not paid')+'</dd>'+(x.measure&&x.measure.want?'<dt>Measuring</dt><dd>'+esc(x.measure.sqft||'?')+' sq ft · est. '+money(measEst(x))+(x.server&&x.server.asbuiltReceived?' · as-built received':'')+'</dd>':'')+(x.server&&x.server.runnerNote?'<dt>Drafting notes</dt><dd style="white-space:pre-wrap">'+esc(x.server.runnerNote)+'</dd>':'')+(x.admin&&x.admin.reviewer?'<dt>Reviewer</dt><dd>'+esc(x.admin.reviewer)+'</dd>':'')+(isOut(x)?'<dt>Building</dt><dd>'+esc(x.out&&x.out.width||'')+' × '+esc(x.out&&x.out.length||'')+' ft ('+outArea(x)+' m²) · '+esc(x.out&&x.out.height||'')+' · rear '+esc(x.out&&x.out.rearSetback||'')+' · side '+esc(x.out&&x.out.sideSetback||'')+' · house '+esc(x.out&&x.out.houseGap||'')+' · '+esc(x.out&&x.out.electrical||'')+' · '+esc(x.out&&x.out.plumbing||'')+'</dd>':'')+(has(x,'bge')?'<dt>Entrance</dt><dd>'+esc(x.bge&&x.bge.where||'')+' · lot line '+esc(x.bge&&x.bge.sideClear||'')+' · '+esc(x.bge&&x.bge.existing||'')+' · grade '+esc(x.bge&&x.bge.grade||'')+' · '+esc(x.bge&&x.bge.drain||'')+' · '+esc(x.bge&&x.bge.cover||'')+'</dd>':'')+(has(x,'deck')?'<dt>Deck</dt><dd>'+esc(x.deck&&x.deck.width||'')+' × '+esc(x.deck&&x.deck.length||'')+' ft · '+esc(x.deck&&x.deck.height||'')+' · '+esc(x.deck&&x.deck.attached||'')+' · '+esc(x.deck&&x.deck.stairs||'')+' · '+esc(x.deck&&x.deck.extras||'')+'</dd>':'')+(isBase(x)?'<dt>Basement</dt><dd>'+esc(x.basement&&x.basement.heightJoists||'')+' · beam '+esc(x.basement&&x.basement.heightBeam||'')+' · '+esc(x.basement&&x.basement.entrance||'')+' · window: '+esc(x.basement&&x.basement.bedroomWindow||'')+' · furnace: '+esc(x.basement&&x.basement.furnaceRoom||'')+'</dd>':'')+'<dt>Timing</dt><dd>'+esc(x.basement&&x.basement.timing2||x.basement&&x.basement.timing||x.out&&x.out.timing||'')+'</dd><dt>Notes</dt><dd>'+esc(x.docs&&x.docs.notes||'')+(x.docs&&x.docs.link?' · <a href="'+esc(x.docs.link)+'" target="_blank" rel="noopener">folder link</a>':'')+'</dd><dt>Acknowledged</dt><dd>'+esc(Object.keys(x.ack||{}).filter(function(k){return x.ack[k];}).join(', ')||'none')+'</dd></dl>'+
+   (x.tier==='t3'&&x.brief?'<div><span class="eyebrow q">Design brief</span><dl class="kv" style="margin-top:6px">'+Object.keys(x.brief).filter(function(k){return k!=='ex';}).map(function(k){return '<dt>'+esc(k)+'</dt><dd>'+esc(x.brief[k])+'</dd>';}).join('')+'<dt>existing</dt><dd>'+esc(Object.keys(x.brief.ex||{}).filter(function(k){return x.brief.ex[k];}).join(', ')||'none')+'</dd></dl></div>':'')+
+   (r?'<div><span class="eyebrow q">Pre-screen</span><div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">'+r.flags.map(function(f){return '<div class="chk '+(f.sev==='bad'?'b':'w')+'"><span class="i"></span><span><b>'+esc(f.item)+':</b> '+esc(f.text)+'</span></div>';}).join('')+(ai?'<div class="chk"><span class="i"></span><span><b>AI:</b> '+esc(ai.summary||'')+' Zoning '+esc(ai.zoning&&ai.zoning.likelihood||'')+': '+esc(ai.zoning&&ai.zoning.note||'')+' Documents: '+esc(ai.documents&&ai.documents.note||'')+'</span></div>'+(Array.isArray(ai.designerNotes)&&ai.designerNotes.length?'<ul style="font-size:13px;color:var(--fg2)">'+ai.designerNotes.map(function(n){return '<li>'+esc(n)+'</li>';}).join('')+'</ul>':''):'')+'</div></div>':'')+
+   '<div><span class="eyebrow q">Files ('+files.length+')</span><div class="thumbs" style="margin-top:6px">'+files.map(function(f){return f.type==='application/pdf'?'<a class="thumb" href="'+f.dataUrl+'" target="_blank" rel="noopener" title="'+esc(f.name)+'">PDF<br>'+esc(f.kind)+'</a>':'<a class="thumb" href="'+f.dataUrl+'" target="_blank" rel="noopener" title="'+esc(f.name)+'"><img src="'+f.dataUrl+'" alt="'+esc(f.name)+'"></a>';}).join('')+'</div></div>'+
+   '<div class="g2" style="border-top:1px solid var(--line);padding-top:14px"><div class="f"><label class="l" for="ad_status">Status</label><select id="ad_status">'+STATUS.map(function(s){return '<option value="'+s[0]+'"'+(x.status===s[0]?' selected':'')+'>'+s[1]+'</option>';}).join('')+'</select></div><div class="f"><label class="l" for="ad_eta">Delivery estimate</label><input id="ad_eta" type="text" value="'+esc(x.admin&&x.admin.eta||'')+'" placeholder="Thu Oct 9"></div><div class="f" style="grid-column:1/-1"><label class="l" for="ad_link">Deliverable link (drawings PDF, Drive or Dropbox; shown on their project page when status is Ready or Delivered)</label><input id="ad_link" type="url" value="'+esc(x.admin&&x.admin.deliveryLink||'')+'" placeholder="https://"></div><div class="f" style="grid-column:1/-1"><label class="l" for="ad_msg">Message to homeowner (shown on their project page)</label><textarea id="ad_msg">'+esc(x.admin&&x.admin.message||'')+'</textarea></div><div class="f" style="grid-column:1/-1"><label class="l" for="ad_notes">Internal notes</label><textarea id="ad_notes">'+esc(x.admin&&x.admin.notes||'')+'</textarea></div></div>'+
+   (x.status==='review'?'<div class="card" style="background:var(--accent-bg);border-color:var(--accent-line);gap:10px"><b>Review</b><p class="sub">Check the drawings and the check report in the Drive folder, then approve or send back.</p><label class="ack"><input type="checkbox" id="ad_eng"'+(x.admin&&x.admin.needsEngineer?' checked':'')+'><span>Needs an engineer or consultant to review or stamp before delivery</span></label><div class="f"><label class="l" for="ad_cons">Consultant (from the Consultants tab; blank = default engineer)</label><input id="ad_cons" type="text" value="'+esc(x.admin&&x.admin.consultant||'')+'"></div><div class="f"><label class="l" for="ad_rnotes">Notes for the drafting run (if sending back)</label><textarea id="ad_rnotes">'+esc(x.admin&&x.admin.reviewNotes||'')+'</textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn sm" id="ad_approve">Approve</button><button type="button" class="btn sm ghost" id="ad_back">Send back with notes</button></div></div>':'')+'<div style="display:flex;gap:10px;flex-wrap:wrap"><button type="button" class="btn sm" id="ad_save">Save</button>'+(x.status==='screened'?'<button type="button" class="btn sm ghost" id="ad_manual">Mark deposit received (paid another way)</button>':'')+'<button type="button" class="btn sm ghost" id="ad_copy">Copy brief as text</button></div></div>';}
+function bindAdminDetail(x){var ref=state.db.doc(x.path);var save=function(extra){var admin=Object.assign({},x.admin||{},{eta:$('#ad_eta').value.trim(),deliveryLink:$('#ad_link').value.trim(),message:$('#ad_msg').value,notes:$('#ad_notes').value},extra||{});var upd={status:$('#ad_status').value,admin:admin,updatedAt:now()};return ref.update(upd).then(function(){x.status=upd.status;x.admin=admin;if(x.id!=='legacy'){return state.db.doc('intakes/'+x.uid).get().then(function(d){if(!d.exists)return;var idx=JSON.parse(JSON.stringify(d.data()));idx.projects=(idx.projects||[]).map(function(pr){return pr.id===x.id?Object.assign(pr,{status:upd.status,updatedAt:upd.updatedAt}):pr;});idx.updatedAt=upd.updatedAt;return state.db.doc('intakes/'+x.uid).set(idx);});}}).then(function(){toast('Saved');}).catch(function(e){toast('Save failed: '+e.code);});};
+  $('#ad_save').onclick=function(){save();};var full=function(status,adminExtra,more){var admin=Object.assign({},x.admin||{},adminExtra||{});var upd=Object.assign({status:status,admin:admin,updatedAt:now()},more||{});return ref.update(upd).then(function(){x.status=status;x.admin=admin;toast('Saved');state.admin.sel=null;state.admin.doc=null;renderAdmin();}).catch(function(e){toast('Save failed: '+(e.message||e.code));});};var ap=$('#ad_approve');if(ap)ap.onclick=function(){var eng=$('#ad_eng').checked;full(eng?'consultant':'ready',{needsEngineer:eng,consultant:$('#ad_cons').value.trim(),approvedAt:now()});};var bk=$('#ad_back');if(bk)bk.onclick=function(){var n=$('#ad_rnotes').value.trim();if(!n){toast('Add a note for the drafting run first.');return;}full('drafting',{reviewNotes:n,sentBackAt:now()},{server:Object.assign({},x.server||{},{sentBack:true})});};var mn=$('#ad_manual');if(mn)mn.onclick=function(){full('confirmed',{},{payment:Object.assign({},x.payment||{},{deposit:{paidAt:now(),manual:true}})});};
+  $('#ad_copy').onclick=function(){var t=JSON.stringify({property:x.property,contact:x.contact,scope:x.scope,tier:x.tier,basement:x.basement,brief:x.brief,docs:x.docs,screen:x.screen},null,2);navigator.clipboard.writeText(t).then(function(){toast('Copied');}).catch(function(){var ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();toast('Select and copy');});};}
+function applyArea(){return;$('#area-txt').textContent=state.settings.area||DEFAULT_SETTINGS.area;$('#area-faq').textContent=(state.settings.area||DEFAULT_SETTINGS.area)+'.';var pro=state.settings.pro||{};$$('[data-pro]').forEach(function(a){var u=pro[a.getAttribute('data-pro')];if(u)a.href=u;});}
+
+// ---------- boot ----------
+function bindLogin(){var em='';var msg=function(t){$('#lg_msg').textContent=t||'';};
+  $('#lg_send').onclick=function(){em=$('#lg_email').value.trim();if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)){msg('Enter a valid email address.');return;}$('#lg_send').disabled=true;msg('Sending…');window.PSR.startLogin(em).then(function(){msg('We sent a code to '+em+'. Check your inbox (and spam).');$('#login-step1').classList.add('hide');$('#login-step2').classList.remove('hide');$('#lg_code').focus();}).catch(function(e){msg(e.message);}).then(function(){$('#lg_send').disabled=false;});};
+  $('#lg_email').onkeydown=function(e){if(e.key==='Enter')$('#lg_send').click();};
+  $('#lg_verify').onclick=function(){var c=$('#lg_code').value.trim();if(!/^\d{6}$/.test(c)){msg('Enter the 6-digit code.');return;}$('#lg_verify').disabled=true;msg('Checking…');window.PSR.verifyLogin(em,c).then(function(){var h=(location.hash||'').replace('#','');location.hash=h&&h!=='landing'?h:'projects';location.reload();}).catch(function(e){msg(e.message);$('#lg_verify').disabled=false;});};
+  $('#lg_code').onkeydown=function(e){if(e.key==='Enter')$('#lg_verify').click();};
+  $('#lg_back').onclick=function(){$('#login-step2').classList.add('hide');$('#login-step1').classList.remove('hide');msg('');};
+  $('#nb-logout').onclick=function(){window.PSR.logout().then(function(){location.hash='';location.reload();});};
+  $('#wb-new').onclick=function(){startNewProject();};}
+function boot(){
+  var h=(location.hash||'').replace('#','');
+  go('landing');try{if(h)history.replaceState(null,'','#'+h);}catch(e){}
+  if(!window.claude||!window.claude.use){$('#offline').classList.remove('hide');return;}bindLogin();
+  Promise.all([claude.use('db'),claude.use('user'),claude.use('sample')]).then(function(r){
+    state.db=r[0];state.user=r[1];state.sample=r[2];
+    if(!state.db||!state.user){if(!window.PSR.configured)$('#offline').classList.remove('hide');go('landing');try{if(h)history.replaceState(null,'','#'+h);}catch(e){}return;}
+    return state.user.me().then(function(me){
+      state.me=me;state.uid=me.id;$('#who').textContent=me.email||'';['#nb-projects','#nb-new','#nb-logout'].forEach(function(s){$(s).classList.remove('hide');});$('#login-box').classList.add('hide');$('#welcome-box').classList.remove('hide');
+      return Promise.all([state.user.canEdit(),state.user.isOwner()]);
+    }).then(function(f){
+      state.isAdmin=!!(f[0]||f[1]);$('#nb-admin').classList.toggle('hide',!state.isAdmin);
+      return state.db.doc('settings/config').get().then(function(s){if(s.exists)state.settings=Object.assign({},DEFAULT_SETTINGS,s.data());applyArea();}).catch(function(){});
+    }).then(function(){
+      if(!state.uid)return;
+      return state.db.doc('intakes/'+state.uid).get().then(function(d){
+        var migrate=Promise.resolve();
+        if(d.exists&&Array.isArray(d.data().projects)){state.index=JSON.parse(JSON.stringify(d.data()));}
+        else if(d.exists&&d.data().property){var legacy=normalize(d.data());legacy.id='p1';legacy.updatedAt=legacy.updatedAt||now();state.index={owner:state.uid,updatedAt:now(),projects:[summary(legacy)]};
+          migrate=state.db.doc(projPath(state.uid,'p1')).set(JSON.parse(JSON.stringify(legacy))).then(function(){return state.db.collection('intakes/'+state.uid+'/files').get();}).then(function(q){return q.docs.reduce(function(pr,dd){return pr.then(function(){return state.db.doc(projPath(state.uid,'p1')+'/files/'+dd.id).set(dd.data());});},Promise.resolve());}).then(function(){return state.db.doc('intakes/'+state.uid).set(JSON.parse(JSON.stringify(state.index)));}).catch(function(e){console.error('migrate',e);});}
+        else{state.index={owner:state.uid,updatedAt:now(),projects:[]};}
+        return migrate.then(function(){var want=null;try{want=localStorage.getItem('pr_pid');}catch(e){}var list=state.index.projects||[];var pick=list.filter(function(x){return x.id===want;})[0]||list[0];if(!pick)return;
+          return state.db.doc(projPath(state.uid,pick.id)).get().then(function(pd){if(!pd.exists)return;state.intake=normalize(pd.data());state.pid=state.intake.id;return loadFiles(state.uid,state.pid).then(function(fs){state.files=fs;});});});
+      });
+    }).then(function(){
+      var h2=h;
+      if(h2==='admin'&&state.isAdmin)go('admin');
+      else if(h2==='projects')go('projects');else if((h2==='project'||h2==='result'||h2==='intake')&&state.intake)go(h2);else if(h2==='intake')startNewProject();
+      else if(state.screen==='intake')renderWiz();
+    });
+  }).catch(function(e){console.error(e);});
+}
+boot();
+})();
+</script>
+
+
+</body>
+</html>
