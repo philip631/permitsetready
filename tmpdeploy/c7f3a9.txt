@@ -1,0 +1,717 @@
+/**
+ * PermitSetReady backend — Google Apps Script web app.
+ * Runs under the PermitSetReady Google Workspace account. Storage: one Google Sheet
+ * (Jobs, Docs, Sessions, Reviewers, Consultants, Settings, Emails, Orders, Log),
+ * files in the Drive jobs folder, email from admin@permitsetready.ca.
+ *
+ * The website talks to it with POST requests (Content-Type text/plain, JSON body).
+ * Lemon Squeezy posts payment webhooks to  <web app URL>?hook=ls&key=<LS_WEBHOOK_KEY>.
+ * The drafting runner uses the runner.* actions with RUNNER_KEY.
+ *
+ * Secrets and ids live in Script Properties (Project Settings › Script properties), never in code:
+ *   SHEET_ID (filled by setup), JOBS_FOLDER_ID, TEMPLATE_FOLDER_ID, FROM_ALIAS, SITE_URL,
+ *   LS_API_KEY, LS_STORE_ID, LS_VARIANT_ID, LS_WEBHOOK_KEY, RUNNER_KEY
+ */
+
+// ---------------------------------------------------------------- constants
+var VERSION = '1.0.0';
+var TZ = 'America/Toronto';
+var PRICES = {t1:{finish:59,unit:59,garage:59,shed:59,deck:59,bge:59},t2:{finish:900,unit:1600,garage:700,shed:500,deck:450,bge:600},t3:{finish:1400,unit:2800,unitNew:3800,garage:1200,shed:900,deck:750,bge:950},addonRate:0.6};
+var SCOPES = {unit:'Legal second unit',finish:'Basement finish',garage:'Detached garage',shed:'Shed or cabana',bge:'Below-grade entrance',deck:'Deck'};
+var SCOPE_ORDER = ['unit','finish','garage','shed','bge','deck'];
+var TIERS = {t1:'Permit Guide',t2:'Draft-to-Scale',t3:'Designed for you'};
+var DEPOSIT_RATE = 0.4;
+var MEAS = {base:820,freeSqft:2000,perSqft:0.2,elev:125,roof:60,perKm:0.85,site:400,markup:0.2};
+var MEAS_KM = {'Mississauga':10,'Brampton':20,'Caledon':40,'Oakville':20,'Burlington':35,'Milton':30,'Halton Hills':35,'Vaughan':35,'Markham':50,'Richmond Hill':45,'Aurora':55,'Newmarket':60,'Pickering':60,'Ajax':65,'Whitby':75,'Oshawa':85,'Toronto':30,'Hamilton':55,'Innisfil':95,'Barrie':105,'Guelph':70,'Kitchener':90,'Other':60};
+// statuses a client may set on their own project; everything else is server/admin only
+var CLIENT_STATUSES = ['draft','screened','declined'];
+var STATUS_LABEL = {draft:'Draft',screened:'Submitted, awaiting deposit',confirmed:'Deposit received',measuring:'Measuring visit',drafting:'Drafting',review:'In review',consultant:'With consultant',ready:'Ready, balance due',delivered:'Delivered',revising:'Revising for City comments',declined:'Not eligible'};
+var EMAIL_TYPES = ['received','deposit','measuring_partner','measuring_client','consultant_transmittal','consultant_client','ready','delivered','revised'];
+var DOC_CHUNK = 45000, DOC_CHUNKS = 8;
+var SHEETS = {
+  Jobs:['PSR','Client','Email','Phone','Address','Municipality','Package','Price','Deposit','Measuring est.','Status','Reviewer','Consultant','Needs engineer','Folder','Updated','Path'],
+  Docs:['Path','Parent','Id','Updated'].concat(['Data1','Data2','Data3','Data4','Data5','Data6','Data7','Data8']),
+  Sessions:['TokenHash','Email','Uid','Created','Expires'],
+  Reviewers:['Name','Email','Active','Project types (blank = all)','Daily capacity','Last assigned'],
+  Consultants:['Name','Firm','Email','Discipline','Rates','Active'],
+  Settings:['Key','Value','Notes'],
+  Emails:['Time','Type','To','Subject','Mode','Job'],
+  Orders:['Time','Event','Order','Email','Product','Total','Job path','Kind'],
+  Log:['Time','Level','Where','Message']
+};
+var DEFAULT_SETTINGS = [
+  ['ADMIN_EMAILS','admin@permitsetready.ca','Comma-separated. These logins see the admin page and get the daily digest.'],
+  ['DIGEST_TO','admin@permitsetready.ca','Daily 8 am digest recipient(s).'],
+  ['SEND_MODE_received','draft','draft = prepared in Gmail Drafts (label PSR-Auto) for you to send; send = goes out automatically'],
+  ['SEND_MODE_deposit','draft',''],
+  ['SEND_MODE_measuring_partner','draft',''],
+  ['SEND_MODE_measuring_client','draft',''],
+  ['SEND_MODE_consultant_transmittal','draft',''],
+  ['SEND_MODE_consultant_client','draft',''],
+  ['SEND_MODE_ready','draft',''],
+  ['SEND_MODE_delivered','draft',''],
+  ['SEND_MODE_revised','draft',''],
+  ['MEASURING_PARTNER','','Name of the measuring partner as listed on the Consultants tab (discipline "measuring").'],
+  ['DEFAULT_ENGINEER','','Name of the default structural engineer on the Consultants tab.']
+];
+
+// ---------------------------------------------------------------- entry points
+function doGet(e) {
+  return json_({ok:true, service:'PermitSetReady', version:VERSION});
+}
+
+function doPost(e) {
+  try {
+    if (e && e.parameter && e.parameter.hook === 'ls') return json_(lsWebhook_(e));
+    var req = JSON.parse((e && e.postData && e.postData.contents) || '{}');
+    var out = route_(req);
+    return json_(Object.assign({ok:true}, out || {}));
+  } catch (err) {
+    var userErr = /log in|Not allowed|code is not right|valid email|Too many|not waiting|balance is due|Unknown action/i.test(String(err && err.message));
+    log_(userErr ? 'info' : 'error', 'doPost', userErr ? String(err.message) : String(err && err.stack || err));
+    return json_({ok:false, error:String(err && err.message || err)});
+  }
+}
+
+function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
+
+function route_(req) {
+  var a = req.action;
+  if (a === 'auth.start') return authStart_(req.email);
+  if (a === 'auth.verify') return authVerify_(req.email, req.code);
+  if (a && a.indexOf('runner.') === 0) return runner_(req);
+  var s = session_(req.token);
+  if (a === 'auth.me') return {user:userOf_(s)};
+  if (a === 'auth.logout') { endSession_(req.token); return {}; }
+  if (a === 'db.get') return dbGet_(s, req.path);
+  if (a === 'db.set') return dbSet_(s, req.path, req.data, !!req.merge);
+  if (a === 'db.delete') return dbDelete_(s, req.path);
+  if (a === 'db.list') return dbList_(s, req.path, req.orderBy, req.dir, req.limit);
+  if (a === 'pay.checkout') return payCheckout_(s, req.path, req.kind);
+  if (a === 'files.deliverables') return deliverables_(s, req.path);
+  if (a === 'files.download') return download_(s, req.path, req.fileId);
+  if (a === 'admin.lists') { needAdmin_(s); return {reviewers:rows_('Reviewers'), consultants:rows_('Consultants')}; }
+  throw new Error('Unknown action');
+}
+
+// ---------------------------------------------------------------- properties, sheet
+function prop_(k) { return PropertiesService.getScriptProperties().getProperty(k) || ''; }
+function ss_() { return SpreadsheetApp.openById(prop_('SHEET_ID')); }
+function sh_(name) { return ss_().getSheetByName(name); }
+function now_() { return new Date().toISOString(); }
+function hash_(s) { return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, s, Utilities.Charset.UTF_8).map(function(b){return ('0'+(b&255).toString(16)).slice(-2);}).join(''); }
+function setting_(k) {
+  var v = sh_('Settings').getDataRange().getValues();
+  for (var i = 1; i < v.length; i++) if (v[i][0] === k) return String(v[i][1] || '');
+  return '';
+}
+function rows_(name) {
+  var v = sh_(name).getDataRange().getValues(), h = v[0], out = [];
+  for (var i = 1; i < v.length; i++) { var o = {}; h.forEach(function(k, j){ o[k] = v[i][j]; }); o._row = i + 1; out.push(o); }
+  return out;
+}
+function log_(level, where, msg) {
+  try { sh_('Log').appendRow([new Date(), level, where, String(msg).slice(0, 5000)]); } catch (e) {}
+}
+
+/** One-time setup: run from the editor. Creates the Sheet (if SHEET_ID is empty), tabs, settings and triggers. */
+function setup() {
+  var props = PropertiesService.getScriptProperties();
+  var defaults = {JOBS_FOLDER_ID:'1q2Bh0pI4kTtSLzl72W3v_nrJz-Ce4VLK', TEMPLATE_FOLDER_ID:'1OpuQcNsVBc7MOlFByReEj6D5O18Jcp_5', HOME_FOLDER_ID:'10xMSScPlEcDFiqHscZtvfSrdRMaLqNFm', FROM_ALIAS:'admin@permitsetready.ca', SITE_URL:'https://permitsetready.ca'};
+  Object.keys(defaults).forEach(function(k){ if (!props.getProperty(k)) props.setProperty(k, defaults[k]); });
+  var id = props.getProperty('SHEET_ID');
+  var ss = id ? SpreadsheetApp.openById(id) : SpreadsheetApp.create('PermitSetReady — Jobs & Portal');
+  if (!id) {
+    props.setProperty('SHEET_ID', ss.getId());
+    try { DriveApp.getFileById(ss.getId()).moveTo(DriveApp.getFolderById(prop_('HOME_FOLDER_ID'))); } catch (e) {}
+  }
+  Object.keys(SHEETS).forEach(function(name) {
+    var sh = ss.getSheetByName(name) || ss.insertSheet(name);
+    if (sh.getLastRow() === 0) { sh.appendRow(SHEETS[name]); sh.setFrozenRows(1); sh.getRange(1,1,1,SHEETS[name].length).setFontWeight('bold'); }
+  });
+  var first = ss.getSheetByName('Sheet1'); if (first && ss.getSheets().length > 1) ss.deleteSheet(first);
+  var st = ss.getSheetByName('Settings');
+  var have = st.getDataRange().getValues().map(function(r){return r[0];});
+  DEFAULT_SETTINGS.forEach(function(r){ if (have.indexOf(r[0]) < 0) st.appendRow(r); });
+  var rv = ss.getSheetByName('Reviewers');
+  if (rv.getLastRow() === 1) rv.appendRow(['PermitSetReady admin', prop_('FROM_ALIAS') || 'admin@permitsetready.ca', true, '', 10, '']);
+  ScriptApp.getProjectTriggers().forEach(function(t){ if (['dailyDigest','hourlyWatch'].indexOf(t.getHandlerFunction()) >= 0) ScriptApp.deleteTrigger(t); });
+  ScriptApp.newTrigger('dailyDigest').timeBased().atHour(8).everyDays(1).inTimezone(TZ).create();
+  ScriptApp.newTrigger('hourlyWatch').timeBased().everyHours(1).create();
+  GmailApp.getUserLabelByName('PSR-Auto') || GmailApp.createLabel('PSR-Auto');
+  if (!prop_('RUNNER_KEY')) props.setProperty('RUNNER_KEY', Utilities.getUuid().replace(/-/g,'') + Utilities.getUuid().replace(/-/g,''));
+  if (!prop_('LS_WEBHOOK_KEY')) props.setProperty('LS_WEBHOOK_KEY', Utilities.getUuid().replace(/-/g,''));
+  Logger.log('Sheet: ' + ss.getUrl());
+  Logger.log('Webhook path: <web app URL>?hook=ls&key=' + prop_('LS_WEBHOOK_KEY'));
+}
+
+/** After pasting LS_API_KEY in Script Properties, run this once: it fills LS_STORE_ID and lists the variants (pick the homeowner payment variant for LS_VARIANT_ID). */
+function lsInfo() {
+  var h = {headers:{Accept:'application/vnd.api+json', Authorization:'Bearer ' + prop_('LS_API_KEY')}, muteHttpExceptions:true};
+  var stores = JSON.parse(UrlFetchApp.fetch('https://api.lemonsqueezy.com/v1/stores', h).getContentText()).data || [];
+  stores.forEach(function(st){ Logger.log('Store ' + st.id + ': ' + st.attributes.name + ' (' + st.attributes.currency + ')'); });
+  if (stores.length && !prop_('LS_STORE_ID')) PropertiesService.getScriptProperties().setProperty('LS_STORE_ID', String(stores[0].id));
+  var vars = JSON.parse(UrlFetchApp.fetch('https://api.lemonsqueezy.com/v1/variants?page[size]=100', h).getContentText()).data || [];
+  vars.forEach(function(v){ Logger.log('Variant ' + v.id + ': ' + v.attributes.name + ' (product ' + v.attributes.product_id + ')'); });
+}
+
+// ---------------------------------------------------------------- auth (email + 6-digit code)
+function authStart_(email) {
+  email = String(email || '').trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new Error('Enter a valid email address.');
+  var cache = CacheService.getScriptCache(), k = 'code:' + hash_(email);
+  var tries = Number(cache.get('tries:' + k) || 0);
+  if (tries >= 5) throw new Error('Too many codes requested. Try again in 15 minutes.');
+  cache.put('tries:' + k, String(tries + 1), 900);
+  var code = String(Math.floor(100000 + Math.random() * 900000));
+  cache.put(k, hash_(code), 600);
+  var html = shell_('Your login code',
+    '<p style="margin:0 0 14px">Use this code to open your PermitSetReady project page. It expires in 10 minutes.</p>' +
+    '<p style="font-size:34px;font-weight:bold;letter-spacing:8px;font-family:\'Courier New\',monospace;margin:8px 0 18px;color:#0E1F36">' + code + '</p>' +
+    '<p style="margin:0;color:#5B6B7F;font-size:13px">If you didn\'t ask for this, you can ignore this email.</p>');
+  // Login codes always send: a client can't log in otherwise.
+  GmailApp.sendEmail(email, 'Your PermitSetReady login code: ' + code, 'Your PermitSetReady login code is ' + code + '. It expires in 10 minutes.', fromOpts_({htmlBody:html}));
+  return {sent:true};
+}
+
+function authVerify_(email, code) {
+  email = String(email || '').trim().toLowerCase();
+  var cache = CacheService.getScriptCache(), k = 'code:' + hash_(email);
+  var want = cache.get(k);
+  if (!want || want !== hash_(String(code || '').trim())) throw new Error('That code is not right or has expired. Request a new one.');
+  cache.remove(k);
+  var token = Utilities.getUuid() + Utilities.getUuid();
+  var uid = 'u_' + hash_(email).slice(0, 20);
+  var exp = new Date(Date.now() + 30 * 24 * 3600 * 1000);
+  sh_('Sessions').appendRow([hash_(token), email, uid, new Date(), exp]);
+  return {token:token, user:userOf_({email:email, uid:uid})};
+}
+
+function session_(token) {
+  if (!token) throw new Error('Please log in.');
+  var cache = CacheService.getScriptCache(), th = hash_(token), c = cache.get('s:' + th);
+  if (c) return JSON.parse(c);
+  var v = sh_('Sessions').getDataRange().getValues();
+  for (var i = v.length - 1; i >= 1; i--) {
+    if (v[i][0] === th) {
+      if (new Date(v[i][4]) < new Date()) break;
+      var s = {email:v[i][1], uid:v[i][2]};
+      s.admin = isAdmin_(s.email); s.reviewer = isReviewer_(s.email);
+      cache.put('s:' + th, JSON.stringify(s), 600);
+      return s;
+    }
+  }
+  throw new Error('Your login has expired. Please log in again.');
+}
+function endSession_(token) {
+  if (!token) return; var th = hash_(token); CacheService.getScriptCache().remove('s:' + th);
+  var sh = sh_('Sessions'), v = sh.getDataRange().getValues();
+  for (var i = v.length - 1; i >= 1; i--) if (v[i][0] === th) sh.getRange(i + 1, 5).setValue(new Date(0));
+}
+function isAdmin_(email) { return setting_('ADMIN_EMAILS').toLowerCase().split(/[,\s]+/).indexOf(String(email).toLowerCase()) >= 0; }
+function isReviewer_(email) { return rows_('Reviewers').some(function(r){ return String(r.Email).toLowerCase() === String(email).toLowerCase() && r.Active !== false && String(r.Active).toUpperCase() !== 'FALSE'; }); }
+function userOf_(s) { var adm = isAdmin_(s.email); return {id:s.uid, email:s.email, name:'', isAdmin:adm || isReviewer_(s.email), role:adm ? 'admin' : (isReviewer_(s.email) ? 'reviewer' : 'client')}; }
+function needAdmin_(s) { if (!(s.admin || s.reviewer)) throw new Error('Not allowed.'); }
+
+// ---------------------------------------------------------------- document store (Firestore-like paths)
+function parts_(path) { path = String(path || '').replace(/^\/+|\/+$/g, ''); if (!path || /\.\./.test(path)) throw new Error('Bad path'); return path.split('/'); }
+function canRead_(s, p) {
+  if (s.admin || s.reviewer) return true;
+  if (p[0] === 'settings') return true;
+  return p[0] === 'intakes' && p[1] === s.uid;
+}
+function canWrite_(s, p) {
+  if (s.admin || s.reviewer) return true;
+  return p[0] === 'intakes' && p[1] === s.uid;
+}
+function findRow_(path) {
+  var sh = sh_('Docs'); if (sh.getLastRow() < 2) return 0;
+  var f = sh.getRange(2, 1, sh.getLastRow() - 1, 1).createTextFinder(path).matchEntireCell(true).findNext();
+  return f ? f.getRow() : 0;
+}
+function readRow_(row) {
+  var v = sh_('Docs').getRange(row, 1, 1, 4 + DOC_CHUNKS).getValues()[0];
+  return JSON.parse(v.slice(4).join('') || '{}');
+}
+function rawGet_(path) { var r = findRow_(path); return r ? readRow_(r) : null; }
+function rawSet_(path, data) {
+  var str = JSON.stringify(data), chunks = [];
+  for (var i = 0; i < DOC_CHUNKS; i++) chunks.push(str.slice(i * DOC_CHUNK, (i + 1) * DOC_CHUNK));
+  if (str.length > DOC_CHUNK * DOC_CHUNKS) throw new Error('Record too large');
+  var p = path.split('/'), row = [path, p.slice(0, -1).join('/'), p[p.length - 1], data.updatedAt || now_()].concat(chunks);
+  var sh = sh_('Docs'), r = findRow_(path);
+  if (r) sh.getRange(r, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+}
+function rawDelete_(path) { var r = findRow_(path); if (r) sh_('Docs').deleteRow(r); }
+
+function dbGet_(s, path) {
+  var p = parts_(path); if (!canRead_(s, p)) throw new Error('Not allowed.');
+  var d = rawGet_(p.join('/'));
+  if (d && isFilePath_(p)) d = withDataUrl_(d);
+  return {exists:!!d, data:d};
+}
+
+function dbList_(s, path, orderBy, dir, limit) {
+  var p = parts_(path); if (!canRead_(s, p)) throw new Error('Not allowed.');
+  var parent = p.join('/'), sh = sh_('Docs'), out = [];
+  if (sh.getLastRow() >= 2) {
+    var v = sh.getRange(2, 1, sh.getLastRow() - 1, 4 + DOC_CHUNKS).getValues();
+    v.forEach(function(r){ if (r[1] === parent) { var d = JSON.parse(r.slice(4).join('') || '{}'); out.push({id:r[2], data:d}); } });
+  }
+  if (orderBy) out.sort(function(a, b){ var x = a.data[orderBy] || '', y = b.data[orderBy] || ''; return (x < y ? -1 : x > y ? 1 : 0) * (dir === 'desc' ? -1 : 1); });
+  if (limit) out = out.slice(0, limit);
+  if (isFilePath_(p.concat(['x']))) out = out.map(function(o){ return {id:o.id, data:withDataUrl_(o.data)}; });
+  return {docs:out};
+}
+
+function dbSet_(s, path, data, merge) {
+  var p = parts_(path); if (!canWrite_(s, p)) throw new Error('Not allowed.');
+  path = p.join('/');
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var prev = rawGet_(path);
+    if (merge && prev) data = deepMerge_(JSON.parse(JSON.stringify(prev)), data);
+    if (isFilePath_(p)) { data = saveFile_(p, data, prev); rawSet_(path, data); if (data.kind === 'comments') onComments_(p); return {}; }
+    if (isProjectPath_(p)) data = guardProject_(s, data, prev);
+    if (p[0] === 'settings' && !s.admin) throw new Error('Not allowed.');
+    rawSet_(path, data);
+    if (isProjectPath_(p)) onProjectSaved_(p, data, prev);
+    return {};
+  } finally { lock.releaseLock(); }
+}
+
+function dbDelete_(s, path) {
+  var p = parts_(path); if (!canWrite_(s, p)) throw new Error('Not allowed.');
+  var d = rawGet_(p.join('/'));
+  if (d && d.driveId) { try { DriveApp.getFileById(d.driveId).setTrashed(true); } catch (e) {} }
+  rawDelete_(p.join('/'));
+  return {};
+}
+
+function deepMerge_(a, b) {
+  Object.keys(b || {}).forEach(function(k){
+    if (b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object' && !Array.isArray(a[k])) a[k] = deepMerge_(a[k], b[k]); else a[k] = b[k];
+  });
+  return a;
+}
+function isProjectPath_(p) { return p.length === 4 && p[0] === 'intakes' && p[2] === 'projects'; }
+function isFilePath_(p) { return p.length === 6 && p[0] === 'intakes' && p[2] === 'projects' && p[4] === 'files'; }
+function projPath_(uid, pid) { return 'intakes/' + uid + '/projects/' + pid; }
+
+/** Clients can edit their answers but never server-owned fields. */
+function guardProject_(s, data, prev) {
+  prev = prev || {};
+  if (s.admin || s.reviewer) return data;
+  if (CLIENT_STATUSES.indexOf(data.status) < 0) data.status = prev.status || 'draft';
+  if (prev.status && CLIENT_STATUSES.indexOf(prev.status) < 0) data.status = prev.status; // locked once paid
+  data.admin = prev.admin || {};
+  data.server = prev.server || {};
+  var pay = prev.payment || {};
+  data.payment = Object.assign({}, data.payment || {}, {deposit:pay.deposit || null, balance:pay.balance || null});
+  return data;
+}
+
+// ---------------------------------------------------------------- files (Drive)
+function stagingFolder_() {
+  var jobs = DriveApp.getFolderById(prop_('JOBS_FOLDER_ID'));
+  var it = jobs.getFoldersByName('_Incoming'); return it.hasNext() ? it.next() : jobs.createFolder('_Incoming');
+}
+function subfolder_(parent, name) { var it = parent.getFoldersByName(name); return it.hasNext() ? it.next() : parent.createFolder(name); }
+function kindFolderName_(kind) { return {survey:'Survey', photo:'Photos', comments:'Received', deliverable:'PDF'}[kind] || 'Received'; }
+function kindLabel_(kind) { return {sketch:'Client Sketch', plan:'Existing Drawings', survey:'Survey', photo:'Site Photos', comments:'City Comments', other:'Other'}[kind] || 'Other'; }
+
+function saveFile_(p, data, prev) {
+  if (!data.dataUrl) return data;
+  var m = /^data:([^;]+);base64,(.*)$/.exec(data.dataUrl); if (!m) throw new Error('Bad file');
+  var proj = rawGet_(p.slice(0, 4).join('/')) || {};
+  var folder = proj.server && proj.server.folderId ? subfolder_(DriveApp.getFolderById(proj.server.folderId), kindFolderName_(data.kind)) : subfolder_(stagingFolder_(), p[1] + '_' + p[3]);
+  var date = Utilities.formatDate(new Date(data.createdAt || Date.now()), TZ, 'yyMMdd');
+  var name = date + ' - ' + kindLabel_(data.kind) + ' - ' + String(data.name || 'file').replace(/[\\\/]/g, '_');
+  var file = folder.createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], name));
+  if (prev && prev.driveId) { try { DriveApp.getFileById(prev.driveId).setTrashed(true); } catch (e) {} }
+  var out = Object.assign({}, data); delete out.dataUrl;
+  out.driveId = file.getId(); out.size = file.getSize(); out.staged = !(proj.server && proj.server.folderId);
+  return out;
+}
+function withDataUrl_(d) {
+  if (!d || !d.driveId) return d;
+  try {
+    var b = DriveApp.getFileById(d.driveId).getBlob();
+    return Object.assign({}, d, {dataUrl:'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes())});
+  } catch (e) { return d; }
+}
+function moveStagedFiles_(uid, pid, folder) {
+  var list = dbListRaw_(projPath_(uid, pid) + '/files');
+  list.forEach(function(o){
+    if (!o.data.driveId || !o.data.staged) return;
+    try { DriveApp.getFileById(o.data.driveId).moveTo(subfolder_(folder, kindFolderName_(o.data.kind))); o.data.staged = false; rawSet_(projPath_(uid, pid) + '/files/' + o.id, o.data); } catch (e) { log_('warn', 'moveStaged', e); }
+  });
+}
+function dbListRaw_(parent) {
+  var sh = sh_('Docs'), out = []; if (sh.getLastRow() < 2) return out;
+  sh.getRange(2, 1, sh.getLastRow() - 1, 4 + DOC_CHUNKS).getValues().forEach(function(r){ if (r[1] === parent) out.push({id:r[2], data:JSON.parse(r.slice(4).join('') || '{}')}); });
+  return out;
+}
+
+function deliverables_(s, path) {
+  var p = parts_(path); if (!canRead_(s, p) || !isProjectPath_(p)) throw new Error('Not allowed.');
+  var d = rawGet_(p.join('/')) || {};
+  if (!(s.admin || s.reviewer) && !(d.server && d.server.released)) return {files:[], released:false};
+  if (!d.server || !d.server.folderId) return {files:[], released:!!(d.server && d.server.released)};
+  var pdf = subfolder_(DriveApp.getFolderById(d.server.folderId), 'PDF'), it = pdf.getFiles(), out = [];
+  while (it.hasNext()) { var f = it.next(); if (!f.isTrashed()) out.push({id:f.getId(), name:f.getName(), size:f.getSize()}); }
+  return {files:out, released:true};
+}
+function download_(s, path, fileId) {
+  var list = deliverables_(s, path).files;
+  if (!list.some(function(f){ return f.id === fileId; })) throw new Error('Not allowed.');
+  var b = DriveApp.getFileById(fileId).getBlob();
+  return {name:b.getName(), dataUrl:'data:' + b.getContentType() + ';base64,' + Utilities.base64Encode(b.getBytes())};
+}
+
+// ---------------------------------------------------------------- pricing (same rules as the questionnaire)
+function scopesOf_(it) { var a = Array.isArray(it.scopes) ? it.scopes : (it.scope ? [it.scope] : []); return SCOPE_ORDER.filter(function(k){ return a.indexOf(k) >= 0; }); }
+function has_(it, k) { return scopesOf_(it).indexOf(k) >= 0; }
+function priceOf_(it) {
+  var t = it.tier || 't2', sc = scopesOf_(it), p = PRICES[t] || PRICES.t2;
+  if (t === 't1') return PRICES.t1[sc[0]] || 59;
+  return sc.reduce(function(sum, k, i){
+    var base = p[k] || 0;
+    if (k === 'unit' && t === 't3' && !has_(it, 'bge') && it.basement && it.basement.entrance === 'Only through the main house') base = PRICES.t3.unitNew;
+    return sum + (i === 0 ? base : Math.round(base * PRICES.addonRate / 50) * 50);
+  }, 0);
+}
+function needsSurvey_(it) { return has_(it,'garage') || has_(it,'shed') || has_(it,'bge') || has_(it,'deck'); }
+function measEst_(it) {
+  var m = it.measure || {}, sq = Number(m.sqft) || 0; if (!(sq > 0)) return 0;
+  var f = m.feat || {}, site = needsSurvey_(it) || !!(f.shed || f.deck || f.patio || f.pool || f.garage || f.other);
+  var km = MEAS_KM[(it.property || {}).municipality] || 60;
+  var sub = MEAS.base + Math.max(0, sq - MEAS.freeSqft) * MEAS.perSqft + ((has_(it,'bge') ? 1 : 0) + (has_(it,'deck') ? 1 : 0)) * MEAS.elev + MEAS.roof + km * 2 * MEAS.perKm + (site ? MEAS.site : 0);
+  return Math.ceil(sub * (1 + MEAS.markup) / 100) * 100;
+}
+function packageName_(it) { return (TIERS[it.tier] || 'Project') + ' · ' + (scopesOf_(it).map(function(k){ return SCOPES[k]; }).join(' + ') || 'Project'); }
+function money_(n) { return '$' + Number(n || 0).toLocaleString('en-CA'); }
+
+// ---------------------------------------------------------------- project lifecycle
+function onProjectSaved_(p, d, prev) {
+  var uid = p[1], pid = p[3], path = p.join('/');
+  var before = (prev && prev.status) || 'draft', after = d.status || 'draft';
+  var changed = false;
+  d.server = d.server || {};
+  // submitted: give it a PSR number, a Drive folder, an intake summary, and a "received" email
+  if (after !== 'draft' && after !== 'declined' && d.tier !== 't1' && !d.server.folderId) {
+    var made = createJobFolder_(d);
+    d.server.psr = made.psr; d.server.folderId = made.id; d.server.folderUrl = made.url; d.server.submittedAt = now_();
+    moveStagedFiles_(uid, pid, DriveApp.getFolderById(made.id));
+    writeSummary_(d, made.id, path);
+    changed = true;
+    queueEmail_('received', d, path);
+  }
+  if (before !== after) {
+    d.server.history = (d.server.history || []).concat([{status:after, at:now_()}]);
+    changed = true;
+    onStatus_(after, d, path);
+  }
+  if (changed) rawSet_(path, d);
+  upsertJob_(d, path);
+  syncIndex_(uid, d);
+}
+
+function setStatus_(path, status, extra) {
+  var d = rawGet_(path); if (!d) throw new Error('No such project');
+  var prev = JSON.parse(JSON.stringify(d));
+  d.status = status; d.updatedAt = now_();
+  if (extra) d = deepMerge_(d, extra);
+  rawSet_(path, d);
+  onProjectSaved_(path.split('/'), d, prev);
+  return d;
+}
+
+function onStatus_(status, d, path) {
+  if (status === 'confirmed') {
+    if (!d.server.depositEmailed) { queueEmail_('deposit', d, path); d.server.depositEmailed = true; }
+    if (d.measure && d.measure.want && !(d.server && d.server.asbuiltReceived)) {
+      queueEmail_('measuring_partner', d, path); queueEmail_('measuring_client', d, path);
+      // move straight on to the measuring stage
+      d.status = 'measuring'; d.server.history = (d.server.history || []).concat([{status:'measuring', at:now_()}]);
+    }
+  }
+  if (status === 'review') {
+    var r = pickReviewer_(d); d.admin = d.admin || {}; d.admin.reviewer = r.email;
+    sendInternal_(r.email, 'PermitSetReady: ' + (d.server.psr || '') + ' ready for review',
+      '<p>' + esc_(d.server.psr || '') + ' · ' + esc_(packageName_(d)) + ' · ' + esc_((d.property || {}).address || '') + '</p>' +
+      '<p>The drawings and the check report are in the job folder: <a href="' + d.server.folderUrl + '">open folder</a>.</p>' +
+      '<p><a href="' + site_() + '/start/#admin">Open the admin page</a> to approve or send it back with notes.</p>');
+  }
+  if (status === 'consultant') {
+    var c = pickConsultant_(d.admin && d.admin.consultant, 'structural');
+    if (c) { d.admin.consultant = c.Name; queueEmail_('consultant_transmittal', d, path, c); }
+    queueEmail_('consultant_client', d, path);
+  }
+  if (status === 'ready') {
+    if (d.payment && d.payment.balance) { // a revision for City comments: already paid, release straight away
+      d.status = 'delivered'; d.server.released = true; d.server.history = (d.server.history || []).concat([{status:'delivered', at:now_()}]);
+      queueEmail_('revised', d, path);
+    } else queueEmail_('ready', d, path);
+  }
+  if (status === 'delivered') { d.server.released = true; queueEmail_('delivered', d, path); }
+  if (status === 'revising') sendInternal_(digestTo_(), 'PermitSetReady: City comments uploaded for ' + (d.server.psr || ''), '<p>The client uploaded the examiner\'s comments. The drafting runner will pick up the revision.</p><p><a href="' + (d.server.folderUrl || '#') + '">Job folder</a></p>');
+}
+
+function onComments_(p) {
+  var path = p.slice(0, 4).join('/'), d = rawGet_(path);
+  if (d && ['delivered','ready'].indexOf(d.status) >= 0) setStatus_(path, 'revising', {server:{commentsAt:now_()}});
+}
+
+function createJobFolder_(d) {
+  var jobs = DriveApp.getFolderById(prop_('JOBS_FOLDER_ID'));
+  var yy = Utilities.formatDate(new Date(), TZ, 'yy'), max = 0, it = jobs.getFolders();
+  while (it.hasNext()) { var m = /^PSR-(\d\d)(\d\d)\b/.exec(it.next().getName()); if (m && m[1] === yy) max = Math.max(max, Number(m[2])); }
+  rows_('Jobs').forEach(function(r){ var m = /^PSR-(\d\d)(\d\d)$/.exec(r.PSR); if (m && m[1] === yy) max = Math.max(max, Number(m[2])); });
+  var psr = 'PSR-' + yy + ('0' + (max + 1)).slice(-2);
+  var c = d.contact || {}, pr = d.property || {};
+  var name = psr + ' - ' + (c.name || 'Client') + ' - ' + (pr.address || 'Address') + (pr.municipality ? ', ' + pr.municipality : '');
+  var folder = jobs.createFolder(name.replace(/[\\\/]/g, '-'));
+  var tpl = prop_('TEMPLATE_FOLDER_ID'); if (tpl) { try { copyTree_(DriveApp.getFolderById(tpl), folder); } catch (e) { log_('warn', 'copyTree', e); } }
+  ['Received','Photos','Survey','PDF','Consultant'].forEach(function(n){ subfolder_(folder, n); });
+  return {psr:psr, id:folder.getId(), url:folder.getUrl()};
+}
+function copyTree_(src, dest) {
+  var fs = src.getFiles(); while (fs.hasNext()) { var f = fs.next(); if (/\.\d{4}\.rvt$/i.test(f.getName())) continue; f.makeCopy(f.getName(), dest); }
+  var ds = src.getFolders(); while (ds.hasNext()) { var s = ds.next(); copyTree_(s, subfolder_(dest, s.getName())); }
+}
+function writeSummary_(d, folderId, path) {
+  var c = d.contact || {}, pr = d.property || {}, lines = [];
+  lines.push('PermitSetReady intake summary — ' + (d.server.psr || ''));
+  lines.push('Submitted: ' + Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'));
+  lines.push('Package: ' + packageName_(d) + '   Price: ' + money_(priceOf_(d)) + '   Deposit (40%): ' + money_(Math.round(priceOf_(d) * DEPOSIT_RATE)));
+  if (d.measure && d.measure.want) lines.push('Measuring visit requested: ' + (d.measure.sqft || '?') + ' sq ft, estimate ' + money_(measEst_(d)) + ' + HST');
+  lines.push('');
+  lines.push('Client: ' + (c.name || '') + ' · ' + (c.email || '') + ' · ' + (c.phone || ''));
+  lines.push('Property: ' + (pr.address || '') + ', ' + (pr.municipality || ''));
+  lines.push('');
+  lines.push('All answers:');
+  flatten_(d, '', lines, ['server','admin','screen','fileIndex','payment']);
+  if (d.screen && d.screen.rules) {
+    lines.push(''); lines.push('Pre-screen:');
+    (d.screen.rules.flags || []).forEach(function(f){ lines.push('  [' + f.sev + '] ' + f.item + ': ' + f.text); });
+    (d.screen.rules.ok || []).forEach(function(t){ lines.push('  [ok] ' + t); });
+  }
+  lines.push(''); lines.push('Portal record: ' + path);
+  DriveApp.getFolderById(folderId).createFile('00 - Intake Summary.txt', lines.join('\n'), MimeType.PLAIN_TEXT);
+}
+function flatten_(o, pre, out, skip) {
+  Object.keys(o || {}).forEach(function(k){
+    if (!pre && skip.indexOf(k) >= 0) return;
+    var v = o[k], key = pre ? pre + '.' + k : k;
+    if (v && typeof v === 'object' && !Array.isArray(v)) flatten_(v, key, out, skip);
+    else if (v !== '' && v !== null && v !== undefined && v !== false) out.push('  ' + key + ': ' + (Array.isArray(v) ? v.join(', ') : v));
+  });
+}
+
+function upsertJob_(d, path) {
+  var sh = sh_('Jobs'), c = d.contact || {}, pr = d.property || {}, s = d.server || {}, a = d.admin || {};
+  if (!s.psr && d.tier !== 't1' && (d.status || 'draft') === 'draft') return; // drafts stay out of the job list
+  var price = priceOf_(d);
+  var row = [s.psr || '', c.name || '', c.email || '', c.phone || '', pr.address || '', pr.municipality || '', packageName_(d), price, Math.round(price * DEPOSIT_RATE),
+    (d.measure && d.measure.want) ? measEst_(d) : '', STATUS_LABEL[d.status] || d.status, a.reviewer || '', a.consultant || '', a.needsEngineer ? 'Yes' : '', s.folderUrl || '', new Date(), path];
+  var last = sh.getLastRow(), r = 0;
+  if (last >= 2) { var f = sh.getRange(2, 17, last - 1, 1).createTextFinder(path).matchEntireCell(true).findNext(); if (f) r = f.getRow(); }
+  if (r) sh.getRange(r, 1, 1, row.length).setValues([row]); else sh.appendRow(row);
+}
+function syncIndex_(uid, d) {
+  var ip = 'intakes/' + uid, idx = rawGet_(ip) || {owner:uid, projects:[]};
+  var list = (idx.projects || []).filter(function(x){ return x.id !== d.id; });
+  list.push({id:d.id, address:(d.property || {}).address || '', municipality:(d.property || {}).municipality || '', scopeName:scopesOf_(d).map(function(k){ return SCOPES[k]; }).join(' + ') || 'Project', tier:d.tier || '', status:d.status || 'draft', updatedAt:d.updatedAt || now_(), contactName:(d.contact || {}).name || ''});
+  list.sort(function(a, b){ return a.updatedAt < b.updatedAt ? 1 : -1; });
+  idx.projects = list; idx.updatedAt = now_();
+  rawSet_(ip, idx);
+}
+
+function pickReviewer_(d) {
+  var list = rows_('Reviewers').filter(function(r){ return r.Email && String(r.Active).toUpperCase() !== 'FALSE'; });
+  var types = scopesOf_(d);
+  list = list.filter(function(r){ var t = String(r['Project types (blank = all)'] || '').toLowerCase(); return !t || types.some(function(k){ return t.indexOf(k) >= 0 || t.indexOf(SCOPES[k].toLowerCase()) >= 0; }); });
+  if (!list.length) return {email:digestTo_()};
+  list.sort(function(a, b){ return new Date(a['Last assigned'] || 0) - new Date(b['Last assigned'] || 0); });
+  var r = list[0]; sh_('Reviewers').getRange(r._row, 6).setValue(new Date());
+  return {email:String(r.Email)};
+}
+function pickConsultant_(name, discipline) {
+  var list = rows_('Consultants').filter(function(r){ return r.Email && String(r.Active).toUpperCase() !== 'FALSE'; });
+  var want = name || setting_(discipline === 'measuring' ? 'MEASURING_PARTNER' : 'DEFAULT_ENGINEER');
+  return list.filter(function(r){ return r.Name === want; })[0] || list.filter(function(r){ return String(r.Discipline).toLowerCase() === discipline; })[0] || null;
+}
+
+// ---------------------------------------------------------------- payments (Lemon Squeezy)
+function payCheckout_(s, path, kind) {
+  var p = parts_(path); if (!canRead_(s, p) || !isProjectPath_(p)) throw new Error('Not allowed.');
+  var d = rawGet_(p.join('/')); if (!d) throw new Error('No such project');
+  if (d.tier === 't1') return {url:'https://permitready.lemonsqueezy.com/checkout/buy/f091900b-7226-460b-8305-c25e2d422423'};
+  var price = priceOf_(d), dep = Math.round(price * DEPOSIT_RATE), amt = kind === 'balance' ? price - dep : dep;
+  if (kind === 'balance' && d.status !== 'ready') throw new Error('The balance is due once your drawings are ready.');
+  if (kind !== 'balance' && ['screened'].indexOf(d.status) < 0) throw new Error('This project is not waiting for a deposit.');
+  var c = d.contact || {};
+  var body = {data:{type:'checkouts', attributes:{
+      custom_price: amt * 100,
+      product_options:{name:'PermitSetReady ' + (d.server && d.server.psr || '') + ' — ' + (kind === 'balance' ? 'balance' : 'deposit'), description:packageName_(d) + ' · ' + ((d.property || {}).address || ''), redirect_url: site_() + '/start/#project'},
+      checkout_data:{email:c.email || s.email, name:c.name || '', custom:{job_path:p.join('/'), kind:kind === 'balance' ? 'balance' : 'deposit'}}},
+    relationships:{store:{data:{type:'stores', id:String(prop_('LS_STORE_ID'))}}, variant:{data:{type:'variants', id:String(prop_('LS_VARIANT_ID'))}}}}};
+  var res = UrlFetchApp.fetch('https://api.lemonsqueezy.com/v1/checkouts', {method:'post', contentType:'application/vnd.api+json', headers:{Accept:'application/vnd.api+json', Authorization:'Bearer ' + prop_('LS_API_KEY')}, payload:JSON.stringify(body), muteHttpExceptions:true});
+  if (res.getResponseCode() >= 300) { log_('error', 'checkout', res.getContentText()); throw new Error('Payment page could not be created. Please try again shortly.'); }
+  return {url:JSON.parse(res.getContentText()).data.attributes.url, amount:amt};
+}
+
+function lsWebhook_(e) {
+  if (!prop_('LS_WEBHOOK_KEY') || e.parameter.key !== prop_('LS_WEBHOOK_KEY')) return {ok:false};
+  var body = JSON.parse(e.postData.contents || '{}'), meta = body.meta || {}, data = body.data || {}, at = data.attributes || {};
+  var custom = meta.custom_data || {};
+  sh_('Orders').appendRow([new Date(), meta.event_name || '', data.id || '', at.user_email || '', at.first_order_item ? at.first_order_item.product_name : '', at.total_formatted || '', custom.job_path || '', custom.kind || '']);
+  if (meta.event_name !== 'order_created' || !custom.job_path) return {ok:true};
+  // Never trust the webhook body alone: read the order back from Lemon Squeezy.
+  var res = UrlFetchApp.fetch('https://api.lemonsqueezy.com/v1/orders/' + encodeURIComponent(data.id), {headers:{Accept:'application/vnd.api+json', Authorization:'Bearer ' + prop_('LS_API_KEY')}, muteHttpExceptions:true});
+  if (res.getResponseCode() !== 200) { log_('warn', 'webhook', 'order lookup failed ' + data.id); return {ok:true}; }
+  var order = JSON.parse(res.getContentText()).data.attributes;
+  if (order.status !== 'paid') return {ok:true};
+  var lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    var path = custom.job_path, d = rawGet_(path); if (!d) return {ok:true};
+    var rec = {orderId:data.id, paidAt:now_(), total:order.total, totalFormatted:order.total_formatted};
+    if (custom.kind === 'balance') setStatus_(path, 'delivered', {payment:{balance:rec}});
+    else if (d.status === 'screened') setStatus_(path, 'confirmed', {payment:{deposit:rec}});
+    else { d.payment = d.payment || {}; d.payment.deposit = rec; rawSet_(path, d); }
+  } finally { lock.releaseLock(); }
+  return {ok:true};
+}
+
+// ---------------------------------------------------------------- drafting runner API
+function runner_(req) {
+  if (!prop_('RUNNER_KEY') || req.key !== prop_('RUNNER_KEY')) throw new Error('Not allowed.');
+  if (req.action === 'runner.jobs') {
+    // Jobs ready for the runner: deposit in and (no measuring, or as-built received), or City comments to address, or sent back by review.
+    var out = [];
+    rows_('Jobs').forEach(function(r){
+      var d = rawGet_(r.Path); if (!d) return;
+      var s = d.server || {}, ready = (d.status === 'confirmed' && (!(d.measure && d.measure.want) || s.asbuiltReceived)) || d.status === 'revising' || (d.status === 'drafting' && s.sentBack);
+      if (ready) out.push({path:r.Path, psr:s.psr, status:d.status, folderId:s.folderId, folderUrl:s.folderUrl, package:packageName_(d), tier:d.tier, scopes:scopesOf_(d), address:(d.property || {}).address, municipality:(d.property || {}).municipality, reviewNotes:(d.admin || {}).reviewNotes || '', needsEngineer:!!(d.admin || {}).needsEngineer});
+    });
+    return {jobs:out};
+  }
+  if (req.action === 'runner.get') return {data:rawGet_(req.path)};
+  if (req.action === 'runner.update') {
+    var lock = LockService.getScriptLock(); lock.waitLock(20000);
+    try {
+      var extra = {server:{runnerNote:req.note || '', runnerAt:now_(), sentBack:false}};
+      if (req.needsEngineer) extra.admin = {needsEngineer:true};
+      var d2 = setStatus_(req.path, req.status, extra);
+      return {status:d2.status};
+    } finally { lock.releaseLock(); }
+  }
+  throw new Error('Unknown runner action');
+}
+
+// ---------------------------------------------------------------- watchers and digest
+function hourlyWatch() {
+  rows_('Jobs').forEach(function(r){
+    try {
+      var d = rawGet_(r.Path); if (!d || !d.server || !d.server.folderId) return;
+      var folder = DriveApp.getFolderById(d.server.folderId);
+      if (d.status === 'measuring') {
+        var since = new Date(lastHistory_(d, 'measuring') || 0);
+        if (newFiles_(subfolder_(folder, 'Survey'), since) || newFiles_(subfolder_(folder, 'Received'), since, /as.?built/i)) {
+          setStatus_(r.Path, 'confirmed', {server:{asbuiltReceived:true}});
+        }
+      }
+      if (d.status === 'consultant') {
+        var since2 = new Date(lastHistory_(d, 'consultant') || 0);
+        if (newFiles_(subfolder_(subfolder_(folder, 'Consultant'), 'Returned'), since2)) setStatus_(r.Path, 'ready');
+      }
+    } catch (e) { log_('warn', 'hourlyWatch ' + r.PSR, e); }
+  });
+}
+function lastHistory_(d, status) { var h = (d.server && d.server.history) || []; for (var i = h.length - 1; i >= 0; i--) if (h[i].status === status) return h[i].at; return null; }
+function newFiles_(folder, since, rx) { var it = folder.getFiles(); while (it.hasNext()) { var f = it.next(); if (f.getDateCreated() > since && (!rx || rx.test(f.getName()))) return true; } return false; }
+
+function dailyDigest() {
+  var jobs = rows_('Jobs'), groups = {};
+  jobs.forEach(function(r){ (groups[r.Status] = groups[r.Status] || []).push(r); });
+  var drafts = 0; try { var lab = GmailApp.getUserLabelByName('PSR-Auto'); drafts = GmailApp.getDrafts().filter(function(d){ return d.getMessage().getThread().getLabels().some(function(l){ return l.getName() === 'PSR-Auto'; }); }).length; } catch (e) {}
+  var errs = rows_('Log').filter(function(l){ return l.Level === 'error' && new Date(l.Time) > new Date(Date.now() - 864e5); });
+  var html = '<p><b>' + drafts + '</b> prepared email(s) waiting in Drafts (label PSR-Auto).</p>';
+  ['In review','Submitted, awaiting deposit','Deposit received','Measuring visit','Drafting','With consultant','Ready, balance due','Revising for City comments'].forEach(function(g){
+    if (!groups[g]) return;
+    html += '<p style="margin:14px 0 4px"><b>' + g + '</b> (' + groups[g].length + ')</p><ul>' + groups[g].map(function(r){ return '<li>' + esc_(r.PSR) + ' · ' + esc_(r.Client) + ' · ' + esc_(r.Address) + ', ' + esc_(r.Municipality) + ' · ' + esc_(r.Package) + '</li>'; }).join('') + '</ul>';
+  });
+  if (errs.length) html += '<p style="color:#A33A2B"><b>' + errs.length + ' error(s) in the last day</b> — see the Log tab.</p>';
+  html += '<p><a href="' + site_() + '/start/#admin">Admin page</a> · <a href="' + ss_().getUrl() + '">Jobs sheet</a></p>';
+  sendInternal_(digestTo_(), 'PermitSetReady daily digest — ' + Utilities.formatDate(new Date(), TZ, 'EEE MMM d'), html);
+}
+
+// ---------------------------------------------------------------- email
+function site_() { return (prop_('SITE_URL') || 'https://permitsetready.ca').replace(/\/$/, ''); }
+function digestTo_() { return setting_('DIGEST_TO') || prop_('FROM_ALIAS') || Session.getEffectiveUser().getEmail(); }
+function fromOpts_(o) { var f = prop_('FROM_ALIAS'); var x = Object.assign({name:'PermitSetReady'}, o || {}); if (f) x.from = f; return x; }
+function esc_(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+function shell_(title, inner) {
+  return '<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#F6F1E8"><tr><td align="center" style="padding:24px 12px">' +
+    '<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#FFFFFF;border:1px solid #E8E0D2;border-radius:14px;font-family:Arial,Helvetica,sans-serif;color:#0E1F36">' +
+    '<tr><td style="background:#0E1F36;padding:18px 28px;border-radius:14px 14px 0 0"><img src="https://cdn.jsdelivr.net/gh/philip631/permitsetready@main/img/brand/permitsetready-logo-on-navy.png" alt="PermitSetReady" width="200" style="display:block;width:200px;height:auto;border:0"></td></tr>' +
+    '<tr><td style="padding:28px;font-size:16px;line-height:1.6"><h1 style="font-family:Georgia,serif;font-size:24px;margin:0 0 14px;color:#0E1F36">' + esc_(title) + '</h1>' + inner + '</td></tr>' +
+    '<tr><td style="padding:16px 28px 22px;border-top:1px solid #E8E0D2;font-size:13px;color:#5B6B7F"><a href="https://permitsetready.ca" style="color:#1F3A5F;font-weight:bold;text-decoration:none">permitsetready.ca</a> &nbsp;·&nbsp; <a href="mailto:admin@permitsetready.ca" style="color:#1F3A5F;font-weight:bold;text-decoration:none">admin@permitsetready.ca</a> &nbsp;·&nbsp; <a href="https://instagram.com/permitsetready" style="color:#1F3A5F;font-weight:bold;text-decoration:none">@permitsetready</a></td></tr>' +
+    '</table></td></tr></table>';
+}
+function button_(label, url) { return '<p style="margin:20px 0"><a href="' + url + '" style="display:inline-block;background:#E0A030;color:#0E1F36;font-weight:bold;text-decoration:none;padding:14px 26px;border-radius:10px">' + esc_(label) + ' &rarr;</a></p>'; }
+
+/** Builds a client- or consultant-facing email and either drafts it (default) or sends it, per the Settings tab. */
+function queueEmail_(type, d, path, consultant) {
+  try {
+    var c = d.contact || {}, s = d.server || {}, first = String(c.name || '').split(' ')[0] || 'there';
+    var portal = site_() + '/start/#project', addr = esc_((d.property || {}).address || ''), pkg = esc_(packageName_(d));
+    var price = priceOf_(d), dep = Math.round(price * DEPOSIT_RATE);
+    var to = c.email, subject = '', body = '';
+    if (type === 'received') {
+      subject = 'We received your project (' + (s.psr || 'PermitSetReady') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>Thanks for sending your project at ' + addr + '. Your package is <b>' + pkg + '</b> at a fixed price of <b>' + money_(price) + '</b> + HST.</p><p>To get started, pay the 40% deposit (' + money_(dep) + ') from your project page. You can follow every step there.</p>' + button_('Open my project', portal);
+    } else if (type === 'deposit') {
+      subject = 'Deposit received — your drawings are underway (' + (s.psr || '') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>Your deposit is in. ' + (d.measure && d.measure.want ? 'Our measuring partner will contact you to book the visit; drafting starts once the house is measured.' : 'Drafting starts now. Typical delivery is 7–10 business days.') + '</p>' + button_('Follow my project', portal);
+    } else if (type === 'measuring_client') {
+      subject = 'Booking your measuring visit (' + (s.psr || '') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>Our measuring partner will be in touch in the next few business days to book a time to measure the house at ' + addr + '. You picked: ' + esc_((d.brief || {}).measureWhen || 'any time') + '.</p>' + button_('Follow my project', portal);
+    } else if (type === 'measuring_partner') {
+      var mp = pickConsultant_(null, 'measuring'); to = mp ? mp.Email : digestTo_();
+      subject = 'Measuring request: ' + ((d.property || {}).address || '') + ', ' + ((d.property || {}).municipality || '') + ' (' + (s.psr || '') + ')';
+      body = '<p>Hello' + (mp ? ' ' + esc_(String(mp.Name).split(' ')[0]) : '') + ',</p><p>Please measure the existing house for a new project:</p><ul><li>Address: ' + addr + ', ' + esc_((d.property || {}).municipality || '') + '</li><li>Size: about ' + esc_((d.measure || {}).sqft || '?') + ' sq ft</li><li>Scope: ' + pkg + '</li><li>Client: ' + esc_(c.name || '') + ', ' + esc_(c.phone || '') + ', ' + esc_(c.email || '') + '</li><li>Preferred time: ' + esc_((d.brief || {}).measureWhen || 'any') + '</li></ul><p>Please upload the as-built to this folder when done: <a href="' + s.folderUrl + '">' + esc_(s.psr || 'job folder') + '</a> (Survey subfolder), or reply with a link.</p>';
+    } else if (type === 'consultant_transmittal') {
+      to = consultant.Email;
+      subject = (s.psr || 'PermitSetReady') + ': drawings for review and stamping — ' + ((d.property || {}).address || '');
+      body = '<p>Hello ' + esc_(String(consultant.Name).split(' ')[0]) + ',</p><p>Please review and stamp the attached set for ' + addr + ', ' + esc_((d.property || {}).municipality || '') + ' (' + pkg + ').</p><p>Drawings: <a href="' + s.folderUrl + '">job folder</a> (PDF subfolder). Please return the stamped set to the Consultant › Returned subfolder, or reply with your comments and fee.</p>';
+    } else if (type === 'consultant_client') {
+      subject = 'Your drawings are with the engineer (' + (s.psr || '') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>Your drawings passed our review and are now with the engineer for review and stamping. We\'ll let you know as soon as they\'re back.</p>' + button_('Follow my project', portal);
+    } else if (type === 'ready') {
+      subject = 'Your permit drawings are ready (' + (s.psr || '') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>Your drawings for ' + addr + ' are ready. Pay the balance (' + money_(price - dep) + ' + HST) on your project page and the download unlocks right away, with your submission checklist.</p>' + button_('Pay and download', portal);
+    } else if (type === 'delivered') {
+      subject = 'Download your permit set (' + (s.psr || '') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>Thank you. Your permit set is ready to download from your project page, along with the checklist for applying to ' + esc_((d.property || {}).municipality || 'the City') + '.</p><p>If the examiner sends comments, upload them on the same page and we\'ll revise the drawings (one round included).</p>' + button_('Download my drawings', portal);
+    } else if (type === 'revised') {
+      subject = 'Your revised drawings are ready (' + (s.psr || '') + ')';
+      body = '<p>Hi ' + esc_(first) + ',</p><p>We\'ve revised your drawings for the examiner\'s comments. Download them from your project page and resubmit.</p>' + button_('Download revised drawings', portal);
+    } else return;
+    if (!to) return;
+    var html = shell_(subject.replace(/ \(PSR-\d+\)$/, ''), body);
+    var mode = (setting_('SEND_MODE_' + type) || 'draft').toLowerCase();
+    if (mode === 'send') GmailApp.sendEmail(to, subject, html.replace(/<[^>]+>/g, ' '), fromOpts_({htmlBody:html}));
+    else {
+      var draft = GmailApp.createDraft(to, subject, html.replace(/<[^>]+>/g, ' '), fromOpts_({htmlBody:html}));
+      var lab = GmailApp.getUserLabelByName('PSR-Auto') || GmailApp.createLabel('PSR-Auto');
+      try { draft.getMessage().getThread().addLabel(lab); } catch (e) {}
+    }
+    sh_('Emails').appendRow([new Date(), type, to, subject, mode, s.psr || path]);
+  } catch (err) { log_('error', 'email ' + type, err); }
+}
+function sendInternal_(to, subject, inner) {
+  try { GmailApp.sendEmail(to, subject, inner.replace(/<[^>]+>/g, ' '), fromOpts_({htmlBody:shell_(subject, inner)})); } catch (e) { log_('error', 'internal email', e); }
+}
