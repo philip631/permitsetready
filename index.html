@@ -2,430 +2,100 @@
 <html lang="en-CA">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PermitSetReady — Ontario residential permit drawings, drafted in Revit</title>
-<meta name="description" content="Fixed-price permit drawings for Ontario design firms, contractors and homeowners. White-label Revit drafting in 7–10 business days, checked against zoning and the 2024 Ontario Building Code.">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PermitSetReady — permit drawings for Ontario homes</title>
+<meta name="description" content="Fixed-price permit drawings for Ontario homeowners, design firms, contractors and engineers. Modelled in BIM software and checked against zoning and the 2024 Ontario Building Code. Delivered in 7–10 business days.">
 <link rel="canonical" href="https://permitsetready.ca/">
-<meta property="og:title" content="PermitSetReady — permit drawings, drafted in Revit">
-<meta property="og:description" content="Fixed price per job, drafted to your standards, delivered in 7–10 business days. Serving the GTA.">
+<meta property="og:title" content="PermitSetReady — from a sketch to a permit-ready set">
+<meta property="og:description" content="Fixed-price permit drawings for Ontario homes. 7–10 business days.">
 <meta property="og:image" content="https://permitsetready.ca/img/hero-sketch.jpg">
 <meta property="og:url" content="https://permitsetready.ca/">
-<link rel="icon" href="img/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet">
-<style>
-:root{
-  --navy:#1F3A5F; --navy-deep:#142A47; --navy-ink:#0E1F36; --ink:#17212E; --amber:#E0A030; --amber-deep:#C98A1E; --amber-soft:#FBF3E2;
-  --paper:#F7F8FA; --card:#FFFFFF; --line:#E2E6EC; --muted:#5B6878; --muted-2:#8A96A6; --mint:#D9EDE4;
-  --max:1160px; --r:14px;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ink);background:var(--paper);line-height:1.5;-webkit-font-smoothing:antialiased}
-a{color:var(--navy)}
-img{max-width:100%;height:auto;display:block}
-h1,h2,h3{margin:0;letter-spacing:-0.015em;line-height:1.15}
-.serif{font-family:Fraunces,Georgia,serif;font-weight:600;letter-spacing:-0.01em}
-.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
-.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--amber-deep);margin:0 0 12px;display:flex;align-items:center;gap:10px}
-.eyebrow::before{content:"";width:22px;height:3px;background:var(--amber);border-radius:2px}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 22px;border-radius:10px;font-weight:700;text-decoration:none;font-size:16px;transition:transform .12s,box-shadow .12s,background .12s;border:1px solid transparent;white-space:nowrap}
-.btn:hover{transform:translateY(-1px)}
-.btn-amber{background:var(--amber);color:var(--ink)}.btn-amber:hover{background:#EBAE43;box-shadow:0 8px 24px rgba(224,160,48,.35)}
-.btn-navy{background:var(--navy);color:#fff}.btn-navy:hover{background:var(--navy-deep);box-shadow:0 8px 24px rgba(31,58,95,.3)}
-.btn-ghost{border-color:rgba(255,255,255,.4);color:#fff;backdrop-filter:blur(4px)}.btn-ghost:hover{background:rgba(255,255,255,.1)}
-.btn-line{border-color:var(--line);color:var(--navy);background:#fff}.btn-line:hover{border-color:var(--navy)}
-
-/* header */
-header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
-nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 0}
-.logo{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--navy);font-size:21px;letter-spacing:-0.02em}
-.logo b{font-weight:800}.logo span{font-weight:400}
-.logo img{width:34px;height:34px;border-radius:8px}
-footer .logo img{width:26px;height:26px}
-.menu{display:flex;align-items:center;gap:26px;font-size:15px;font-weight:500}
-.menu a{color:var(--ink);text-decoration:none}.menu a:hover{color:var(--navy)}
-.menu .btn{padding:10px 18px;font-size:15px}
-.burger{display:none;background:none;border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;cursor:pointer}
-@media (max-width:860px){
-  .menu{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border-bottom:1px solid var(--line);flex-direction:column;align-items:flex-start;padding:16px 20px;gap:14px}
-  .menu.open{display:flex}.burger{display:block}
-}
-
-/* hero */
-.hero{position:relative;color:#fff;overflow:hidden;background:var(--navy-ink);padding:0}
-.hero .bg{position:absolute;inset:0;background:url(img/hero-sketch.jpg) right center/cover no-repeat;opacity:.95}
-.hero::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(14,31,54,.96) 0%,rgba(14,31,54,.9) 40%,rgba(14,31,54,.35) 62%,rgba(14,31,54,.08) 100%),linear-gradient(180deg,rgba(14,31,54,0) 60%,rgba(14,31,54,.9) 100%)}
-.hero .wrap{position:relative;z-index:1;padding-top:104px;padding-bottom:110px;max-width:var(--max)}
-.hero .eyebrow{color:#F3C978}.hero .eyebrow::before{background:#F3C978}
-.hero h1{font-size:clamp(38px,5.4vw,64px);font-weight:600;max-width:12ch;line-height:1.05}
-.hero h1 em{font-style:italic;color:#F3C978}
-.hero .lead{font-size:19px;color:#D6DEE9;max-width:520px;margin:22px 0 30px}
-.hero .cta{display:flex;flex-wrap:wrap;gap:12px}
-.hero .fine{margin:22px 0 0;font-size:14px;color:#AEBBCD}
-.strip{position:relative;z-index:1;background:rgba(255,255,255,.06);border-top:1px solid rgba(255,255,255,.12);backdrop-filter:blur(8px)}
-.strip .wrap{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;padding:22px 20px}
-.strip b{display:block;font-size:24px;font-weight:800;letter-spacing:-0.02em;color:#fff}
-.strip span{font-size:13.5px;color:#C3CEDC}
-@media (max-width:860px){.hero .wrap{padding-top:64px;padding-bottom:70px}.hero .bg{opacity:.35}.strip .wrap{grid-template-columns:1fr 1fr}}
-
-/* sections */
-section{padding:84px 0}
-.section-head{max-width:760px;margin-bottom:40px}
-.section-head h2{font-size:clamp(30px,3.6vw,42px);font-weight:600}
-.section-head p{font-size:17px;color:var(--muted);margin:14px 0 0}
-
-/* audience split */
-.split{display:grid;grid-template-columns:1fr 1fr;border-radius:20px;overflow:hidden;box-shadow:0 24px 60px rgba(23,33,46,.12)}
-.pane{padding:52px 48px;display:flex;flex-direction:column;gap:16px;position:relative}
-.pane.navy{background:linear-gradient(160deg,var(--navy) 0%,var(--navy-deep) 100%);color:#fff}
-.pane .eyebrow{padding-right:84px}
-.pane.navy .eyebrow{color:#F3C978}.pane.navy .eyebrow::before{background:#F3C978}
-.pane.navy h3{color:#fff}.pane.navy p{color:#C9D4E2}.pane.navy li{color:#E4EAF2}
-.pane.amber{background:linear-gradient(160deg,#FBF3E2 0%,#F4E3BF 100%)}
-.pane h3{font-size:30px;font-weight:600}
-.pane p{margin:0;font-size:16.5px;color:var(--muted)}
-.pane ul{margin:4px 0 0;padding:0;list-style:none;display:grid;gap:10px;font-size:15.5px;color:#3F4D5A}
-.pane li{padding-left:28px;position:relative}
-.pane li::before{content:"";position:absolute;left:0;top:3px;width:18px;height:18px;border-radius:50%;background:var(--amber);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2317212E' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E");background-size:11px;background-repeat:no-repeat;background-position:center}
-.pane .foot{margin-top:auto;padding-top:14px}
-.pane .glyph{position:absolute;right:28px;top:28px;width:64px;height:64px;opacity:.9}
-@media (max-width:860px){.split{grid-template-columns:1fr}.pane{padding:36px 26px}.pane .glyph{width:48px;height:48px}}
-
-/* timeline */
-.timeline{list-style:none;padding:0;margin:0;position:relative;display:grid;grid-template-columns:repeat(4,1fr);gap:24px;margin-top:8px}
-.timeline::before{content:"";position:absolute;left:4%;right:4%;top:22px;height:3px;background:linear-gradient(90deg,var(--amber),#F3C978);border-radius:2px}
-.step{position:relative;padding-top:60px}
-.step .dot{position:absolute;left:0;top:6px;width:36px;height:36px;border-radius:50%;background:var(--navy);color:#fff;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 6px var(--paper)}
-.step .when{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--amber-deep)}
-.step h3{font-size:20px;margin:6px 0 8px;font-weight:700}
-.step p{margin:0;font-size:15px;color:var(--muted)}
-@media (max-width:860px){.hero .bg{background-position:58% center}.hero::after{background:linear-gradient(180deg,rgba(14,31,54,.82) 0%,rgba(14,31,54,.7) 55%,rgba(14,31,54,.92) 100%)}}
-@media (max-width:860px){.timeline{grid-template-columns:1fr;gap:22px;padding-left:52px;margin-top:4px}.timeline::before{left:17px;right:auto;top:6px;bottom:6px;width:3px;height:auto}.step{padding-top:0;padding-bottom:6px}.step .dot{left:-52px;top:0}}
-
-/* pricing */
-.pricing{background:#fff;border-top:1px solid var(--line);border-bottom:1px solid var(--line);position:relative}
-.pricing::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(31,58,95,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(31,58,95,.04) 1px,transparent 1px);background-size:40px 40px;mask-image:linear-gradient(to bottom,#000,transparent 70%)}
-.pricing .wrap{position:relative}
-.plans{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start}
-.plan{background:#fff;border:1px solid var(--line);border-radius:18px;padding:34px;position:relative;box-shadow:0 10px 30px rgba(23,33,46,.05)}
-.plan.featured{border-color:var(--amber);box-shadow:0 20px 50px rgba(224,160,48,.18)}
-.plan .tag{position:absolute;top:-14px;left:28px;background:var(--amber);color:var(--ink);font-size:12px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:6px 12px;border-radius:999px}
-.plan h3{font-size:24px;font-weight:700}
-.plan .sub{color:var(--muted);font-size:15px;margin:6px 0 20px}
-.plan ul{list-style:none;margin:0;padding:0;display:grid}
-.plan li{display:flex;justify-content:space-between;gap:16px;padding:12px 0;border-top:1px solid var(--line);font-size:16px}
-.plan li b{font-variant-numeric:tabular-nums;white-space:nowrap}
-.plan li.quote span{color:var(--muted)}
-.plan .foot{margin-top:18px;padding:14px 16px;border-radius:10px;background:var(--amber-soft);font-size:14px;color:#5A4A2A}
-.plan .btn{margin-top:18px;width:100%;justify-content:center}
-.note{font-size:14px;color:var(--muted);margin:22px 0 0;max-width:760px}
-@media (max-width:860px){.plans{grid-template-columns:1fr}}
-
-/* work gallery */
-.work{background:var(--navy-ink);color:#fff}
-.work .section-head h2{color:#fff}.work .section-head p{color:#B9C6D8}
-.work .eyebrow{color:#F3C978}.work .eyebrow::before{background:#F3C978}
-.gallery{display:grid;grid-template-columns:1.4fr 1fr;grid-auto-rows:260px;gap:16px}
-.gallery figure{margin:0;position:relative;border-radius:14px;overflow:hidden;background:#1F3A5F;border:1px solid rgba(255,255,255,.1)}
-.gallery figure img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform .5s}
-.gallery figure.fit{background:#fff}.gallery figure.fit img{object-fit:contain;padding:12px 12px 44px}.gallery figure.fit figcaption{background:#F6F1E8;color:#1F3A5F;border-top:1px solid #E8E0D2;padding:10px 14px}
-.gallery figure:hover img{transform:scale(1.03)}
-.gallery figcaption{position:absolute;left:0;right:0;bottom:0;padding:14px 16px;font-size:13px;color:#fff;background:linear-gradient(180deg,rgba(14,31,54,0),rgba(14,31,54,.85))}
-.gallery .tall{grid-row:span 2}
-.specs{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 28px;margin:36px 0 0;padding:0;list-style:none;font-size:15px;color:#D6DEE9}
-.specs li{padding-left:22px;position:relative}
-.specs li::before{content:"";position:absolute;left:0;top:9px;width:10px;height:3px;background:var(--amber);border-radius:2px}
-@media (max-width:860px){.gallery{grid-template-columns:1fr;grid-auto-rows:250px}.gallery figure.fit img{padding-bottom:60px}.gallery .tall{grid-row:auto}.specs{grid-template-columns:1fr 1fr}}
-
-/* about */
-.about .wrap{display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center}
-.about figure{margin:0;border-radius:18px;overflow:hidden;position:relative;box-shadow:0 24px 60px rgba(23,33,46,.14)}
-.about figure::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.06);border-radius:18px}
-.about h2{font-size:clamp(28px,3.4vw,40px);font-weight:600}
-.about p{font-size:17px;color:var(--muted)}
-.about .quote{font-family:Fraunces,Georgia,serif;font-size:22px;line-height:1.35;color:var(--navy);border-left:4px solid var(--amber);padding-left:18px;margin:22px 0}
-@media (max-width:860px){.about .wrap{grid-template-columns:1fr}}
-
-/* tools */
-.tools{background:#fff;border-top:1px solid var(--line)}
-.grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:20px}
-.tool{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;display:flex;flex-direction:column;transition:box-shadow .15s,transform .15s}
-.tool:hover{box-shadow:0 18px 44px rgba(23,33,46,.1);transform:translateY(-2px)}
-.tool img{aspect-ratio:4/3;object-fit:cover;width:100%}
-.tool .body{padding:24px;display:flex;flex-direction:column;gap:10px;flex:1}
-.tool h3{font-size:21px;font-weight:700}
-.tool p{margin:0;color:var(--muted);font-size:15px}
-.tool .price{color:var(--ink);font-weight:700;font-size:16px}
-.tool .btn{margin-top:auto;align-self:flex-start}
-
-/* cta band */
-.band{background:linear-gradient(135deg,var(--navy) 0%,var(--navy-deep) 100%);color:#fff;border-radius:20px;padding:48px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:22px;position:relative;overflow:hidden}
-.band::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to left,#000,transparent 60%)}
-.band>*{position:relative}
-.band h2{font-size:clamp(24px,3vw,34px);font-weight:600}
-.band p{margin:8px 0 0;color:#C9D4E2;font-size:17px}
-
-/* homeowners */
-.home .wrap{display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:center}
-.home h2{font-size:clamp(26px,3vw,36px);font-weight:600}
-.home p{color:var(--muted);font-size:17px}
-.home .ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:20px}
-.home figure{margin:0;border-radius:var(--r);overflow:hidden;border:1px solid var(--line);box-shadow:0 14px 40px rgba(23,33,46,.08)}
-@media (max-width:860px){.home .wrap{grid-template-columns:1fr}}
-
-/* faq */
-details{background:#fff;border:1px solid var(--line);border-radius:12px;padding:0 22px;margin-bottom:10px}
-summary{cursor:pointer;font-weight:600;padding:18px 0;list-style:none;display:flex;justify-content:space-between;gap:12px}
-summary::-webkit-details-marker{display:none}
-summary::after{content:"+";color:var(--amber-deep);font-weight:800;font-size:20px;line-height:1}
-details[open] summary::after{content:"–"}
-details p{margin:0 0 18px;color:var(--muted);font-size:15.5px}
-
-footer{background:var(--navy-ink);color:#9FB0C6;font-size:14px}
-footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:14px;padding-top:30px;padding-bottom:30px}
-footer a{color:#fff;text-decoration:none}
-footer .logo{color:#fff;font-size:18px}
-</style>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
-
-<header>
-<div class="wrap">
-<nav aria-label="Main">
-  <a class="logo" href="#top" aria-label="PermitSetReady home"><img src="img/logo-icon.svg" alt="" width="34" height="34"><span><b>PermitSet</b>Ready</span></a>
-  <button class="burger" aria-expanded="false" aria-controls="menu" onclick="const m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">Menu</button>
-  <div class="menu" id="menu">
-    <a href="#firms">Design firms</a>
-    <a href="#contractors">Contractors</a>
-    <a href="#pricing">Pricing</a>
-    <a href="#work">The work</a>
-    <a href="#tools">Tools</a>
-    <a href="#homeowners">Homeowners</a>
-    <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/aad2baad-4ab8-4331-bb9b-67981e19e9a6">Book a job</a>
+<header class="site-header">
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a class="logo" href="/" aria-label="PermitSetReady home"><img src="/img/logo-icon-amber.svg" alt="" width="34" height="34"><span><b>PermitSet</b>Ready</span></a>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="menu" onclick="var m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">Menu</button>
+      <div class="menu" id="menu">
+        <a href="/homeowners/">For homeowners</a>
+        <a href="/professionals/">For professionals</a>
+        <a href="/start/#projects">Client login</a>
+        <a class="btn btn-amber btn-sm" href="/start/">Start a project</a>
+      </div>
+    </nav>
   </div>
-</nav>
-</div>
 </header>
 
-<section class="hero" id="top">
-<div class="bg" role="img" aria-label="Two-storey house at dusk, drawn and modelled in Revit"></div>
-<div class="wrap">
-  <p class="eyebrow">Ontario residential permit drafting · Part 9</p>
-  <h1 class="serif">Permit drawings, <em>drawn right</em> the first time.</h1>
-  <p class="lead">Fixed price per job, drafted in Revit to your office standards, delivered in 7–10 business days. You send the design; we send back the set.</p>
-  <div class="cta">
-    <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/aad2baad-4ab8-4331-bb9b-67981e19e9a6">Book a job — free, fixed quote</a>
-    <a class="btn btn-ghost" href="#pricing">See pricing</a>
-  </div>
-  <p class="fine">Basements · second units · below-grade entrances · decks · garages · additions</p>
-</div>
-<div class="strip"><div class="wrap">
-  <div><b>7–10</b><span>business days, standard</span></div>
-  <div><b>1 day</b><span>to a fixed quote</span></div>
-  <div><b>2024 OBC</b><span>and the local by-law, checked</span></div>
-  <div><b>15+</b><span>municipalities on file</span></div>
-</div></div>
-</section>
-
-<section>
-<div class="wrap">
-<div class="split">
-  <article class="pane navy" id="firms">
-    <svg class="glyph" viewBox="0 0 64 64" fill="none" stroke="#E0A030" stroke-width="3" aria-hidden="true"><rect x="8" y="10" width="48" height="44" rx="3"/><path d="M8 42h48M40 42v12M12 48h22M12 51h16"/><path d="M14 22h20M14 28h12M14 34h16"/></svg>
-    <p class="eyebrow">For design firms</p>
-    <h3 class="serif">Your design, your template, your name.<br>We just draft it.</h3>
-    <p>White-label drafting for when your queue is full. We set up your Revit template once, then draft every job to your office standards. You review, stamp and submit.</p>
-    <ul>
-      <li>Your title block, line styles, details and note blocks</li>
-      <li>Revit model and PDFs back in your shared folder</li>
-      <li>Confidential: we never contact your client or the municipality</li>
-      <li>One round of revisions included on every job</li>
-    </ul>
-    <div class="foot"><a class="btn btn-amber" href="#pricing">White-label pricing</a></div>
-  </article>
-  <article class="pane amber" id="contractors">
-    <svg class="glyph" viewBox="0 0 64 64" fill="none" stroke="#1F3A5F" stroke-width="3" aria-hidden="true"><circle cx="32" cy="32" r="22"/><circle cx="32" cy="32" r="14"/><path d="M24 32l6 6 10-12"/></svg>
-    <p class="eyebrow">For contractors and investors</p>
-    <h3 class="serif">Permit-ready drawings so your jobs don't wait.</h3>
-    <p>Send the layout and the existing drawings. We draw the permit set to scale and check it for zoning, the 2024 Building Code and missing notes before it reaches you.</p>
-    <ul>
-      <li>Fixed price, quoted within one business day</li>
-      <li>Checked against the by-law for the address</li>
-      <li>Designer of record and BCIN arranged where required</li>
-      <li>Volume pricing for repeat accounts</li>
-    </ul>
-    <div class="foot"><a class="btn btn-navy" href="#pricing">Contractor pricing</a></div>
-  </article>
-</div>
-</div>
-</section>
-
-<section id="how">
-<div class="wrap">
-<div class="section-head"><p class="eyebrow">How a job works</p><h2 class="serif">Four steps. No phone tag.</h2></div>
-<ol class="timeline">
-  <li class="step"><span class="dot">1</span><span class="when">Day 0</span><h3>Book</h3><p>Free checkout holds your slot. Reply to the receipt with a Drive or Dropbox link to the design, survey and deadline.</p></li>
-  <li class="step"><span class="dot">2</span><span class="when">Day 1</span><h3>Fixed quote</h3><p>Price and delivery date within one business day. Nothing starts and nothing is charged until you accept.</p></li>
-  <li class="step"><span class="dot">3</span><span class="when">Days 2–9</span><h3>Drafting</h3><p>Drawn in Revit, in your template or ours, with every assumption and open question listed.</p></li>
-  <li class="step"><span class="dot">4</span><span class="when">Day 10</span><h3>Delivery</h3><p>Model and PDFs in your shared folder. One round of revisions included; rush in 5 days.</p></li>
-</ol>
-</div>
-</section>
-
-<section class="pricing" id="pricing">
-<div class="wrap">
-<div class="section-head"><p class="eyebrow">Pricing</p><h2 class="serif">Fixed per job. No surprises.</h2><p>CAD, before tax. Larger or unusual work is quoted at $75/hour. Rush delivery (5 business days) +30%.</p></div>
-<div class="plans">
-  <article class="plan featured">
-    <span class="tag">Most firms start here</span>
-    <h3>White-label</h3>
-    <p class="sub">Drafted in your template. You review, stamp and submit.</p>
-    <ul>
-      <li><span>Basement finish</span><b>$600</b></li>
-      <li><span>Second unit (ARU)</span><b>$1,100</b></li>
-      <li><span>Below-grade entrance</span><b>$450</b></li>
-      <li><span>Detached garage</span><b>$500</b></li>
-      <li><span>Deck</span><b>$350</b></li>
-      <li class="quote"><span>Additions and new homes</span><b>$75/hr</b></li>
-    </ul>
-    <div class="foot">$300 template setup once, credited back on your third job.</div>
-    <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/aad2baad-4ab8-4331-bb9b-67981e19e9a6">Book a job</a>
-  </article>
-  <article class="plan">
-    <h3>Contractor set</h3>
-    <p class="sub">Drafted and checked by us, ready to file.</p>
-    <ul>
-      <li><span>Basement finish</span><b>$900</b></li>
-      <li><span>Second unit (ARU)</span><b>$1,600</b></li>
-      <li><span>Below-grade entrance</span><b>$600</b></li>
-      <li><span>Detached garage</span><b>$700</b></li>
-      <li><span>Deck</span><b>$450</b></li>
-      <li class="quote"><span>Additions and new homes</span><b>$75/hr</b></li>
-    </ul>
-    <div class="foot">Ask about volume pricing for repeat accounts.</div>
-    <a class="btn btn-navy" href="https://permitready.lemonsqueezy.com/checkout/buy/aad2baad-4ab8-4331-bb9b-67981e19e9a6">Book a job</a>
-  </article>
-</div>
-<p class="note">First job: 50% to start, balance on delivery. Following jobs are invoiced on delivery, due in 15 days.</p>
-</div>
-</section>
-
-<section class="work" id="work">
-<div class="wrap">
-<div class="section-head"><p class="eyebrow">The work</p><h2 class="serif">Drawn the way an examiner expects to read it.</h2><p>Real insulation, standard hatching, all-caps leader notes and the details a Part 9 set needs. Modelled in Revit, so elevations, sections and schedules all agree.</p></div>
-<div class="gallery">
-  <figure class="fit tall"><img src="img/deck-section.jpg" alt="Attached deck section with guard, ledger and footing notes"><figcaption>Attached deck section — guard, ledger and footing, OBC 9.8.8 and 9.12.2</figcaption></figure>
-  <figure class="fit"><img src="img/egress-section.jpg" alt="Basement bedroom egress window and window well section"><figcaption>Egress window and window well, OBC 9.9.10.1</figcaption></figure>
-  <figure class="fit"><img src="img/fire-separation.jpg" alt="Fire separation wall and ceiling assembly between dwelling units"><figcaption>Second-unit fire separation assemblies, OBC 9.10.9</figcaption></figure>
-  <figure class="fit"><img src="img/bge-section.jpg" alt="Below-grade entrance stair and areaway section"><figcaption>Below-grade entrance — stair, areaway and drainage</figcaption></figure>
-  <figure class="fit"><img src="img/garage-detail.jpg" alt="Detached garage wall section at the lot line"><figcaption>Detached garage, wall section at the lot line</figcaption></figure>
-</div>
-<ul class="specs">
-  <li>Footings and foundation details</li>
-  <li>Egress windows and wells</li>
-  <li>Fire separations for second units</li>
-  <li>Deck and guard details</li>
-  <li>Garage lintel and header tables</li>
-  <li>Zoning stats table on the site plan</li>
-</ul>
-</div>
-</section>
-
-<section class="about">
-<div class="wrap">
-  <figure><img src="img/about-desk.jpg" alt="Hands drafting a house section on trace paper with a scale rule"></figure>
-  <div>
-    <p class="eyebrow">Behind the drawings</p>
-    <h2 class="serif">Built by someone who knows what examiners look for.</h2>
-    <p class="quote">"Every comment an examiner writes is a day lost. We draw the set so there's nothing to write."</p>
-    <p>PermitSetReady is run by an Ontario residential designer with years on both sides of the permit counter. That's why the sets are drawn to pass review, not just to look finished: the right note in the right place, the by-law numbers checked for the address, the details the examiner actually asks for.</p>
-    <p>We stay behind the scenes. Your name goes on the drawings; ours doesn't.</p>
-  </div>
-</div>
-</section>
-
-<section class="tools" id="tools">
-<div class="wrap">
-<div class="section-head"><p class="eyebrow">Tools for your own office</p><h2 class="serif">The same review skills we run on every set.</h2><p>Skills for Claude that check Ontario residential drawings for zoning, the 2024 Building Code and missing notes, plus a short course on using them.</p></div>
-<div class="grid-3">
-  <article class="tool">
-    <img src="img/pack-hero.jpg" alt="PermitSetReady Review Pack">
-    <div class="body">
-      <h3>Permit Review Pack</h3>
-      <p>Zoning, OBC and drawing-review skills, with a sourced reference for 15 GTA municipalities, refreshed quarterly.</p>
-      <p class="price">$199 + $59 a quarter, or $249 once</p>
-      <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/eb954c79-347d-459d-a64f-6b284dae42ca">Get the Review Pack</a>
+<main>
+  <section class="hero doors">
+    <div class="bg" style="background-image:url(/img/hero-sketch.jpg)" role="img" aria-label="A rough floor plan sketch turning into a clean permit drawing"></div>
+    <div class="wrap inner">
+      <p class="eyebrow light">Ontario residential permit drawings</p>
+      <h1>From a sketch to a permit-ready set.</h1>
+      <p class="lead">Fixed-price drawings, modelled in BIM software and checked against zoning and the 2024 Ontario Building Code. Delivered in 7–10 business days.</p>
     </div>
-  </article>
-  <article class="tool">
-    <img src="img/course-hero.jpg" alt="AI-assisted permit QA course">
-    <div class="body">
-      <h3>AI-assisted permit QA course</h3>
-      <p>Three hours, four modules and an 8-sheet practice set with 11 planted deficiencies. Review Pack included.</p>
-      <p class="price">$199</p>
-      <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/2955997f-fe9f-46d9-8bf0-9b006ff8294f">Take the course</a>
-    </div>
-  </article>
-  <article class="tool">
-    <img src="img/guide-hero.jpg" alt="The Ontario Residential Permit Guide">
-    <div class="body">
-      <h3>The Ontario Residential Permit Guide</h3>
-      <p>40 pages on planning, drawing and filing a basement, second unit, deck or garage permit in the GTA, with 5 construction details.</p>
-      <p class="price">$59 · instant PDF</p>
-      <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/f091900b-7226-460b-8305-c25e2d422423">Buy the guide</a>
-    </div>
-  </article>
-</div>
-</div>
-</section>
+  </section>
 
-<section>
-<div class="wrap">
-<div class="band">
-  <div>
-    <h2 class="serif">Have a job waiting on drawings?</h2>
-    <p>Book a slot now and get a fixed price within one business day. No calls needed.</p>
+  <section class="wrap doors-wrap" aria-labelledby="who">
+    <h2 id="who">Who are you?</h2>
+    <div class="door-grid">
+      <a class="door light" href="/homeowners/">
+        <img src="/img/home-sketch-to-deck.jpg" alt="A rough hand sketch of a deck turning into a clean permit drawing" style="object-position:center 55%">
+        <div class="body">
+          <p class="eyebrow">I'm a homeowner</p>
+          <h3>Planning a basement, second unit, deck or garage?</h3>
+          <p class="desc">We prepare the drawings for your own permit application, and show you exactly what you submit to the City and when.</p>
+          <ul class="ticks">
+            <li>Permit guide from $59</li>
+            <li>Your sketch drawn to scale from $450</li>
+            <li>Clear answer on who files and who talks to the City</li>
+          </ul>
+          <span class="btn btn-amber go">Start my project →</span>
+        </div>
+      </a>
+      <a class="door dark" href="/professionals/">
+        <img src="/img/firm-desk.jpg" alt="A drafting desk with permit drawings and a 3D framing model on screen" style="object-position:center 40%">
+        <div class="body">
+          <p class="eyebrow">I'm a designer, contractor or engineer</p>
+          <h3>Your drafting team, in your title block.</h3>
+          <p class="desc">Permit sets, structural drawings, 3D models and shop drawings, drawn to your standards and delivered under your name.</p>
+          <ul class="ticks">
+            <li>Permit sets from $350 per job</li>
+            <li>Structural, 3D modelling and shop drawings</li>
+            <li>We never contact your client or the municipality</li>
+          </ul>
+          <span class="btn btn-amber go">See professional services →</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-block:56px 8px">
+    <div class="stats">
+      <div><b>7–10</b><span>business days, typical</span></div>
+      <div><b>Fixed</b><span>price per job, quoted up front</span></div>
+      <div><b>2024</b><span>Ontario Building Code</span></div>
+      <div><b>15+</b><span>municipalities on file</span></div>
+    </div>
+  </section>
+
+  <section class="wrap" style="padding-block:8px 64px">
+    <p class="small" style="margin-top:22px"><b style="color:var(--ink)">Service area:</b> Mississauga, Toronto, Oakville, Burlington, Brampton, Halton Hills, Innisfil, Barrie, Guelph, Kitchener, Hamilton and many more.</p>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap row">
+    <a class="logo" href="/"><img src="/img/logo-icon-amber.svg" alt="" width="28" height="28"><span><b>PermitSet</b>Ready</span></a>
+    <span>Ontario residential permit drawings</span>
+    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a></span>
   </div>
-  <a class="btn btn-amber" href="https://permitready.lemonsqueezy.com/checkout/buy/aad2baad-4ab8-4331-bb9b-67981e19e9a6">Book a job</a>
-</div>
-</div>
-</section>
-
-<section class="home" id="homeowners">
-<div class="wrap">
-  <div>
-    <p class="eyebrow">Homeowners</p>
-    <h2 class="serif">Planning your own basement, second unit or deck?</h2>
-    <p>Start with the guide, or answer a few questions in the app and we'll pre-screen your project, quote it, and draw it to scale for your permit application.</p>
-    <div class="ctas">
-      <a class="btn btn-navy" href="https://claude.ai/artifact/53coUwUxBofbmozvdpGtZG">Start your project</a>
-      <a class="btn btn-line" href="https://permitready.lemonsqueezy.com/checkout/buy/f091900b-7226-460b-8305-c25e2d422423">Get the $59 guide</a>
-    </div>
-  </div>
-  <figure><img src="img/home-deck.jpg" alt="Two-storey house with a covered deck and pergola"></figure>
-</div>
-</section>
-
-<section id="faq">
-<div class="wrap">
-<div class="section-head"><p class="eyebrow">Questions</p><h2 class="serif">Straight answers.</h2></div>
-<details><summary>Do you stamp or sign the drawings?</summary><p>No. For white-label work, you are the designer of record and your BCIN or seal goes on the set. For contractor sets we arrange the designer of record where the project needs one, and the price reflects it.</p></details>
-<details><summary>Which municipalities do you cover?</summary><p>Mississauga, Toronto, Oakville, Burlington, Brampton, Halton Hills, Innisfil, Barrie, Guelph, Kitchener, Hamilton and many more. If your project is in Ontario and under Part 9 of the Building Code, send it through.</p></details>
-<details><summary>What do you need from me to start?</summary><p>The design (sketch, markups or SD drawings with dimensions), the survey, any existing drawings for renovations, your deadline, and for firms, your Revit template and a recent permit set.</p></details>
-<details><summary>What if the examiner comes back with comments?</summary><p>One round of revisions is included on every job. Comments caused by our drafting are fixed at no charge; design changes after delivery are billed at $75/hour.</p></details>
-<details><summary>How is payment handled?</summary><p>First job: 50% to start, balance on delivery. After that, invoiced on delivery with 15-day terms. Booking is free; nothing is charged until you accept the quote.</p></details>
-</div>
-</section>
-
-<footer>
-<div class="wrap">
-  <a class="logo" href="#top"><img src="img/logo-icon.svg" alt="" width="26" height="26"><span><b>PermitSet</b>Ready</span></a>
-  <span>Ontario residential, Part 9 · Serving Mississauga, Caledon, Halton, York and Durham</span>
-  <span><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a> &nbsp;·&nbsp; <a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">Instagram @permitsetready</a></span>
-</div>
 </footer>
-
 </body>
 </html>
