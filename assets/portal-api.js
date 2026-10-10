@@ -59,10 +59,16 @@
     return self;
   }
 
+  // Back from a Stripe payment (?paid=<session id>): confirm it before the page loads its data.
+  var paidId = null; try { paidId = new URLSearchParams(location.search).get('paid'); } catch (e) {}
+  var confirmed = (paidId && API) ? call('pay.confirm', {session: paidId}).catch(function () {}).then(function () {
+    try { history.replaceState(null, '', location.pathname + location.hash); } catch (e) {}
+  }) : Promise.resolve();
+
   var mePromise = null;
   function me() {
     if (!token()) return Promise.resolve(null);
-    if (!mePromise) mePromise = call('auth.me').then(function (j) { return j.user; }).catch(function () { setToken(''); return null; });
+    if (!mePromise) mePromise = confirmed.then(function () { return call('auth.me'); }).then(function (j) { return j.user; }).catch(function () { setToken(''); return null; });
     return mePromise;
   }
 
