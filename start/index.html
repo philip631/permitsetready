@@ -509,7 +509,7 @@ var CHECKLIST={
   ['Window wells','A window below ground needs a well with drainage and room to open the window and climb out.','9.7.5'],
   ['Bedroom size','At least 9.8 m² (105 sq ft) if it is the only bedroom; 6.5 m² (70 sq ft) for each additional bedroom.','9.5.3.1'],
   ['Doorways','Clear width at least 800 mm (31½ in) for rooms and 700 mm (27½ in) for bathrooms.','9.5.9'],
-  ['Stairs to the basement','Each step rises 125–200 mm and has a run of at least 210 mm; headroom at least 1,950 mm; width at least 860 mm; a handrail where there are 3 or more risers, 865–965 mm high.','9.8'],
+  ['Stairs to the basement','Each step rises 125–200 mm and runs 255–355 mm, all steps equal; headroom at least 1,950 mm; width at least 860 mm; a handrail where there are more than 2 risers, 865–1,070 mm high.','9.8.4 / 9.8.7'],
   ['Smoke and CO alarms','Smoke alarm on the basement level, in each bedroom and outside sleeping areas, all interconnected; CO alarm where there is a fuel-burning appliance.','9.10.19 / 9.10.21'],
   ['Bathroom fan','Show an exhaust fan in each bathroom.','9.32.3'],
   ['Furnace room','Show the furnace, water heater and panel with clear access around them.','9.33']]},
@@ -521,20 +521,23 @@ var CHECKLIST={
   ['Separate alarms','Each unit has its own interconnected smoke alarms and a CO alarm.','9.10.19 / 9.10.21'],
   ['Laundry and parking','Note whether laundry is separate or shared. Parking follows your municipality’s zoning by-law; we check it on the site plan.','9.31 / zoning']]},
  bge:{t:'Below-grade entrance',i:[
-  ['Stairs','Each step rises 125–200 mm, runs at least 210 mm, width at least 860 mm, headroom at least 1,950 mm, a landing at the bottom.','9.8'],
-  ['Guards','A guard at least 1,070 mm (42 in) high around the open stairwell wherever the drop is more than 600 mm (24 in), with no opening a 100 mm (4 in) ball can pass through.','9.8.8'],
-  ['Handrail','A handrail where there are 3 or more risers, 865–965 mm high.','9.8.7'],
+  ['Stairs','Each step rises 125–200 mm and runs 255–355 mm, all steps equal; width at least 900 mm; headroom at least 1,950 mm; a landing at the bottom.','9.8.2 / 9.8.4'],
+  ['Guards','A guard around the open stairwell wherever the drop is more than 600 mm (24 in): at least 900 mm (36 in) high where the drop is 1,800 mm or less, 1,070 mm (42 in) where it is more, which covers most basement stairwells. No opening a 100 mm (4 in) ball can pass through, and nothing between 140 mm and 900 mm above the ground that a child could climb.','9.8.8.3 / 9.8.8.5 / 9.8.8.6'],
+  ['Handrail','A handrail where there are more than 3 risers (4 or more), 865–1,070 mm high.','9.8.7.1 / 9.8.7.4'],
   ['Drainage','A drain at the bottom of the stairwell, connected to the weeping tile or storm system.','9.14'],
   ['Retaining walls','Stairwell walls holding back soil may need an engineer’s design; we confirm this when we draw.','Part 4'],
   ['Side yard','Show the distance from the stairwell to the side lot line; many by-laws require a clear path to the rear yard. We check your municipality’s rule.','zoning']]},
  deck:{t:'Deck',i:[
-  ['Height','Note the height of the deck floor above the ground at its highest point. Above 600 mm (24 in) guards are required.','9.8.8.1'],
-  ['Guards','At least 1,070 mm (42 in) high on every open side, with no opening a 100 mm (4 in) ball can pass through.','9.8.8.3 / 9.8.8.4'],
-  ['Stairs','Each step rises 125–200 mm and runs at least 210 mm, all steps equal.','9.8.4.1'],
-  ['Handrail','A handrail on at least one side where there are 3 or more risers, 865–965 mm high.','9.8.7'],
-  ['Footings','Posts sit on footings below frost, about 1.2 m (4 ft) deep, or on approved helical piles. Mark the post locations on your sketch.','9.15'],
-  ['Attachment','Show whether the deck is attached to the house (ledger with flashing) or freestanding.','9.23 / 9.27'],
-  ['Cantilevers','A deck that extends more than 600 mm past a beam needs an engineer.','Part 4'],
+  ['Height','Note the height of the deck floor above the ground on each open side. A guard is needed on any side where the drop is more than 600 mm (24 in), or where the ground within 1.2 m (4 ft) of the deck slopes steeper than 1 in 2.','9.8.8.1'],
+  ['Guards','At least 900 mm (36 in) high where the deck is 1,800 mm (5 ft 11 in) or less above the ground, and 1,070 mm (42 in) where it is higher; 900 mm along stairs. No opening a 100 mm (4 in) ball can pass through.','9.8.8.3 / 9.8.8.5'],
+  ['Non-climbable guards','No rails, members or attachments between 140 mm and 900 mm above the deck that a child could climb. Horizontal-rail guards are a common reason for refusal.','9.8.8.6'],
+  ['Guard construction','Wood guards follow the standard guard details (SB-7). A prefab metal or glass railing needs details stamped by an Ontario-licensed engineer.','SB-7'],
+  ['Stairs','Each step rises 125–200 mm and runs 255–355 mm, all steps equal; each tread no deeper than the run plus 25 mm. Stairs at least 900 mm (36 in) wide.','9.8.2.1 / 9.8.4.1 / 9.8.4.2'],
+  ['Handrail','A handrail where the stair has more than 3 risers (4 or more), 865–1,070 mm high.','9.8.7.1 / 9.8.7.4'],
+  ['Footings','Posts sit on footings below frost, about 1.2 m (4 ft) deep, or on helical piles with an engineer’s design or a CCMC-evaluated product. A low freestanding deck (one storey, 55 m² or less, 600 mm or less from the ground to the underside of the joists, no roof, not attached to the house) does not need frost-depth footings. Mark the post locations on your sketch.','9.12.2.2'],
+  ['Attachment','Show whether the deck is attached to the house (ledger with flashing) or freestanding. A deck cannot be supported on brick veneer. A freestanding deck more than 600 mm (2 ft) above the ground needs bracing.','9.23 / 9.27.3'],
+  ['Wood near the ground','Lumber within 150 mm (6 in) of the ground must be rated for ground contact.','9.3.2'],
+  ['Cantilevers','Joists or beams that cantilever beyond the span tables or your municipality’s deck guide need an engineer’s design.','Part 4'],
   ['Distances','Show the distance from the deck to each lot line and to the house on your survey or sketch.','zoning']]},
  garage:{t:'Detached garage',i:[
   ['Permit size','A building permit is needed when the building is over 15 m² (161 sq ft). Smaller buildings may still need one if they have plumbing; we confirm with your municipality.','Div. C'],
@@ -577,7 +580,7 @@ function ruleScreen(it){var flags=[],ok=[];var excl=state.settings.excluded.inde
     ok.push('Below-grade entrance drawn with the stair, guard, door and drainage detail; structural lintel sized by us or your engineer.');}
   if(has(it,'deck')){var d=it.deck||{},da=deckArea(it);
     if(/Under 24/.test(d.height||'')&&/Freestanding/.test(d.attached||'')&&da<=10)flags.push({sev:'warn',item:'Permit may not be needed',text:'A freestanding deck under 0.6 m high and under 10 m² usually needs no building permit; zoning setbacks still apply. The Guide tier covers what to check.'});
-    else ok.push('Deck '+da+' m² at '+(d.height||'')+': a building permit is required; guards and stairs are detailed in the set.');
+    else ok.push('Deck '+da+' m²'+(d.height?' at '+d.height:'')+': a building permit is required; guards and stairs are detailed in the set.');
     if(/Over 6 ft/.test(d.height||''))flags.push({sev:'warn',item:'Height',text:'Over 1.8 m the guard, post and footing requirements step up and the deck may count toward lot coverage. Zoning to be verified.'});
     if(/Under 2 ft/.test(d.setback||''))flags.push({sev:'warn',item:'Setback',text:'Under 0.6 m to a lot line is below most by-law minimums for a deck over 0.6 m high.'});
     if(/Hot tub/.test(d.extras||''))flags.push({sev:'warn',item:'Hot tub',text:'A hot tub adds a large point load; the joists and footings under it are sized for it and an engineer may be required.'});
