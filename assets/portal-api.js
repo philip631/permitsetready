@@ -87,7 +87,13 @@
   // The project pages ask for 'db', 'user' and 'sample'. Without a login, db and user are null.
   window.claude = {
     use: function (name) {
-      if (name === 'sample') return Promise.resolve(null);
+      if (name === 'sample') return me().then(function (u) {
+        if (!u) return null;
+        return {
+          limits: function () { return Promise.resolve(null); },
+          json: function (prompt) { return call('ai.screen', {path: window.PSR_AI_PATH || '', prompt: prompt}).then(function (j) { return j.json; }); }
+        };
+      });
       return me().then(function (u) {
         if (!u) return null;
         if (name === 'db') return db;
