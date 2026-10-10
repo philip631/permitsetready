@@ -612,7 +612,7 @@ function runScreen(){var it=state.intake;var base=ruleScreen(it);var out=$('#run
 
 // ---------- result ----------
 function renderResult(){var it=state.intake,root=$('#result-root');if(!it||!it.screen){root.innerHTML='<div class="card"><p>No result yet.</p><button type="button" class="btn sm" data-go="intake">Start the pre-screen</button></div>';return;}
-  var r=it.screen.rules,ai=it.screen.ai;var flags=r.flags.slice();if(ai&&Array.isArray(ai.additionalFlags))ai.additionalFlags.forEach(function(f){if(f&&f.item)flags.push({sev:'warn',item:String(f.item),text:String(f.text||'')});});
+  var r=it.screen.rules,ai=it.screen.ai;var flags=r.flags.slice();if(ai&&Array.isArray(ai.additionalFlags))ai.additionalFlags.forEach(function(f){var it2=f&&(f.item||f.title||f.code),tx=f&&(f.text||f.message||f.note);if(it2||tx)flags.push({sev:'warn',item:String(it2||'Note').replace(/_/g,' ').toLowerCase().replace(/^./,function(c){return c.toUpperCase();}),text:String(tx||'')});});
   var eligible=r.eligible&&!flags.some(function(f){return f.sev==='bad';});
   var price=priceFor(it),dep=Math.round(price*0.4);var t=TIERS[it.tier].name;
   var head=eligible?'<span class="big"></span><div><h1 style="font-size:24px">You qualify for '+esc(t)+'</h1><span class="sub">'+esc(scopeName(it))+' · '+esc(it.property.address)+'</span></div>':'<span class="big b"></span><div><h1 style="font-size:24px">Not eligible as described</h1><span class="sub">'+esc(it.property.address)+'</span></div>';
