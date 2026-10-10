@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ontario Residential Permit Guide</title>
+<meta name="description" content="The Ontario Residential Permit Guide: 40 pages on planning, drawing and filing a basement, second unit, deck or garage permit, with 5 construction details. $59, instant PDF.">
+<link rel="canonical" href="https://permitsetready.ca/guide/">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+  .guide-box{max-width:760px;margin:0 auto;display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:center}
+  .guide-box img{width:100%;border-radius:12px;box-shadow:0 12px 30px rgba(14,31,54,.18)}
+  .guide-box .cta{display:flex;flex-direction:column;gap:10px;align-items:flex-start;margin-top:18px}
+  @media (max-width:640px){.guide-box{grid-template-columns:1fr}.guide-box img{max-width:220px}}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a class="logo" href="/" aria-label="PermitSetReady home"><img src="/img/logo-icon-amber.svg" alt="" width="34" height="34"><span><b>PermitSet</b>Ready</span></a>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="menu" onclick="var m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">Menu</button>
+      <div class="menu" id="menu">
+        <a href="/homeowners/">Homeowners</a>
+        <a href="/professionals/">Professionals</a>
+        <a class="btn btn-amber btn-sm" href="/start/">Start my project</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap section last">
+  <div class="guide-box">
+    <img src="/img/guide-hero.jpg" alt="The Ontario Residential Permit Guide">
+    <div>
+      <p class="eyebrow" id="g-eyebrow">The Ontario Residential Permit Guide</p>
+      <h1 id="g-title" style="font-size:clamp(28px,4vw,40px);margin:6px 0 10px">Plan, draw and file your own permit</h1>
+      <p class="muted" id="g-text">40 pages on planning, drawing and filing a basement, second unit, deck or garage permit, with 5 construction details. $59 · instant PDF.</p>
+      <div class="cta" id="g-cta">
+        <a class="btn btn-amber" data-buy="guide" href="mailto:admin@permitsetready.ca?subject=Permit%20Guide">Buy the guide · $59</a>
+        <span class="small">Secure card payment through Stripe.</span>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap row">
+    <a class="logo" href="/"><img src="/img/logo-icon-amber.svg" alt="" width="28" height="28"><span><b>PermitSet</b>Ready</span></a>
+    <span>Ontario residential permit drawings</span>
+    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a></span>
+  </div>
+</footer>
+<script src="/assets/config.js"></script>
+<script src="/assets/buy.js"></script>
+<script>
+(function () {
+  var API = (window.PSR_CONFIG && window.PSR_CONFIG.apiUrl) || '';
+  var s = null; try { s = new URLSearchParams(location.search).get('s'); } catch (e) {}
+  if (!s || !API) return;
+  var $ = function (id) { return document.getElementById(id); };
+  $('g-eyebrow').textContent = 'Thank you';
+  $('g-title').textContent = 'Your guide is ready';
+  $('g-text').textContent = 'We also emailed you this download link. It works for 60 days.';
+  $('g-cta').innerHTML = '<button type="button" class="btn btn-amber" id="g-dl">Download the guide (PDF)</button><span class="small" id="g-msg" role="status"></span>';
+  var post = function (body) { return fetch(API, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(body)}).then(function (r) { return r.json(); }); };
+  post({action: 'pay.confirm', session: s}).catch(function () {});
+  $('g-dl').onclick = function () {
+    var b = $('g-dl'), m = $('g-msg'); b.disabled = true; b.textContent = 'Preparing your download…'; m.textContent = '';
+    post({action: 'guide.download', session: s}).then(function (j) {
+      if (!j.ok) throw new Error(j.error);
+      var bin = atob(j.b64), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      var url = URL.createObjectURL(new Blob([arr], {type: j.mime})), a = document.createElement('a');
+      a.href = url; a.download = j.name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+      b.disabled = false; b.textContent = 'Download again';
+    }).catch(function (e) {
+      b.disabled = false; b.textContent = 'Try again';
+      m.textContent = (e && e.message) || 'The download could not start. Email admin@permitsetready.ca and we will send it.';
+    });
+  };
+})();
+</script>
+</body>
+</html>
