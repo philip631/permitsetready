@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /start/
+Disallow: /my-project/
+
+Sitemap: https://permitsetready.ca/sitemap.xml
