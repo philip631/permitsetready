@@ -221,7 +221,7 @@ input[type=number]{font:inherit;font-size:15px;padding:11px 13px;border:1px soli
               <label class="opt"><input type="checkbox" name="scope" value="bge"><span><b>Below-grade entrance</b><small>New exterior stair and door into the basement.</small></span></label>
               <label class="opt"><input type="checkbox" name="scope" value="deck"><span><b>Deck</b><small>Attached or freestanding, any height.</small></span></label>
               <label class="opt"><input type="checkbox" name="scope" value="garage"><span><b>Detached garage</b><small>New garage or workshop in the yard.</small></span></label>
-              <label class="opt"><input type="checkbox" name="scope" value="shed"><span><b>Shed, cabana, gazebo or pergola</b><small>Storage shed, pool cabana, studio, gazebo or pergola. Over 15 m², or with plumbing, needs a building permit; zoning applies at any size. Smaller? We can still draw it so you or your builder know exactly how to build it.</small></span></label>
+              <label class="opt"><input type="checkbox" name="scope" value="shed"><span><b>Shed, cabana, gazebo or pergola</b><small>Storage shed, pool cabana, studio, gazebo or pergola. Over 15 m², or with plumbing, needs a building permit; zoning applies at any size. Smaller, with no plumbing? We can still draw it so you or your builder know exactly how to build it: build drawings for $350.</small></span></label>
             </div></div>
           <div id="bge-block" class="hide" style="display:flex;flex-direction:column;gap:12px"><span class="eyebrow q">Below-grade entrance</span><div class="g2">
               <div class="f"><label class="l" for="e_where">Where on the house</label><select id="e_where" data-k="bge.where"><option>Side wall</option><option>Rear wall</option><option>Front wall</option><option>Not sure</option></select></div>
@@ -385,7 +385,8 @@ input[type=number]{font:inherit;font-size:15px;padding:11px 13px;border:1px soli
 (function(){
 'use strict';
 // ---------- constants ----------
-var PRICES={t1:{finish:59,unit:59,garage:59,shed:59,deck:59,bge:59},t2:{finish:1150,unit:1600,garage:900,shed:650,deck:800,bge:900},t3:{finish:1500,unit:2800,unitNew:3800,garage:1200,shed:900,deck:1000,bge:1100},measure:350,addonRate:0.6};
+var PRICES={t1:{finish:59,unit:59,garage:59,shed:59,deck:59,bge:59},t2:{finish:1150,unit:1600,garage:900,shed:650,deck:800,bge:900},t3:{finish:1500,unit:2800,unitNew:3800,garage:1200,shed:900,deck:1000,bge:1100},measure:350,addonRate:0.6,shedSmall:350};
+function smallOut(it){var a=outArea(it),pl=(it.out&&it.out.plumbing)||'None';return has(it,'shed')&&a>0&&a<=15&&pl==='None';}
 // Measuring (existing drawings) estimate: Philip's GDG Package Fee formula, 20% markup, travel from Hwy 403 & Hurontario (one-way km, approx.)
 var MEAS={base:820,freeSqft:2000,perSqft:0.2,elev:125,roof:60,perKm:0.85,site:400,markup:0.2};
 var MEAS_KM={'Mississauga':10,'Brampton':20,'Caledon':40,'Oakville':20,'Burlington':35,'Milton':30,'Halton Hills':35,'Vaughan':35,'Markham':50,'Richmond Hill':45,'Aurora':55,'Newmarket':60,'Pickering':60,'Ajax':65,'Whitby':75,'Oshawa':85,'Toronto':30,'Hamilton':55,'Innisfil':95,'Barrie':105,'Guelph':70,'Kitchener':90,'Other':60};
@@ -410,7 +411,7 @@ function statusLabel(s){var f=STATUS.filter(function(x){return x[0]===s;})[0];re
 function scopesOf(it){var a=Array.isArray(it&&it.scopes)?it.scopes.slice():(it&&it.scope?[it.scope]:[]);return SCOPE_ORDER.filter(function(k){return a.indexOf(k)>=0;});}
 function has(it,k){return scopesOf(it).indexOf(k)>=0;}
 function priceLines(it){var t=it.tier||'t2',sc=scopesOf(it),p=PRICES[t]||PRICES.t2,lines=[];if(t==='t1'){lines.push({label:'Permit Guide ('+sc.map(function(k){return SCOPES[k];}).join(' + ')+')',amount:(PRICES.t1[sc[0]]||59)});return lines;}
-  sc.forEach(function(k,i){var base=p[k]||0;if(k==='unit'&&t==='t3'&&!has(it,'bge')&&it.basement&&it.basement.entrance==='Only through the main house')base=PRICES.t3.unitNew;var amt=i===0?base:Math.round(base*PRICES.addonRate/50)*50;lines.push({label:SCOPES[k]+(i===0?'':' (add-on)'),amount:amt});});return lines;}
+  sc.forEach(function(k,i){var base=p[k]||0;if(k==='shed'&&smallOut(it))base=PRICES.shedSmall;if(k==='unit'&&t==='t3'&&!has(it,'bge')&&it.basement&&it.basement.entrance==='Only through the main house')base=PRICES.t3.unitNew;var amt=i===0?base:Math.round(base*PRICES.addonRate/50)*50;lines.push({label:SCOPES[k]+(k==='shed'&&smallOut(it)?' (under 15 m², build drawings)':'')+(i===0?'':' (add-on)'),amount:amt});});return lines;}
 function sheetList(it){var parts=[];if(isBase(it))parts.push('existing and proposed plans, section, notes');if(has(it,'bge'))parts.push('entrance plan, section and drainage');if(has(it,'deck'))parts.push('deck framing plan and guard detail');if(isOut(it))parts.push('foundation plan, elevations, section');if(needsSurvey(it)||has(it,'unit'))parts.push('site plan');return parts.join('; ');}
 function priceFor(it){return priceLines(it).reduce(function(a,l){return a+l.amount;},0);}
 function scopeName(it){return scopesOf(it).map(function(k){return SCOPES[k];}).join(' + ')||'Project';}
@@ -588,7 +589,7 @@ function ruleScreen(it){var flags=[],ok=[];var excl=state.settings.excluded.inde
     if(/Roof|pergola/.test(d.extras||''))flags.push({sev:'warn',item:'Roof',text:'A roof over the deck makes it a covered structure with its own coverage and height rules.'});
     if(/Yes, over a below-grade/.test(d.overEntrance||'')&&!has(it,'bge'))flags.push({sev:'warn',item:'Entrance below the deck',text:'The deck sits over an entrance that is not in this request. Add the below-grade entrance so both are coordinated in one set.'});}
   if(isOut(it)){var a=outArea(it),o=it.out||{};var nm=has(it,'garage')?'garage':'shed';
-    if(a>0&&a<=15)flags.push({sev:'warn',item:'Permit may not be needed',text:'At '+a+' m² (under 15 m²) Ontario does not require a building permit for a detached accessory building, but zoning setbacks and lot coverage still apply. We can still draw it for you: a custom design and build drawings (plan, section, framing and footing details) so you or your builder know exactly how to build it.'});
+    if(a>0&&a<=15)flags.push({sev:'warn',item:'Permit may not be needed',text:'At '+a+' m² (under 15 m²) Ontario does not require a building permit for a detached accessory building, but zoning setbacks and lot coverage still apply. We can still draw it for you: a custom design and build drawings (plan, section, framing and footing details) for $350, so you or your builder know exactly how to build it. Always confirm zoning (setbacks, height, lot coverage) with your city before you build.'});
     else if(a>0)ok.push('Footprint '+a+' m²: a building permit is required and this is a standard Part 9 accessory building.');
     if(a>55&&nm==='garage')flags.push({sev:'warn',item:'Size',text:'Over 55 m² the garage may need a fire-rated wall where it sits close to a lot line and extra structural detail. Confirm the municipal maximum accessory floor area.'});
     if(/Over 15 ft|two storeys/.test(o.height||''))flags.push({sev:'warn',item:'Height',text:'Most GTA by-laws cap accessory buildings near 4.5 m; two storeys or a tall loft usually needs a minor variance.'});
