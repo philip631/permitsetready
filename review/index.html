@@ -56,6 +56,7 @@
   </section>
 
   <section class="wrap section" id="plans">
+    <div class="card feature hide" id="course-banner" style="margin-bottom:22px;max-width:760px"><b>Course members: your first month of Starter is free.</b><span class="muted">3 set reviews, 30 days free, then $229 a month unless you cancel. Card required; cancel any time from "Billing and cancel".</span><div><button type="button" class="btn btn-amber" data-plan="starter">Start my free month</button></div></div>
     <div class="section-head"><h2>Launch prices</h2><p>Locked for 12 months for the first 10 firms. Prices in CAD plus HST.</p></div>
     <div class="grid-3 plans">
       <div class="card">
@@ -194,7 +195,9 @@
   if (sess) auth.session = sess; else if (store.get('psr_rv_token')) auth.token = store.get('psr_rv_token');
 
   // buying
-  var plan = null, names = {single: 'Single review · $99', starter: 'Starter · $229 a month', pro: 'Pro · $449 a month', extra: 'Extra set · $69'};
+  var course = null; try { course = new URLSearchParams(location.search).get('course'); } catch (e) {}
+  if (course) { $('course-banner').classList.remove('hide'); }
+  var plan = null, names = {single: 'Single review · $99', starter: course ? 'Starter · first month free' : 'Starter · $229 a month', pro: 'Pro · $449 a month', extra: 'Extra set · $69'};
   function openBuy(p) { plan = p; $('bm-title').textContent = names[p]; $('bm_msg').textContent = ''; $('bm_email').value = store.get('psr_rv_email') || ''; $('buy-modal').classList.remove('hide'); $('bm_email').focus(); }
   Array.prototype.forEach.call(document.querySelectorAll('[data-plan]'), function (b) { b.onclick = function () { openBuy(b.getAttribute('data-plan')); }; });
   $('bm_x').onclick = function () { $('buy-modal').classList.add('hide'); };
@@ -202,7 +205,7 @@
     var e = $('bm_email').value.trim(), b = $('bm_ok');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { $('bm_msg').textContent = 'Enter a valid email address.'; return; }
     store.set('psr_rv_email', e); b.disabled = true; b.textContent = 'Opening payment…';
-    post({action: 'review.checkout', plan: plan, email: e}).then(function (j) { location.href = j.url; })
+    post({action: 'review.checkout', plan: plan, email: e, course: (course && plan === 'starter') ? course : undefined}).then(function (j) { location.href = j.url; })
       .catch(function (err) { b.disabled = false; b.textContent = 'Continue to payment'; $('bm_msg').textContent = err.message; });
   };
 
