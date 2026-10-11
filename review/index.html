@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Permit Set Review</title>
+<meta name="description" content="Send a permit set before you submit it. A review report on zoning, the 2024 Ontario Building Code and the notes examiners ask for. $99 a set, or a monthly membership for your office.">
+<link rel="canonical" href="https://permitsetready.ca/review/">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+<style>
+  .plans .card{gap:10px}
+  .plans .price{font-size:34px;font-weight:800;color:var(--navy);line-height:1}
+  .plans .price small{font-size:15px;font-weight:600;color:var(--muted)}
+  .plans .was{font-size:13px;color:var(--muted)}
+  .plans ul{margin:4px 0 8px;padding-left:18px;font-size:15px}
+  .plans .btn{margin-top:auto;align-self:flex-start}
+  .rv-form{display:grid;gap:14px;max-width:640px}
+  .rv-form label{font-weight:600;font-size:14px;display:block;margin-bottom:4px}
+  .rv-form input,.rv-form select,.rv-form textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;box-sizing:border-box}
+  .rv-form textarea{min-height:90px}
+  .rv-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:640px){.rv-2{grid-template-columns:1fr}}
+  .rv-msg{min-height:20px;font-size:14px}
+  .rv-msg.err{color:#A33A2B}
+  .rv-hist{list-style:none;padding:0;margin:8px 0 0;font-size:14px}
+  .rv-hist li{padding:8px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .hide{display:none!important}
+  .modal{position:fixed;inset:0;background:rgba(14,31,54,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+  .modal .card{max-width:440px;width:100%}
+</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a class="logo" href="/" aria-label="PermitSetReady home"><img src="/img/logo-icon-amber.svg" alt="" width="34" height="34"><span><b>PermitSet</b>Ready</span></a>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="menu" onclick="var m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">Menu</button>
+      <div class="menu" id="menu">
+        <a href="/homeowners/">Homeowners</a>
+        <a href="/professionals/">Professionals</a>
+        <a class="btn btn-amber btn-sm" href="#upload">Send a set</a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="wrap section">
+    <p class="eyebrow">For designers, BCINs and builders</p>
+    <h1 style="font-size:clamp(30px,4.4vw,46px);margin:6px 0 12px;max-width:820px">Find the comments before the examiner does.</h1>
+    <p class="muted" style="font-size:17px;max-width:720px">Send a permit set before you submit it. You get back a report on zoning for the address, the 2024 Ontario Building Code, and the notes, dimensions and details examiners ask for, with each item tied to a sheet. Fix them, and send the revised set for one free re-check.</p>
+  </section>
+
+  <section class="wrap section" id="plans">
+    <div class="section-head"><h2>Launch prices</h2><p>Locked for 12 months for the first 10 firms. Prices in CAD plus HST.</p></div>
+    <div class="grid-3 plans">
+      <div class="card">
+        <span class="pill navy">One set</span>
+        <h3>Single review</h3>
+        <div class="price">$99 <small>per set</small></div><div class="was">Launch price</div>
+        <ul><li>Report in 2 business days</li><li>One free re-check within 30 days</li><li>No account needed</li></ul>
+        <button type="button" class="btn btn-line" data-plan="single">Buy a review</button>
+      </div>
+      <div class="card">
+        <span class="pill navy">Monthly</span>
+        <h3>Starter</h3>
+        <div class="price">$229 <small>a month</small></div><div class="was">Launch price</div>
+        <ul><li>Up to 3 sets a month (about $76 each)</li><li>Report in 2 business days</li><li>Re-check on every set · cancel any time</li></ul>
+        <button type="button" class="btn btn-line" data-plan="starter">Start Starter</button>
+      </div>
+      <div class="card feature">
+        <span class="pill">Most sets</span>
+        <h3>Pro</h3>
+        <div class="price">$449 <small>a month</small></div><div class="was">Launch price</div>
+        <ul><li>Up to 8 sets a month (about $56 each)</li><li>Report the next business day</li><li>Re-check on every set · cancel any time</li></ul>
+        <button type="button" class="btn btn-amber" data-plan="pro">Start Pro</button>
+      </div>
+    </div>
+    <p class="small" style="margin-top:14px">Members who need more in a month can add a set for $69. Unused reviews don't carry over. Secure card payment through Stripe.</p>
+  </section>
+
+  <section class="wrap section" id="checked">
+    <div class="grid-2">
+      <div class="card">
+        <h3>What the report covers</h3>
+        <ul style="margin:0;padding-left:18px">
+          <li>Zoning for the address: setbacks, height, coverage, GFA, parking, second-unit rules, and the by-law section for each</li>
+          <li>2024 OBC Part 9: stairs, guards, handrails, egress, ceiling heights, fire separations, smoke and CO alarms, spatial separation</li>
+          <li>Notes, dimensions and tags that don't agree between sheets</li>
+          <li>Details that don't match the plans and sections</li>
+          <li>What the municipality expects in the submission</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>What it isn't</h3>
+        <p class="muted" style="margin:0">A quality check to help your submission, not a permit approval, an engineering review or a design service. You stay the designer of record and decide what to change. Requirements vary by municipality, so always confirm with the city.</p>
+        <p class="small" style="margin:0">Sets are kept private, used only for your review, and never shown to anyone else.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section" id="upload">
+    <div class="section-head"><h2 id="up-title">Send a set</h2><p id="up-sub">Already bought a review or a membership? Sign in with your email to upload.</p></div>
+
+    <div id="up-login" class="card" style="max-width:640px">
+      <div class="rv-form">
+        <div><label for="lg_email">Email</label><input id="lg_email" type="email" autocomplete="email" placeholder="you@firm.ca"></div>
+        <div id="lg_code_row" class="hide"><label for="lg_code">6-digit code we emailed you</label><input id="lg_code" inputmode="numeric" autocomplete="one-time-code" maxlength="6"></div>
+        <div><button type="button" class="btn btn-amber" id="lg_btn">Email me a sign-in code</button></div>
+        <p class="rv-msg" id="lg_msg" role="status"></p>
+      </div>
+    </div>
+
+    <div id="up-box" class="hide">
+      <div class="card" style="max-width:640px;margin-bottom:18px">
+        <b id="st-line">Loading…</b>
+        <div id="st-extra" class="small"></div>
+      </div>
+      <form class="card rv-form" id="rv-form" style="max-width:640px" novalidate>
+        <div id="rc-row" class="hide"><label for="f_recheck">Is this a re-check?</label><select id="f_recheck"></select></div>
+        <div class="rv-2">
+          <div><label for="f_firm">Firm</label><input id="f_firm" autocomplete="organization"></div>
+          <div><label for="f_type">Project type</label><select id="f_type"><option>Second unit</option><option>Basement finish</option><option>Below-grade entrance</option><option>Addition</option><option>New house</option><option>Deck</option><option>Garage or accessory building</option><option>Interior alteration</option><option>Other</option></select></div>
+        </div>
+        <div class="rv-2">
+          <div><label for="f_addr">Project address</label><input id="f_addr" autocomplete="off" placeholder="12 Elm St"></div>
+          <div><label for="f_muni">Municipality</label><input id="f_muni" list="munis" placeholder="Brampton"></div>
+        </div>
+        <datalist id="munis"><option>Toronto</option><option>Mississauga</option><option>Brampton</option><option>Caledon</option><option>Oakville</option><option>Burlington</option><option>Milton</option><option>Halton Hills</option><option>Vaughan</option><option>Markham</option><option>Richmond Hill</option><option>Hamilton</option><option>Pickering</option><option>Ajax</option><option>Whitby</option><option>Oshawa</option><option>Barrie</option><option>Innisfil</option><option>Guelph</option><option>Kitchener</option></datalist>
+        <div><label for="f_file">Permit set (one PDF, up to 30 MB)</label><input id="f_file" type="file" accept="application/pdf,.pdf"></div>
+        <div><label for="f_link">Or a share link (Drive, Dropbox, WeTransfer) for larger sets, survey and city comments</label><input id="f_link" type="url" placeholder="https://"></div>
+        <div><label for="f_notes">Anything we should know (optional)</label><textarea id="f_notes" placeholder="e.g. resubmission after City comments, a variance already granted, the areas you're unsure about"></textarea></div>
+        <div><button type="submit" class="btn btn-amber" id="f_send">Send for review</button></div>
+        <p class="rv-msg" id="f_msg" role="status"></p>
+      </form>
+      <div class="card" style="max-width:640px;margin-top:18px" id="hist-box">
+        <b>Your reviews</b>
+        <ul class="rv-hist" id="hist"></ul>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px">
+          <button type="button" class="btn btn-line btn-sm hide" id="b_extra">Add a set ($69)</button>
+          <button type="button" class="btn btn-line btn-sm hide" id="b_billing">Billing and cancel</button>
+          <button type="button" class="btn btn-line btn-sm" id="b_out">Sign out</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="wrap section last" id="faq">
+    <div class="section-head"><h2>Questions</h2></div>
+    <div class="faq">
+      <details open><summary>Who does the review?</summary><p>An Ontario residential designer with years on both sides of the permit counter, using the same zoning and Code checklists we run on our own permit sets.</p></details>
+      <details><summary>What do I send?</summary><p>The full permit set as one PDF. A survey, the zoning certificate or any City comments help, so add a share link if you have them.</p></details>
+      <details><summary>How does the re-check work?</summary><p>Fix the items and send the revised set within 30 days. Pick the original review from the "Is this a re-check?" list and we check that each item was dealt with. One re-check per review, no charge.</p></details>
+      <details><summary>Can I cancel a membership?</summary><p>Yes, any time from "Billing and cancel" after you sign in. It runs to the end of the month you paid for.</p></details>
+      <details><summary>Do you keep my drawings?</summary><p>Only to do the review and the re-check. They are never shared, published or used in our marketing.</p></details>
+    </div>
+  </section>
+</main>
+
+<div class="modal hide" id="buy-modal" role="dialog" aria-modal="true" aria-labelledby="bm-title">
+  <div class="card">
+    <h3 id="bm-title">Your email</h3>
+    <p class="small" id="bm-sub" style="margin:0">We send the receipt and your report here.</p>
+    <div class="rv-form"><input id="bm_email" type="email" autocomplete="email" placeholder="you@firm.ca"></div>
+    <p class="rv-msg err" id="bm_msg" role="status"></p>
+    <div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn btn-line btn-sm" id="bm_x">Cancel</button><button type="button" class="btn btn-amber btn-sm" id="bm_ok">Continue to payment</button></div>
+  </div>
+</div>
+
+<footer class="site-footer">
+  <div class="wrap row">
+    <a class="logo" href="/"><img src="/img/logo-icon-amber.svg" alt="" width="28" height="28"><span><b>PermitSet</b>Ready</span></a>
+    <span>Ontario residential permit drawings</span>
+    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a></span>
+  </div>
+</footer>
+<script src="/assets/config.js"></script>
+<script>
+(function () {
+  var API = (window.PSR_CONFIG && window.PSR_CONFIG.apiUrl) || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var post = function (body) {
+    if (!API) return Promise.reject(new Error('Reviews are being set up. Email admin@permitsetready.ca.'));
+    return fetch(API, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(body)})
+      .then(function (r) { return r.json(); }).then(function (j) { if (!j.ok) throw new Error(j.error || 'Something went wrong.'); return j; });
+  };
+  var store = {get: function (k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set: function (k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch (e) {} }};
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
+  var auth = {}, sess = null; try { sess = new URLSearchParams(location.search).get('s'); } catch (e) {}
+  if (sess) auth.session = sess; else if (store.get('psr_rv_token')) auth.token = store.get('psr_rv_token');
+
+  // buying
+  var plan = null, names = {single: 'Single review · $99', starter: 'Starter · $229 a month', pro: 'Pro · $449 a month', extra: 'Extra set · $69'};
+  function openBuy(p) { plan = p; $('bm-title').textContent = names[p]; $('bm_msg').textContent = ''; $('bm_email').value = store.get('psr_rv_email') || ''; $('buy-modal').classList.remove('hide'); $('bm_email').focus(); }
+  Array.prototype.forEach.call(document.querySelectorAll('[data-plan]'), function (b) { b.onclick = function () { openBuy(b.getAttribute('data-plan')); }; });
+  $('bm_x').onclick = function () { $('buy-modal').classList.add('hide'); };
+  $('bm_ok').onclick = function () {
+    var e = $('bm_email').value.trim(), b = $('bm_ok');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { $('bm_msg').textContent = 'Enter a valid email address.'; return; }
+    store.set('psr_rv_email', e); b.disabled = true; b.textContent = 'Opening payment…';
+    post({action: 'review.checkout', plan: plan, email: e}).then(function (j) { location.href = j.url; })
+      .catch(function (err) { b.disabled = false; b.textContent = 'Continue to payment'; $('bm_msg').textContent = err.message; });
+  };
+
+  // signing in
+  var codeSent = false;
+  $('lg_btn').onclick = function () {
+    var e = $('lg_email').value.trim(), m = $('lg_msg'), b = $('lg_btn'); m.className = 'rv-msg'; m.textContent = '';
+    b.disabled = true;
+    if (!codeSent) {
+      post({action: 'auth.start', email: e}).then(function () { codeSent = true; $('lg_code_row').classList.remove('hide'); b.textContent = 'Sign in'; m.textContent = 'Code sent. Check your inbox.'; $('lg_code').focus(); })
+        .catch(function (err) { m.className = 'rv-msg err'; m.textContent = err.message; }).then(function () { b.disabled = false; });
+    } else {
+      post({action: 'auth.verify', email: e, code: $('lg_code').value.trim()}).then(function (j) { store.set('psr_rv_token', j.token); store.set('psr_rv_email', e); auth = {token: j.token}; load(); })
+        .catch(function (err) { m.className = 'rv-msg err'; m.textContent = err.message; }).then(function () { b.disabled = false; });
+    }
+  };
+  $('b_out').onclick = function () { if (auth.token) post({action: 'auth.logout', token: auth.token}).catch(function () {}); store.set('psr_rv_token', null); auth = {}; if (sess) location.href = '/review/#upload'; else show(false); };
+
+  function show(on) { $('up-login').classList.toggle('hide', on); $('up-box').classList.toggle('hide', !on); }
+  var st = null;
+  function load() {
+    show(true); $('st-line').textContent = 'Loading…';
+    var first = sess ? post({action: 'pay.confirm', session: sess}).catch(function () {}) : Promise.resolve();
+    return first.then(function () { return post(Object.assign({action: 'review.status'}, auth)); }).then(render).catch(function (err) {
+      if (auth.token && /log in/i.test(err.message)) { store.set('psr_rv_token', null); auth = {}; show(false); return; }
+      $('st-line').textContent = err.message; $('st-extra').textContent = '';
+    });
+  }
+  function render(j) {
+    st = j;
+    if (sess) { $('up-title').textContent = 'Thank you. Send your set.'; $('up-sub').textContent = 'Your payment went through. Upload the set below; we email the report to ' + j.email + '.'; }
+    var left = (j.member ? j.member.left : 0) + j.paid;
+    $('st-line').textContent = j.member ? j.member.name + ': ' + j.member.left + ' of ' + j.member.allowance + ' reviews left this month' + (j.paid ? ', plus ' + j.paid + ' extra' : '') : (j.paid ? j.paid + ' review' + (j.paid > 1 ? 's' : '') + ' ready to use' : 'No reviews left to use');
+    $('st-extra').textContent = j.member ? (j.member.cancelAtEnd ? 'Ends ' : 'Renews ') + new Date(j.member.renews).toLocaleDateString('en-CA', {month: 'long', day: 'numeric'}) + ' · signed in as ' + j.email : 'Signed in as ' + j.email;
+    var rc = j.rechecks || [];
+    $('f_recheck').innerHTML = '<option value="">No, a new set' + (left ? '' : ' (none left)') + '</option>' + rc.map(function (r) { return '<option value="' + esc(r.id) + '">Re-check of ' + esc(r.address) + ' (' + esc(r.id) + ')</option>'; }).join('');
+    $('rc-row').classList.toggle('hide', !rc.length);
+    $('f_send').disabled = !left && !rc.length;
+    $('f_msg').className = 'rv-msg'; $('f_msg').textContent = (!left && !rc.length) ? (j.member ? 'You have used this month\'s reviews. Add a set for $69 below.' : 'Buy a review above to send a set.') : '';
+    var lab = {paid: 'Ready to use', submitted: 'Received', reviewing: 'In review', held: 'In review', ready: 'In review', sent: 'Report sent'};
+    $('hist').innerHTML = (j.history || []).filter(function (h) { return h.status !== 'paid'; }).map(function (h) { return '<li><span>' + esc(h.address) + (h.recheckOf ? ' · re-check' : '') + '</span><span class="small">' + esc(lab[h.status] || h.status) + '</span></li>'; }).join('') || '<li><span class="small">Nothing sent yet.</span></li>';
+    $('b_extra').classList.toggle('hide', !j.member);
+    $('b_billing').classList.toggle('hide', !(j.member && auth.token));
+  }
+  $('b_extra').onclick = function () { openBuy('extra'); };
+  $('b_billing').onclick = function () { var b = $('b_billing'); b.disabled = true; post({action: 'review.billing', token: auth.token}).then(function (j) { location.href = j.url; }).catch(function (e) { b.disabled = false; $('f_msg').className = 'rv-msg err'; $('f_msg').textContent = e.message; }); };
+
+  // sending a set
+  function readFile(f) { return new Promise(function (ok, bad) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = function () { bad(new Error('The file could not be read.')); }; r.readAsDataURL(f); }); }
+  $('rv-form').onsubmit = function (ev) {
+    ev.preventDefault();
+    var m = $('f_msg'), b = $('f_send'), f = $('f_file').files[0], link = $('f_link').value.trim();
+    var form = {firm: $('f_firm').value.trim(), type: $('f_type').value, address: $('f_addr').value.trim(), municipality: $('f_muni').value.trim(), notes: $('f_notes').value.trim(), link: link, recheckOf: $('f_recheck').value};
+    m.className = 'rv-msg err';
+    if (!form.address || !form.municipality) { m.textContent = 'Add the project address and municipality.'; return; }
+    if (!f && !/^https:\/\//.test(link)) { m.textContent = 'Attach the PDF set or paste a share link.'; return; }
+    if (f && f.size > 30 * 1024 * 1024) { m.textContent = 'That file is over 30 MB. Paste a share link instead.'; return; }
+    if (f && !/pdf$/i.test(f.name)) { m.textContent = 'Send the set as one PDF.'; return; }
+    b.disabled = true; b.textContent = 'Uploading…'; m.className = 'rv-msg'; m.textContent = f ? 'Uploading ' + (f.size / 1048576).toFixed(1) + ' MB. Keep this page open.' : '';
+    (f ? readFile(f) : Promise.resolve(null)).then(function (data) {
+      if (data) { form.file = data; form.fileName = f.name; }
+      return post(Object.assign({action: 'review.submit', form: form}, auth));
+    }).then(function (j) {
+      $('rv-form').reset(); m.className = 'rv-msg'; m.textContent = 'Received (' + j.id + '). We email the report to ' + st.email + '.';
+      b.textContent = 'Send for review'; return post(Object.assign({action: 'review.status'}, auth)).then(function (s) { render(s); m.className = 'rv-msg'; m.textContent = 'Received (' + j.id + '). We email the report to ' + s.email + '.'; });
+    }).catch(function (e) { b.disabled = false; b.textContent = 'Send for review'; m.className = 'rv-msg err'; m.textContent = e.message; });
+  };
+
+  if (auth.session || auth.token) { load(); if (sess) setTimeout(function () { $('upload').scrollIntoView(); }, 50); }
+})();
+</script>
+</body>
+</html>
