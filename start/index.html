@@ -68,7 +68,7 @@
   <div class="wrap row">
     <a class="logo" href="/"><img src="/img/logo-icon-amber.svg" alt="" width="28" height="28"><span><b>PermitSet</b>Ready</span></a>
     <span>Drafting for Ontario designers, contractors &amp; engineers</span>
-    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a></span>
+    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a><a href="/terms/">Terms</a></span>
   </div>
 </footer>
 
@@ -101,10 +101,10 @@ var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
 var QUOTED = ['addition', 'newhome', 'structural', 'model3d', 'shop', 'interior', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome'];
 var TIERS = {wl: 'White-label', cs: 'Contractor set'};
-var LABEL = {draft: 'Not sent yet', screened: 'Quote within 1 business day', quoted: 'Quote ready', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
+var LABEL = {draft: 'Not sent yet', screened: 'Quote within 1 business day', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
 var STAGE = {draft: 0, screened: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
 var MUNIS = ['Toronto', 'Mississauga', 'Brampton', 'Caledon', 'Oakville', 'Burlington', 'Milton', 'Halton Hills', 'Vaughan', 'Markham', 'Richmond Hill', 'Hamilton', 'Pickering', 'Ajax', 'Whitby', 'Oshawa', 'Barrie', 'Innisfil', 'Guelph', 'Kitchener'];
-var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['template', 'Your title block and a recent set', 'first job only, so we match your standards'], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
+var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['template', 'Your template and 1–2 sample projects', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
 var S = {user: null, jobs: [], job: null, path: null, files: [], step: 1, admin: {jobs: []}};
 function scopes(it) { var a = (it && it.scopes) || []; return SCOPES.map(function (s) { return s[0]; }).filter(function (k) { return a.indexOf(k) >= 0; }); }
 function quoted(it) { return scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
@@ -147,7 +147,7 @@ function setMain(html) { $('#app').innerHTML = html; window.scrollTo(0, 0); }
 
 // ---------- login
 function viewLogin() {
-  setMain('<p class="eyebrow">For designers, contractors &amp; engineers</p><h1 style="font-size:clamp(28px,4vw,40px);margin:6px 0 8px">Your jobs, in one place.</h1><p class="muted" style="max-width:640px">Book a drafting job, get a fixed quote, check the draft and download the final files. Sign in with your email; we send you a 6-digit code.</p>' +
+  setMain('<p class="eyebrow">For designers, contractors &amp; engineers</p><h1 style="font-size:clamp(28px,4vw,40px);margin:6px 0 8px">Your jobs, in one place.</h1><p class="muted" style="max-width:640px">Book a drafting job, get your price, check the draft and download the final files. Sign in with your email; we send you a 6-digit code.</p>' +
     '<div class="card fd" style="max-width:520px;margin-top:20px"><div><label class="l" for="lg_e">Work email</label><input id="lg_e" type="email" autocomplete="email" placeholder="you@firm.ca"></div><div id="lg_cr" class="hide"><label class="l" for="lg_c">6-digit code</label><input id="lg_c" inputmode="numeric" maxlength="6" autocomplete="one-time-code"></div><div><button class="btn btn-amber" id="lg_b" type="button">Email me a code</button></div><p class="msg" id="lg_m" role="status"></p></div>');
   var sent = false, e = $('#lg_e');
   e.value = store.get('psr_email') || '';
@@ -172,7 +172,7 @@ function viewJobs() {
     if (ref && ref.credit) h += '<div class="banner" style="margin-top:12px">You have <b>' + money(ref.credit) + '</b> in credit. It comes off your next deposit or balance automatically.</div>';
     h += '<div class="jobs" style="margin-top:20px">' + (list.length ? list.map(function (x) {
       return '<div class="card job" data-id="' + esc(x.id) + '"><div><b>' + esc(x.address || 'New job') + '</b><div class="small">' + esc(x.municipality || '') + (x.scopeName ? ' · ' + esc(x.scopeName) : '') + ' · updated ' + fmtDate(x.updatedAt) + '</div></div>' + statusPill(x.status) + '</div>';
-    }).join('') : '<div class="card"><p style="margin:0">No jobs yet. <a href="#new">Book your first job</a>: you get a fixed quote within one business day and nothing is charged until you accept it.</p></div>') + '</div>';
+    }).join('') : '<div class="card"><p style="margin:0">No jobs yet. <a href="#new">Book your first job</a>: fixed-price work is pre-screened and priced right away; anything else gets a fixed quote within one business day. Nothing is charged until you start.</p></div>') + '</div>';
     setMain(h);
     $$('.job').forEach(function (c) { c.onclick = function () { location.hash = 'job/' + c.getAttribute('data-id'); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
@@ -201,7 +201,7 @@ function viewForm(it) {
   if (!j.contact.firm && S.jobs.length) {} // keep blank
   var first = !S.jobs.some(function (x) { return x.id !== j.id && x.status && x.status !== 'draft'; });
   var munis = MUNIS.map(function (m) { return '<option>' + m + '</option>'; }).join('');
-  var h = '<p class="eyebrow">Book a job</p><h1 style="font-size:clamp(26px,4vw,38px);margin:6px 0 6px">Send us the job. Fixed quote within one business day.</h1><p class="muted" style="max-width:700px;margin:0">Nothing is charged until you accept the quote. <span id="savestate" class="small"></span></p>' +
+  var h = '<p class="eyebrow">Book a job</p><h1 style="font-size:clamp(26px,4vw,38px);margin:6px 0 6px">Send us the job.</h1><p class="muted" style="max-width:700px;margin:0">Fixed-price work is pre-screened and priced right away; anything else gets a fixed quote within one business day. Nothing is charged until you start. <span id="savestate" class="small"></span></p>' +
     '<div class="stepnav" id="stepnav"></div><form class="card fd stp" id="f" style="max-width:780px" novalidate onsubmit="return false">' +
     // 1
     '<div data-step="1" class="fd"><h2><i>1</i>Your firm</h2>' +
@@ -224,7 +224,7 @@ function viewForm(it) {
     // 4
     '<div data-step="4" class="fd hide"><h2><i>4</i>Files &amp; inspiration</h2>' + KINDS.map(function (k) {
       if (k[0] === 'template' && !first) return '';
-      return '<div class="up" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.rvt,.zip"></label></div>';
+      return '<div class="up' + (k[0] === 'template' ? ' wlonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'template' ? '<span class="req">Required for your first white-label job</span><br><em>Your Revit template (or a recent .rvt) with title block, plus 1–2 recent permit sets, ideally issued without comments. We set up your template from these, send a sample sheet to approve, and match how you draw.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.rvt,.zip"></label></div>';
     }).join('') +
     '<div><label class="l">Or share a folder (Drive, Dropbox, WeTransfer)</label><input data-k="docs.link" type="url" placeholder="https://"></div>' +
     '<div><label class="l">Inspiration: Pinterest board or photo link (optional)</label><input data-k="docs.inspiration" type="url" placeholder="https://pinterest.com/…  or a link to photos"><p class="small" style="margin:6px 0 0">Helps us match the finishes, details and look you and your client expect.</p></div>' +
@@ -237,7 +237,8 @@ function viewForm(it) {
     '<label><input type="checkbox" data-ack="revisions"> Code revisions from City comments are included at no extra cost. Design changes after delivery are $85/hour.</label>' +
     '<label><input type="checkbox" data-ack="zoning"> We check zoning, but approval rests with the municipality. Examiners can interpret the by-law differently and by-laws change, so zoning approval can\'t be guaranteed. Minor variances aren\'t included.</label>' +
     '<label><input type="checkbox" data-ack="finals"> You check a watermarked draft first; final files are released once the balance is paid.</label>' +
-    '<label><input type="checkbox" data-ack="responsible"> I am the designer, contractor or engineer responsible for this project and its submission.</label></div></div>' +
+    '<label><input type="checkbox" data-ack="responsible"> I am the designer, contractor or engineer responsible for this project and its submission.</label>' +
+    '<label><input type="checkbox" data-ack="terms"> I have read and agree to the <a href="/terms/" target="_blank" rel="noopener">Terms for firms</a>, including that payments are non-refundable.</label></div></div>' +
     '<p class="msg" id="fmsg" role="status"></p><div class="navrow"><button type="button" class="btn btn-line" id="back">Back</button><button type="button" class="btn btn-amber" id="next">Continue</button></div></form>';
   setMain(h);
   fillForm(); bindForm(); showStep();
@@ -259,6 +260,7 @@ function sync() {
   $$('#f .chips label,#f .opt label').forEach(function (l) { var i = l.querySelector('input'); l.classList.toggle('on', !!(i && i.checked)); });
   var q = quoted(j); $('#qbox').classList.toggle('hide', !q.length); $('#qlist').textContent = q.map(function (k) { return SNAME[k]; }).join(', ');
   var sv = $('#svreq'); if (sv) sv.classList.toggle('hide', !surveyNeeded(j));
+  $$('#f .wlonly').forEach(function (e) { e.classList.toggle('hide', j.tier !== 'wl'); });
   $('#sqbox').classList.toggle('hide', !(j.measure && j.measure.want));
   $$('#f .up').forEach(function (u) { var k = u.getAttribute('data-kind'); var names = S.files.filter(function (f) { return f.kind === k; }).map(function (f) { return f.name; }); u.querySelector('.names').textContent = names.length ? '✓ ' + names.join(', ') : ''; });
 }
@@ -287,10 +289,11 @@ function showStep() {
   $('#stepnav').innerHTML = names.map(function (n, i) { return '<button type="button" data-s="' + (i + 1) + '" class="' + (i + 1 === S.step ? 'on' : (i + 1 < S.step ? 'done' : '')) + '">' + (i + 1) + ' ' + esc(n) + '</button>'; }).join('');
   $$('#stepnav button').forEach(function (b) { b.onclick = function () { var t = Number(b.getAttribute('data-s')); for (var s = 1; s < t; s++) { var e = check(s); if (e) { S.step = s; showStep(); msg(e, true); return; } } S.step = t; showStep(); }; });
   $('#back').textContent = S.step === 1 ? 'Cancel' : 'Back';
-  $('#next').textContent = S.step === 6 ? 'Send for a fixed quote' : 'Continue';
+  $('#next').textContent = S.step === 6 ? (quoted(S.job).length || (S.job.measure && S.job.measure.want) ? 'Send for a fixed quote' : 'Send for pre-screening') : 'Continue';
   if (S.step === 6) summary();
   window.scrollTo(0, 0);
 }
+function firstJob(j) { return !S.jobs.some(function (x) { return x.id !== j.id && x.status && x.status !== 'draft' && x.status !== 'declined'; }); }
 function check(step) {
   var j = S.job;
   if (step === 1 && (!j.contact.firm || !j.contact.name)) return 'Add your firm and contact name.';
@@ -300,16 +303,17 @@ function check(step) {
     var has = function (k) { return S.files.some(function (f) { return f.kind === k; }); }, link = /^https:\/\//.test((j.docs || {}).link || '');
     if (!has('design') && !link) return 'Upload the design (or share a folder link) so we can quote.';
     if (surveyNeeded(j) && !has('survey') && !link) return 'A survey is required for this job. Upload it or share a folder link.';
+    if (j.tier === 'wl' && firstJob(j) && !has('template') && !link) return 'For your first white-label job, add your template and 1–2 sample projects (or share a folder link).';
   }
   if (step === 5 && j.measure && j.measure.want && !(Number(j.measure.sqft) > 0)) return 'Add the approximate house size so we can price the visit.';
-  if (step === 6) { var a = j.ack || {}; if (!(a.revisions && a.zoning && a.finals && a.responsible)) return 'Tick all four boxes to send the job.'; }
+  if (step === 6) { var a = j.ack || {}; if (!(a.revisions && a.zoning && a.finals && a.responsible && a.terms)) return 'Tick all five boxes to send the job.'; }
   return '';
 }
 function summary() {
   var j = S.job, lp = listPrice(j), q = quoted(j);
   $('#sum').innerHTML = '<dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd><dt>Project</dt><dd>' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</dd>' +
     '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job.rush === 'Yes' ? ' · rush' : '') + '</dd>' +
-    '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST (list price; confirmed in your quote)') + '</dd>' +
+    '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST' + (j.measure && j.measure.want ? ' + site visit (priced in your quote)' : ' (list price; pre-screened as soon as you send it)')) + '</dd>' +
     '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes, priced in the quote' : 'No') + '</dd>' +
     '<dt>Delivery</dt><dd>' + (j.job.rush === 'Yes' ? '5 business days' : '7–10 business days') + ' from your go-ahead</dd>' +
     '<dt>Payment</dt><dd>First job: 50% to start. Every job: balance due when you approve the draft.</dd><dt>Before finals</dt><dd>Watermarked draft for your check</dd>';
@@ -335,24 +339,27 @@ function submit() {
   S.job.status = 'screened'; S.job.submittedAt = now();
   saveNow().then(function () { return api('db.get', {path: S.path}); }).then(function (r) {
     S.job = r.data; store.set('psr_ref', null);
-    if (S.job.status !== 'screened') throw new Error('The job could not be sent. Please try again.');
-    toast('Sent. We\'ll email your quote within one business day.'); location.hash = 'job/' + S.job.id;
+    if (S.job.status !== 'screened' && S.job.status !== 'quoted') throw new Error('The job could not be sent. Please try again.');
+    toast(S.job.status === 'quoted' ? 'Pre-screened. You can start right away.' : 'Sent. We\'ll email your quote within one business day.'); location.hash = 'job/' + S.job.id;
   }).catch(function (e) { S.job.status = 'draft'; b.disabled = false; msg(e.message, true); });
 }
 
 // ---------- job view
 function viewJob() {
   var j = S.job, st = j.status, stg = STAGE[st] || 0, sv = j.server || {}, price = priceOf(j);
-  var steps = ['Sent', 'Quote', 'Underway', 'Draft check', 'Balance', 'Final files'];
+  var auto = !quoted(j).length && !(j.measure && j.measure.want);
+  var steps = ['Sent', auto ? 'Pre-screen' : 'Quote', 'Underway', 'Draft check', 'Balance', 'Final files'];
   var h = '<p><a href="#jobs">← All jobs</a></p><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><p class="eyebrow">' + esc((sv.psr ? sv.psr + ' · ' : '') + pkg(j)) + '</p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 0">' + esc(j.property.address || '') + '</h1><p class="muted" style="margin:4px 0 0">' + esc(j.property.municipality || '') + '</p></div>' + statusPill(st) + '</div>' +
     '<div class="tl">' + steps.map(function (s, i) { return '<div class="' + (i <= stg ? 'on' : '') + '">' + s + '</div>'; }).join('') + '</div>';
   var card = '';
-  if (st === 'screened') card = '<b>We\'re preparing your fixed quote.</b><p class="muted" style="margin:6px 0 0">You\'ll get it by email within one business day. Nothing is charged until you accept it.</p>';
+  if (st === 'screened' && auto) card = '<b>We\'re pre-screening your job.</b><p class="muted" style="margin:6px 0 0">Refresh in a moment: you\'ll be able to start it here.</p>';
+  else if (st === 'screened') card = '<b>We\'re preparing your fixed quote.</b><p class="muted" style="margin:6px 0 0">You\'ll get it by email within one business day. Nothing is charged until you accept it.</p>';
   else if (st === 'quoted') {
     var dep = Number((j.quote || {}).deposit) || 0;
-    card = '<b>Your fixed quote</b><p style="font-size:30px;font-weight:800;color:var(--navy);margin:6px 0">' + money(price) + ' <small style="font-size:15px;color:var(--muted)">+ HST</small></p>' + (j.quote && j.quote.note ? '<p style="margin:0 0 8px">' + esc(j.quote.note) + '</p>' : '') +
+    var isAuto = !!(j.quote && j.quote.auto);
+    card = '<b>' + (isAuto ? 'Pre-screened: ready to start' : 'Your fixed quote') + '</b><p style="font-size:30px;font-weight:800;color:var(--navy);margin:6px 0">' + money(price) + ' <small style="font-size:15px;color:var(--muted)">+ HST</small></p>' + (j.quote && j.quote.note ? '<p style="margin:0 0 8px">' + esc(j.quote.note) + '</p>' : '') +
       '<p class="muted" style="margin:0 0 12px">Delivery: ' + esc((j.quote && j.quote.days) || '7–10 business days') + ' from your go-ahead. ' + (dep > 0 ? 'Deposit to start: <b>' + money(dep) + '</b> + HST. Balance due when you approve the draft.' : 'No deposit: the full amount is due when you approve the draft.') + '</p>' +
-      '<div style="display:flex;gap:10px;flex-wrap:wrap">' + (dep > 0 ? '<button class="btn btn-amber" id="paydep">Accept and pay the deposit</button>' : '<button class="btn btn-amber" id="accept">Accept the quote</button>') + '<a class="btn btn-line" href="mailto:admin@permitsetready.ca?subject=' + encodeURIComponent('Question about ' + (sv.psr || 'my quote')) + '">Ask a question</a></div>';
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">' + (dep > 0 ? '<button class="btn btn-amber" id="paydep">' + (isAuto ? 'Pay the deposit and start' : 'Accept and pay the deposit') + '</button>' : '<button class="btn btn-amber" id="accept">' + (isAuto ? 'Start the job' : 'Accept the quote') + '</button>') + '<a class="btn btn-line" href="mailto:admin@permitsetready.ca?subject=' + encodeURIComponent('Question about ' + (sv.psr || 'my quote')) + '">Ask a question</a></div>';
   } else if (['confirmed', 'measuring', 'drafting', 'review', 'consultant'].indexOf(st) >= 0) card = '<b>Your job is underway.</b><p class="muted" style="margin:6px 0 0">' + (st === 'measuring' ? 'Our measuring partner will contact you to book the site visit. ' : '') + 'You\'ll get a watermarked draft to check' + (j.admin && j.admin.eta ? ' around ' + esc(j.admin.eta) : ' in about 7–10 business days') + '.</p>';
   else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or tell us what to change.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul><div class="fd" style="margin-top:12px"><label class="l" for="chg">Changes (if any)</label><textarea id="chg" rows="3" placeholder="e.g. move the bathroom door to the hall side"></textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-amber" id="approve">Approve the draft</button><button class="btn btn-line" id="changes">Send changes</button></div>';
   else if (st === 'changes') card = '<b>We\'re making your changes.</b><p class="muted" style="margin:6px 0 0">You\'ll get an updated draft to check.</p>';

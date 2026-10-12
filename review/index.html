@@ -166,6 +166,7 @@
     <h3 id="bm-title">Your email</h3>
     <p class="small" id="bm-sub" style="margin:0">We send the receipt and your report here.</p>
     <div class="rv-form"><input id="bm_email" type="email" autocomplete="email" placeholder="you@firm.ca"><input id="bm_ref" placeholder="Referred by a firm? Their email or code (optional)"></div>
+    <label class="small" style="display:flex;gap:8px;align-items:flex-start;margin:4px 0 0;font-weight:400"><input type="checkbox" id="bm_terms" style="width:auto;margin-top:3px"> <span>I have read and agree to the <a href="/terms/" target="_blank" rel="noopener">Terms for firms</a>, including that payments are non-refundable.</span></label>
     <p class="rv-msg err" id="bm_msg" role="status"></p>
     <div style="display:flex;gap:10px;justify-content:flex-end"><button type="button" class="btn btn-line btn-sm" id="bm_x">Cancel</button><button type="button" class="btn btn-amber btn-sm" id="bm_ok">Continue to payment</button></div>
   </div>
@@ -175,7 +176,7 @@
   <div class="wrap row">
     <a class="logo" href="/"><img src="/img/logo-icon-amber.svg" alt="" width="28" height="28"><span><b>PermitSet</b>Ready</span></a>
     <span>Ontario residential permit drawings</span>
-    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a></span>
+    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a><a href="/terms/">Terms</a></span>
   </div>
 </footer>
 <script src="/assets/config.js"></script>
@@ -202,8 +203,9 @@
   $('bm_ok').onclick = function () {
     var e = $('bm_email').value.trim(), b = $('bm_ok');
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) { $('bm_msg').textContent = 'Enter a valid email address.'; return; }
+    if (!$('bm_terms').checked) { $('bm_msg').textContent = 'Tick the box to accept the terms.'; return; }
     store.set('psr_rv_email', e); var ref = $('bm_ref').value.trim(); b.disabled = true; b.textContent = 'Opening payment…';
-    post({action: 'review.checkout', plan: plan, email: e, ref: ref || undefined}).then(function (j) { location.href = j.url; })
+    post({action: 'review.checkout', plan: plan, email: e, ref: ref || undefined, terms: true}).then(function (j) { location.href = j.url; })
       .catch(function (err) { b.disabled = false; b.textContent = 'Continue to payment'; $('bm_msg').textContent = err.message; });
   };
 
