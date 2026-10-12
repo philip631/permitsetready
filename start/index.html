@@ -147,7 +147,7 @@ function route() {
   if (h === 'refer') return viewRefer();
   if (h === 'admin') return viewAdmin();
   if (h === 'admin/costs') return viewCosts();
-  if (h.indexOf('admin/') === 0) return viewAdminJob(decodeURIComponent(h.slice(6)));
+  if (h.indexOf('admin/') === 0) return S.user && S.user.isAdmin ? viewAdminJob(decodeURIComponent(h.slice(6))) : viewJobs();
   if (h === 'project' && S.lastPid) return openJob(S.lastPid, false);
   return viewJobs();
 }
