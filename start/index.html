@@ -118,13 +118,18 @@ function listPrice(it) {
   return sum;
 }
 function priceOf(it) { return (it.quote && Number(it.quote.amount) > 0) ? Number(it.quote.amount) : listPrice(it); }
-function paidDeposit(it) { var d = (it.payment || {}).deposit; if (!d) return 0; if (d.net != null && d.net !== '') return Number(d.net) || 0; return Math.round(Number(d.total || 0) / 100 / 1.13); }
+function paidDeposit(it) { var d = (it.payment || {}).deposit; if (!d) return 0; if (d.comped) return priceOf(it); if (d.net != null && d.net !== '') return Number(d.net) || 0; return Math.round(Number(d.total || 0) / 100 / 1.13); }
 function pkg(it) { return (TIERS[it.tier] || 'Job') + ' · ' + (scopes(it).map(function (k) { return SNAME[k]; }).join(' + ') || 'Project'); }
 function projPath(uid, pid) { return 'intakes/' + uid + '/projects/' + pid; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function blank() {
   var ref = store.get('psr_ref') || '';
   return {id: newId(), owner: S.user.id, createdAt: now(), updatedAt: now(), status: 'draft', tier: 'wl', scopes: [], contact: {email: S.user.email}, property: {}, job: {rush: 'No', deliver: ['pdf', 'dwg'], pricing: 'fixed'}, docs: {}, measure: {want: false}, referral: ref, ack: {}};
+}
+function jobPill(j) {
+  var st = j.status, ps = (j.server || {}).prescreen || {};
+  if (st === 'screened') { var t = (ps.state === 'pending' || ps.state === 'running') ? 'Pre-screening' : (listPrice(j) ? (ps.state === 'review' ? 'Pre-screen: needs your look' : 'Price check') : 'Quote needed'); return '<span class="status act">' + esc(t) + '</span>'; }
+  return statusPill(st);
 }
 function statusPill(st) { var cls = st === 'delivered' ? 'done' : (['quoted', 'draftready', 'ready'].indexOf(st) >= 0 ? 'act' : ''); return '<span class="status ' + cls + '">' + esc(LABEL[st] || st) + '</span>'; }
 
@@ -173,7 +178,7 @@ function viewJobs() {
     if (ref && ref.credit) h += '<div class="banner" style="margin-top:12px">You have <b>' + money(ref.credit) + '</b> in credit. It comes off your next deposit or balance automatically.</div>';
     h += '<div class="jobs" style="margin-top:20px">' + (list.length ? list.map(function (x) {
       return '<div class="card job" data-id="' + esc(x.id) + '"><div><b>' + esc(x.address || 'New job') + '</b><div class="small">' + esc(x.municipality || '') + (x.scopeName ? ' · ' + esc(x.scopeName) : '') + ' · updated ' + fmtDate(x.updatedAt) + '</div></div>' + statusPill(x.status) + '</div>';
-    }).join('') : '<div class="card"><p style="margin:0">No jobs yet. <a href="#new">Book your first job</a>: fixed-price work is pre-screened and priced right away; anything else gets a fixed quote within one business day. Nothing is charged until you start.</p></div>') + '</div>';
+    }).join('') : '<div class="card"><p style="margin:0">No jobs yet. <a href="#new">Book your first job</a>: we pre-screen your files and send your price or fixed quote within one business day. Nothing is charged until you start.</p></div>') + '</div>';
     setMain(h);
     $$('.job').forEach(function (c) { c.onclick = function () { location.hash = 'job/' + c.getAttribute('data-id'); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
@@ -202,7 +207,7 @@ function viewForm(it) {
   if (!j.contact.firm && S.jobs.length) {} // keep blank
   var first = !S.jobs.some(function (x) { return x.id !== j.id && x.status && x.status !== 'draft'; });
   var munis = MUNIS.map(function (m) { return '<option>' + m + '</option>'; }).join('');
-  var h = '<p class="eyebrow">Book a job</p><h1 style="font-size:clamp(26px,4vw,38px);margin:6px 0 6px">Send us the job.</h1><p class="muted" style="max-width:700px;margin:0">Fixed-price work is pre-screened and priced right away; anything else gets a fixed quote within one business day. Nothing is charged until you start. <span id="savestate" class="small"></span></p>' +
+  var h = '<p class="eyebrow">Book a job</p><h1 style="font-size:clamp(26px,4vw,38px);margin:6px 0 6px">Send us the job.</h1><p class="muted" style="max-width:700px;margin:0">We pre-screen your files and send your price or fixed quote within one business day. Nothing is charged until you start. <span id="savestate" class="small"></span></p>' +
     '<div class="stepnav" id="stepnav"></div><form class="card fd stp" id="f" style="max-width:780px" novalidate onsubmit="return false">' +
     // 1
     '<div data-step="1" class="fd"><h2><i>1</i>Your firm</h2>' +
@@ -363,7 +368,7 @@ function viewJob() {
   var card = '';
   var ps = sv.prescreen || {}, pr = ps.result || {}, prescreening = st === 'screened' && (ps.state === 'pending' || ps.state === 'running');
   var understood = pr.understood ? '<div class="banner" style="margin:12px 0 0"><b>What we understood:</b> ' + esc(pr.understood) + ((pr.concerns || []).length ? '<br><b>Early notes</b> (we confirm these while drafting): ' + pr.concerns.map(function (c) { return esc(c.note); }).join(' · ') : '') + '</div>' : '';
-  if (prescreening) card = '<b>Pre-screening your files…</b><p class="muted" style="margin:6px 0 0">We\'re checking that everything is legible and we have what we need. This usually takes a minute or two; you can leave this page.</p>';
+  if (prescreening) card = '<b>Pre-screening your files…</b><p class="muted" style="margin:6px 0 0">We\'re checking that everything is legible and we have what we need. You\'ll have your price, or any questions, within one business day. You can leave this page; we email you.</p>';
   else if (st === 'info') card = '<b>A few questions before we start</b><p class="muted" style="margin:6px 0 10px">Answer below and add any files, then send it back. We pick it up right away.</p>' + understood +
     '<div class="fd" id="qa" style="margin-top:12px">' + (pr.questions || []).map(function (q, i) { return '<div><label class="l" for="qa' + i + '">' + esc(q) + '</label><textarea id="qa' + i + '" data-q="' + esc(q) + '" rows="2"></textarea></div>'; }).join('') +
     ((pr.missing || []).length ? '<div><span class="lbl">Still needed</span><ul style="margin:4px 0 0">' + pr.missing.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' : '') +
@@ -460,7 +465,7 @@ function viewAdminJob(path) {
   Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'}), api('files.draft', {path: path})]).then(function (r) {
     var j = r[0].data, files = (r[1].docs || []).map(function (d) { return d.data; }), drafts = r[2].files || [], sv = j.server || {}, row = S.admin.jobs.filter(function (x) { return x.Path === path; })[0] || {};
     var lp = listPrice(j), dep = j.quote && j.quote.deposit != null ? j.quote.deposit : (typeof row.Deposit === 'number' ? row.Deposit : Math.round((lp || 0) * 0.5));
-    var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + statusPill(j.status) + '</div>' +
+    var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
       '<div class="grid-2" style="margin-top:16px;align-items:start"><div class="card"><b>Job</b><dl class="sum" style="margin-top:8px"><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + ' · ' + esc(j.contact.name || '') + '</dd><dt>Email</dt><dd>' + esc(j.contact.email || '') + ' ' + esc(j.contact.phone || '') + '</dd><dt>Role</dt><dd>' + esc(j.contact.role || '') + '</dd>' +
       '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + '</dd><dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
       (j.job && j.job.budget ? '<dt>Their budget</dt><dd>' + esc(j.job.budget) + ' (' + esc(j.job.budgetType || '') + ')</dd>' : '') + (j.job && j.job.pricing === 'hourly' ? '<dt>Pricing</dt><dd>$85/hour requested</dd>' : '') +
@@ -477,6 +482,8 @@ function viewAdminJob(path) {
     setMain(h);
     var upd = function (data, btn) { btn.disabled = true; return api('db.set', {path: path, data: data, merge: true}).then(function () { toast('Saved'); viewAdminJob(path); }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); };
     $('#q_send').onclick = function () { var a = Number($('#q_a').value); if (!(a > 0)) { msg('Enter the price.', true); return; } upd({status: 'quoted', quote: {amount: a, deposit: Number($('#q_d').value) || 0, days: $('#q_t').value.trim(), note: $('#q_n').value.trim(), at: now()}}, this); };
+    var pso = $('#ps_ok'); if (pso) pso.onclick = function () { pso.disabled = true; api('ai.feedback', {path: path, ok: true, rule: $('#ps_fb').value.trim()}).then(function () { toast('Thanks, noted'); viewAdminJob(path); }).catch(function (e) { pso.disabled = false; msg(e.message, true); }); };
+    var psb = $('#ps_bad'); if (psb) psb.onclick = function () { var t = $('#ps_fb').value.trim(); if (!t) { msg('Say what it should have done.', true); return; } psb.disabled = true; api('ai.feedback', {path: path, wrong: '[pre-screen] ' + t, rule: t}).then(function () { toast('Lesson saved for review'); viewAdminJob(path); }).catch(function (e) { psb.disabled = false; msg(e.message, true); }); };
     var rp = $('#a_rps'); if (rp) rp.onclick = function () { rp.disabled = true; rp.textContent = 'Running…'; api('job.prescreen', {path: path, force: true}).then(function () { viewAdminJob(path); }).catch(function (e) { rp.disabled = false; msg(e.message, true); }); };
     $('#a_save').onclick = function () { upd({admin: Object.assign({}, j.admin || {}, {notes: $('#a_n').value, eta: $('#a_eta').value.trim()})}, this); };
     $$('#app [data-st]').forEach(function (b) { b.onclick = function () {
@@ -494,6 +501,9 @@ function adminPrescreen(j) {
   return '<b style="display:block;margin-top:14px">Pre-screen</b><div class="small" style="margin-top:4px">' + esc(ps.state || '') + (ps.round ? ' · round ' + ps.round : '') + (ps.error ? ' · ' + esc(ps.error) : '') + (j.status === 'screened' ? ' · <a href="#" id="a_rps" onclick="return false">Run again</a>' : '') + '</div>' +
     (r.understood ? '<p style="margin:6px 0">' + esc(r.understood) + '</p>' : '') +
     (r.unsure ? '<p class="banner" style="margin:6px 0"><b>Not sure, needs your look:</b> ' + esc(r.reviewNote || '') + '</p>' : '') +
+    (r.reasoning ? '<p class="small" style="margin:6px 0"><b>Why:</b> ' + esc(r.reasoning) + '</p>' : '') +
+    (ps.result ? '<div class="fd" style="margin:8px 0;gap:6px">' + ((j.admin || {}).prescreenVerdict ? '<p class="small" style="margin:0">You marked this pre-screen <b>' + ((j.admin.prescreenVerdict.ok) ? 'right' : 'wrong') + '</b>.</p>' : '') +
+      '<textarea id="ps_fb" rows="2" placeholder="What should the pre-screen have done, or what did it get right? (it learns from this)"></textarea><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-line btn-sm" id="ps_ok">Pre-screen was right</button><button type="button" class="btn btn-line btn-sm" id="ps_bad">It got this wrong</button></div></div>' : '') +
     ((r.files || []).length ? '<ul class="flist">' + r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><span class="small">' + (f.readable ? 'readable' : 'NOT READ') + (f.note ? ' · ' + esc(f.note) : '') + '</span></li>'; }).join('') + '</ul>' : '') +
     ((r.questions || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Asked</b></p><ul style="margin:0">' + r.questions.map(function (q) { return '<li class="small">' + esc(q) + '</li>'; }).join('') + '</ul>' : '') +
     ((j.answers || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Answers</b></p><ul style="margin:0">' + j.answers.map(function (x) { return '<li class="small">' + esc(x.q) + ' <b>' + esc(x.a) + '</b></li>'; }).join('') + '</ul>' : '') +
