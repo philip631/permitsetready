@@ -101,13 +101,13 @@ var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
 var QUOTED = ['addition', 'newhome', 'structural', 'model3d', 'shop', 'interior', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome'];
 var TIERS = {wl: 'White-label', cs: 'Contractor set'};
-var LABEL = {draft: 'Not sent yet', screened: 'Quote within 1 business day', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
-var STAGE = {draft: 0, screened: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
+var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Quote within 1 business day', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
+var STAGE = {draft: 0, screened: 1, info: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
 var MUNIS = ['Toronto', 'Mississauga', 'Brampton', 'Caledon', 'Oakville', 'Burlington', 'Milton', 'Halton Hills', 'Vaughan', 'Markham', 'Richmond Hill', 'Hamilton', 'Pickering', 'Ajax', 'Whitby', 'Oshawa', 'Barrie', 'Innisfil', 'Guelph', 'Kitchener'];
 var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['template', 'Your template and 1–2 sample projects', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
 var S = {user: null, jobs: [], job: null, path: null, files: [], step: 1, admin: {jobs: []}};
 function scopes(it) { var a = (it && it.scopes) || []; return SCOPES.map(function (s) { return s[0]; }).filter(function (k) { return a.indexOf(k) >= 0; }); }
-function quoted(it) { return scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
+function quoted(it) { return (it.job && it.job.fromBrief) ? scopes(it) : scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
 function exterior(it) { return scopes(it).some(function (k) { return EXTERIOR.indexOf(k) >= 0; }); }
 function surveyNeeded(it) { return exterior(it); }
 function listPrice(it) {
@@ -123,7 +123,7 @@ function projPath(uid, pid) { return 'intakes/' + uid + '/projects/' + pid; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function blank() {
   var ref = store.get('psr_ref') || '';
-  return {id: newId(), owner: S.user.id, createdAt: now(), updatedAt: now(), status: 'draft', tier: 'wl', scopes: [], contact: {email: S.user.email}, property: {}, job: {rush: 'No', deliver: ['pdf', 'model'], pricing: 'fixed'}, docs: {}, measure: {want: false}, referral: ref, ack: {}};
+  return {id: newId(), owner: S.user.id, createdAt: now(), updatedAt: now(), status: 'draft', tier: 'wl', scopes: [], contact: {email: S.user.email}, property: {}, job: {rush: 'No', deliver: ['pdf', 'dwg'], pricing: 'fixed'}, docs: {}, measure: {want: false}, referral: ref, ack: {}};
 }
 function statusPill(st) { var cls = st === 'delivered' ? 'done' : (['quoted', 'draftready', 'ready'].indexOf(st) >= 0 ? 'act' : ''); return '<span class="status ' + cls + '">' + esc(LABEL[st] || st) + '</span>'; }
 
@@ -213,18 +213,19 @@ function viewForm(it) {
     '<div data-step="2" class="fd hide"><h2><i>2</i>Project</h2>' +
     '<div class="fd2"><div><label class="l">Project address</label><input data-k="property.address" autocomplete="off" placeholder="48 Maple Grove Rd"></div><div><label class="l">Municipality</label><input data-k="property.municipality" list="munis" placeholder="Oakville"><datalist id="munis">' + munis + '</datalist></div></div>' +
     '<div><span class="lbl">What are we drawing? (pick all that apply)</span><div class="chips" id="scopes">' + SCOPES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"> ' + s[1] + '</label>'; }).join('') + '</div></div>' +
+    '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" id="brief" style="width:auto;margin-top:4px"> <span><b>No design yet: design it from our description.</b> We prepare a layout for you to approve before drafting. Quoted per job or $85/hour.</span></label>' +
     '<div class="fd2"><div><label class="l">Existing building</label><input data-k="job.existing" placeholder="e.g. detached house, 1990"></div><div><label class="l">Approx. area of work</label><input data-k="job.area" placeholder="e.g. 85 m² basement"></div></div>' +
     '<div class="fd2"><div><label class="l">Date you need it</label><input data-k="job.due" type="date"></div><div><label class="l">Rush (5 business days, +30%)</label><select data-k="job.rush"><option>No</option><option>Yes</option></select></div></div></div>' +
     // 3
     '<div data-step="3" class="fd hide"><h2><i>3</i>Service</h2>' +
     '<div class="opt"><label><input type="radio" name="tier" data-k="tier" value="wl"> <b>White-label</b>Drafted in your template and title block. You review, stamp and submit.</label><label><input type="radio" name="tier" data-k="tier" value="cs"> <b>Contractor set</b>Drafted and checked by us, ready for you to file.</label></div>' +
-    '<div><span class="lbl">What you want back</span><div class="chips" id="deliver">' + [['pdf', 'PDF set'], ['model', 'Revit model'], ['dwg', 'DWG export'], ['stats', 'Zoning stats table']].map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '"> ' + d[1] + '</label>'; }).join('') + '</div></div>' +
+    '<div><span class="lbl">What you want back</span><div class="chips" id="deliver">' + [['pdf', 'PDF set'], ['dwg', 'DWG files'], ['stats', 'Zoning stats table']].map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '"> ' + d[1] + '</label>'; }).join('') + '</div></div>' +
     '<div class="quoted hide" id="qbox"><span class="small" style="display:block;margin-bottom:8px">Quoted work: <span id="qlist"></span></span><span class="lbl">How should we price it?</span><div class="chips"><label><input type="radio" name="pricing" data-k="job.pricing" value="fixed"> Fixed quote</label><label><input type="radio" name="pricing" data-k="job.pricing" value="hourly"> $85/hour</label></div>' +
     '<label class="l" style="margin-top:12px">Your budget for this job (optional)</label><div class="fd2"><input data-k="job.budget" placeholder="e.g. $2,500"><select data-k="job.budgetType"><option>Firm budget</option><option>Rough idea</option><option>Prefer not to say</option></select></div><p class="small" style="margin:6px 0 0">Helps us scope the set to fit: if your number is tight, we\'ll say what fits in it before quoting.</p></div></div>' +
     // 4
     '<div data-step="4" class="fd hide"><h2><i>4</i>Files &amp; inspiration</h2>' + KINDS.map(function (k) {
       if (k[0] === 'template' && !first) return '';
-      return '<div class="up' + (k[0] === 'template' ? ' wlonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'template' ? '<span class="req">Required for your first white-label job</span><br><em>Your Revit template (or a recent .rvt) with title block, plus 1–2 recent permit sets, ideally issued without comments. We set up your template from these, send a sample sheet to approve, and match how you draw.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.rvt,.zip"></label></div>';
+      return '<div class="up' + (k[0] === 'template' ? ' wlonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'template' ? '<span class="req">Required for your first white-label job</span><br><em>Your template in Revit or AutoCAD (a .rte/.rvt, or DWG sheets with your title block), 1–2 recent permit sets, ideally issued without comments, and your text, dimension and line styles if they differ. We build the template from these and send a sample sheet to approve.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.rvt,.zip"></label></div>';
     }).join('') +
     '<div><label class="l">Or share a folder (Drive, Dropbox, WeTransfer)</label><input data-k="docs.link" type="url" placeholder="https://"></div>' +
     '<div><label class="l">Inspiration: Pinterest board or photo link (optional)</label><input data-k="docs.inspiration" type="url" placeholder="https://pinterest.com/…  or a link to photos"><p class="small" style="margin:6px 0 0">Helps us match the finishes, details and look you and your client expect.</p></div>' +
@@ -251,6 +252,7 @@ function fillForm() {
     if (el.type === 'radio') el.checked = String(v) === el.value; else el.value = v == null ? (el.tagName === 'SELECT' ? el.options[0].value : '') : v;
   });
   $$('#scopes input').forEach(function (i) { i.checked = (j.scopes || []).indexOf(i.value) >= 0; });
+  $('#brief').checked = !!(j.job || {}).fromBrief;
   $$('#deliver input').forEach(function (i) { i.checked = ((j.job || {}).deliver || []).indexOf(i.value) >= 0; });
   $$('#agree input').forEach(function (i) { i.checked = !!(j.ack || {})[i.getAttribute('data-ack')]; });
   sync();
@@ -275,6 +277,7 @@ function bindForm() {
     el.addEventListener(el.type === 'radio' || el.tagName === 'SELECT' ? 'change' : 'input', h);
   });
   $$('#scopes input').forEach(function (i) { i.onchange = function () { S.job.scopes = $$('#scopes input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
+  $('#brief').onchange = function () { S.job.job.fromBrief = $('#brief').checked; sync(); queueSave(); };
   $$('#deliver input').forEach(function (i) { i.onchange = function () { S.job.job.deliver = $$('#deliver input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
   $$('#agree input').forEach(function (i) { i.onchange = function () { S.job.ack = S.job.ack || {}; S.job.ack[i.getAttribute('data-ack')] = i.checked; queueSave(); }; });
   $$('#f .up input[type=file]').forEach(function (inp) { inp.onchange = function () { upload(inp.closest('.up').getAttribute('data-kind'), inp.files); inp.value = ''; }; });
@@ -301,7 +304,8 @@ function check(step) {
   if (step === 2 && !scopes(j).length) return 'Pick at least one thing for us to draw.';
   if (step === 4) {
     var has = function (k) { return S.files.some(function (f) { return f.kind === k; }); }, link = /^https:\/\//.test((j.docs || {}).link || '');
-    if (!has('design') && !link) return 'Upload the design (or share a folder link) so we can quote.';
+    if (j.job && j.job.fromBrief) { if (String((j.docs || {}).notes || '').trim().length < 40) return 'Describe what your client wants in "Anything we should know": rooms, sizes, style, anything fixed.'; }
+    else if (!has('design') && !link) return 'Upload the design (or share a folder link) so we can quote.';
     if (surveyNeeded(j) && !has('survey') && !link) return 'A survey is required for this job. Upload it or share a folder link.';
     if (j.tier === 'wl' && firstJob(j) && !has('template') && !link) return 'For your first white-label job, add your template and 1–2 sample projects (or share a folder link).';
   }
@@ -340,7 +344,7 @@ function submit() {
   saveNow().then(function () { return api('db.get', {path: S.path}); }).then(function (r) {
     S.job = r.data; store.set('psr_ref', null);
     if (S.job.status !== 'screened' && S.job.status !== 'quoted') throw new Error('The job could not be sent. Please try again.');
-    toast(S.job.status === 'quoted' ? 'Pre-screened. You can start right away.' : 'Sent. We\'ll email your quote within one business day.'); location.hash = 'job/' + S.job.id;
+    toast('Sent. Pre-screening your files now.'); location.hash = 'job/' + S.job.id;
   }).catch(function (e) { S.job.status = 'draft'; b.disabled = false; msg(e.message, true); });
 }
 
@@ -352,18 +356,26 @@ function viewJob() {
   var h = '<p><a href="#jobs">← All jobs</a></p><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><p class="eyebrow">' + esc((sv.psr ? sv.psr + ' · ' : '') + pkg(j)) + '</p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 0">' + esc(j.property.address || '') + '</h1><p class="muted" style="margin:4px 0 0">' + esc(j.property.municipality || '') + '</p></div>' + statusPill(st) + '</div>' +
     '<div class="tl">' + steps.map(function (s, i) { return '<div class="' + (i <= stg ? 'on' : '') + '">' + s + '</div>'; }).join('') + '</div>';
   var card = '';
-  if (st === 'screened' && auto) card = '<b>We\'re pre-screening your job.</b><p class="muted" style="margin:6px 0 0">Refresh in a moment: you\'ll be able to start it here.</p>';
+  var ps = sv.prescreen || {}, pr = ps.result || {}, prescreening = st === 'screened' && (ps.state === 'pending' || ps.state === 'running');
+  var understood = pr.understood ? '<div class="banner" style="margin:12px 0 0"><b>What we understood:</b> ' + esc(pr.understood) + ((pr.concerns || []).length ? '<br><b>Early notes</b> (we confirm these while drafting): ' + pr.concerns.map(function (c) { return esc(c.note); }).join(' · ') : '') + '</div>' : '';
+  if (prescreening) card = '<b>Pre-screening your files…</b><p class="muted" style="margin:6px 0 0">We\'re checking that everything is legible and we have what we need. This usually takes a minute or two; you can leave this page.</p>';
+  else if (st === 'info') card = '<b>A few questions before we start</b><p class="muted" style="margin:6px 0 10px">Answer below and add any files, then send it back. We pick it up right away.</p>' + understood +
+    '<div class="fd" id="qa" style="margin-top:12px">' + (pr.questions || []).map(function (q, i) { return '<div><label class="l" for="qa' + i + '">' + esc(q) + '</label><textarea id="qa' + i + '" data-q="' + esc(q) + '" rows="2"></textarea></div>'; }).join('') +
+    ((pr.missing || []).length ? '<div><span class="lbl">Still needed</span><ul style="margin:4px 0 0">' + pr.missing.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' : '') +
+    '<div class="up" data-kind="other"><span class="t"><b>Upload the missing files</b><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide"></label></div>' +
+    '<div><label class="l" for="qa_more">Anything else</label><textarea id="qa_more" rows="2"></textarea></div><div><button class="btn btn-amber" id="sendinfo">Send it back</button></div></div>';
+  else if (st === 'screened' && auto) card = '<b>We\'re checking your job.</b><p class="muted" style="margin:6px 0 0">You\'ll get the price here and by email shortly.</p>' + understood;
   else if (st === 'screened') card = '<b>We\'re preparing your fixed quote.</b><p class="muted" style="margin:6px 0 0">You\'ll get it by email within one business day. Nothing is charged until you accept it.</p>';
   else if (st === 'quoted') {
     var dep = Number((j.quote || {}).deposit) || 0;
     var isAuto = !!(j.quote && j.quote.auto);
-    card = '<b>' + (isAuto ? 'Pre-screened: ready to start' : 'Your fixed quote') + '</b><p style="font-size:30px;font-weight:800;color:var(--navy);margin:6px 0">' + money(price) + ' <small style="font-size:15px;color:var(--muted)">+ HST</small></p>' + (j.quote && j.quote.note ? '<p style="margin:0 0 8px">' + esc(j.quote.note) + '</p>' : '') +
+    card = understood + '<b style="display:block;margin-top:' + (understood ? '14px' : '0') + '">' + (isAuto ? 'Pre-screened: ready to start' : 'Your fixed quote') + '</b><p style="font-size:30px;font-weight:800;color:var(--navy);margin:6px 0">' + money(price) + ' <small style="font-size:15px;color:var(--muted)">+ HST</small></p>' + (j.quote && j.quote.note ? '<p style="margin:0 0 8px">' + esc(j.quote.note) + '</p>' : '') +
       '<p class="muted" style="margin:0 0 12px">Delivery: ' + esc((j.quote && j.quote.days) || '7–10 business days') + ' from your go-ahead. ' + (dep > 0 ? 'Deposit to start: <b>' + money(dep) + '</b> + HST. Balance due when you approve the draft.' : 'No deposit: the full amount is due when you approve the draft.') + '</p>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' + (dep > 0 ? '<button class="btn btn-amber" id="paydep">' + (isAuto ? 'Pay the deposit and start' : 'Accept and pay the deposit') + '</button>' : '<button class="btn btn-amber" id="accept">' + (isAuto ? 'Start the job' : 'Accept the quote') + '</button>') + '<a class="btn btn-line" href="mailto:admin@permitsetready.ca?subject=' + encodeURIComponent('Question about ' + (sv.psr || 'my quote')) + '">Ask a question</a></div>';
   } else if (['confirmed', 'measuring', 'drafting', 'review', 'consultant'].indexOf(st) >= 0) card = '<b>Your job is underway.</b><p class="muted" style="margin:6px 0 0">' + (st === 'measuring' ? 'Our measuring partner will contact you to book the site visit. ' : '') + 'You\'ll get a watermarked draft to check' + (j.admin && j.admin.eta ? ' around ' + esc(j.admin.eta) : ' in about 7–10 business days') + '.</p>';
   else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or tell us what to change.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul><div class="fd" style="margin-top:12px"><label class="l" for="chg">Changes (if any)</label><textarea id="chg" rows="3" placeholder="e.g. move the bathroom door to the hall side"></textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-amber" id="approve">Approve the draft</button><button class="btn btn-line" id="changes">Send changes</button></div>';
   else if (st === 'changes') card = '<b>We\'re making your changes.</b><p class="muted" style="margin:6px 0 0">You\'ll get an updated draft to check.</p>';
-  else if (st === 'ready') { var bal = Math.max(0, price - paidDeposit(j)); card = '<b>Draft approved. Balance due: ' + money(bal) + ' + HST.</b><p class="muted" style="margin:6px 0 12px">The final PDFs and model are released as soon as it\'s paid.</p><div><button class="btn btn-amber" id="paybal">Pay the balance</button></div>'; }
+  else if (st === 'ready') { var bal = Math.max(0, price - paidDeposit(j)); card = '<b>Draft approved. Balance due: ' + money(bal) + ' + HST.</b><p class="muted" style="margin:6px 0 12px">The final PDF and DWG files are released as soon as it\'s paid.</p><div><button class="btn btn-amber" id="paybal">Pay the balance</button></div>'; }
   else if (st === 'delivered' || st === 'revising') card = '<b>' + (st === 'revising' ? 'We\'re revising the set for the City comments (no charge).' : 'Your final files are ready.') + '</b><ul class="flist" id="finals"><li class="small">Loading…</li></ul><p class="small" style="margin:10px 0 6px">City comments? Upload them here. Code revisions are included at no extra cost.</p><div class="up" data-kind="comments"><span class="t"><b>Examiner comments</b><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide"></label></div>';
   else if (st === 'declined') card = '<b>We can\'t take this job.</b><p class="muted" style="margin:6px 0 0">' + esc((j.admin && j.admin.declineNote) || 'We\'ve emailed you the reason.') + '</p>';
   h += '<div class="card" style="max-width:780px;margin-top:18px">' + card + '<p class="msg" id="fmsg" role="status"></p></div>';
@@ -375,6 +387,14 @@ function viewJob() {
   var pd = $('#paydep'); if (pd) pd.onclick = function () { pay('deposit', pd); };
   var pb = $('#paybal'); if (pb) pb.onclick = function () { pay('balance', pb); };
   var ac = $('#accept'); if (ac) ac.onclick = function () { move('accepted', '', ac); };
+  var si = $('#sendinfo'); if (si) si.onclick = function () {
+    var ans = $$('#qa textarea[data-q]').map(function (t) { return {q: t.getAttribute('data-q'), a: t.value.trim()}; });
+    if ($('#qa_more').value.trim()) ans.push({q: 'Anything else', a: $('#qa_more').value.trim()});
+    if (ans.some(function (x) { return x.q !== 'Anything else' && !x.a; })) { msg('Answer each question (or write "see uploaded file").', true); return; }
+    si.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = 'screened'; d.answers = ans;
+    api('db.set', {path: S.path, data: d}).then(function () { toast('Sent back. Pre-screening again.'); return openJob(S.job.id, false); }).catch(function (e) { si.disabled = false; msg(e.message, true); });
+  };
+  if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false); }).catch(function (e) { S.prescreenBusy = false; msg(e.message, true); }); }
   var ap = $('#approve'); if (ap) ap.onclick = function () { move('approved', $('#chg').value.trim(), ap); };
   var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); if (!n) { msg('Tell us what to change.', true); return; } move('changes', n, ch); };
   if ($('#draftlist')) api('files.draft', {path: S.path}).then(function (r) { $('#draftlist').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Open</a></li>'; }).join('') : '<li class="small">The draft file is on its way.</li>'; bindDl('files.draftDownload'); });
@@ -442,14 +462,16 @@ function viewAdminJob(path) {
       '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
       '<dt>Links</dt><dd>' + (j.docs && j.docs.link ? '<a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared folder</a> ' : '') + (j.docs && j.docs.inspiration ? '<a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Inspiration</a> ' : '') + (sv.folderUrl ? '<a href="' + esc(sv.folderUrl) + '" target="_blank" rel="noopener">Job folder</a>' : '') + '</dd>' +
       '<dt>Notes</dt><dd style="font-weight:400">' + esc((j.docs || {}).notes || '') + '</dd>' + (j.clientNotes ? '<dt>Changes</dt><dd style="font-weight:400">' + esc(j.clientNotes) + '</dd>' : '') + '</dl>' +
+      adminPrescreen(j) +
       '<b style="display:block;margin-top:14px">Files</b><ul class="flist">' + files.map(function (f) { return '<li><span>' + esc(f.kind) + ' · ' + esc(f.name) + '</span>' + (f.driveUrl ? '<a href="' + esc(f.driveUrl) + '" target="_blank" rel="noopener">Open</a>' : '') + '</li>'; }).join('') + '</ul></div>' +
       '<div class="card fd"><b>Quote</b><div class="fd2"><div><label class="l">Price (before HST)</label><input id="q_a" type="number" value="' + esc((j.quote && j.quote.amount) || lp || '') + '"></div><div><label class="l">Deposit</label><input id="q_d" type="number" value="' + esc(dep) + '"></div></div><div><label class="l">Delivery</label><input id="q_t" value="' + esc((j.quote && j.quote.days) || '7–10 business days') + '"></div><div><label class="l">Note to the client (optional)</label><textarea id="q_n" rows="2">' + esc((j.quote && j.quote.note) || '') + '</textarea></div><div><button class="btn btn-amber btn-sm" id="q_send">' + (j.quote ? 'Update and resend quote' : 'Send quote') + '</button></div>' +
       '<b style="margin-top:8px">Progress</b><div class="chips">' + [['drafting', 'Start drafting'], ['review', 'Quality check'], ['draftready', 'Send draft (' + drafts.length + ' file' + (drafts.length === 1 ? '' : 's') + ' in Draft)'], ['ready', 'Balance due'], ['delivered', 'Release finals'], ['revising', 'Revising'], ['declined', 'Decline']].map(function (s) { return '<button type="button" class="btn btn-line btn-sm" data-st="' + s[0] + '">' + esc(s[1]) + '</button>'; }).join('') + '</div>' +
       '<div><label class="l">Expected draft date (shown to the client)</label><input id="a_eta" value="' + esc((j.admin || {}).eta || '') + '" placeholder="e.g. Oct 24"></div><div><label class="l">Internal notes</label><textarea id="a_n" rows="3">' + esc((j.admin || {}).notes || '') + '</textarea></div><div><button class="btn btn-line btn-sm" id="a_save">Save notes</button></div>' +
-      '<p class="small" style="margin:0">Put the watermarked review PDF in the job folder\'s <b>Draft</b> subfolder before sending the draft, and the final PDFs and model in <b>PDF</b> before releasing finals.</p><p class="msg" id="fmsg"></p></div></div>';
+      '<p class="small" style="margin:0">Put the watermarked review PDF in the job folder\'s <b>Draft</b> subfolder before sending the draft, and the final PDF and DWG files plus the job notes sheet in <b>PDF</b> before releasing finals.</p><p class="msg" id="fmsg"></p></div></div>';
     setMain(h);
     var upd = function (data, btn) { btn.disabled = true; return api('db.set', {path: path, data: data, merge: true}).then(function () { toast('Saved'); viewAdminJob(path); }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); };
     $('#q_send').onclick = function () { var a = Number($('#q_a').value); if (!(a > 0)) { msg('Enter the price.', true); return; } upd({status: 'quoted', quote: {amount: a, deposit: Number($('#q_d').value) || 0, days: $('#q_t').value.trim(), note: $('#q_n').value.trim(), at: now()}}, this); };
+    var rp = $('#a_rps'); if (rp) rp.onclick = function () { rp.disabled = true; rp.textContent = 'Running…'; api('job.prescreen', {path: path, force: true}).then(function () { viewAdminJob(path); }).catch(function (e) { rp.disabled = false; msg(e.message, true); }); };
     $('#a_save').onclick = function () { upd({admin: Object.assign({}, j.admin || {}, {notes: $('#a_n').value, eta: $('#a_eta').value.trim()})}, this); };
     $$('#app [data-st]').forEach(function (b) { b.onclick = function () {
       var st = b.getAttribute('data-st');
@@ -458,6 +480,17 @@ function viewAdminJob(path) {
       upd({status: st}, b);
     }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
+}
+
+function adminPrescreen(j) {
+  var ps = (j.server || {}).prescreen; if (!ps) return '';
+  var r = ps.result || {};
+  return '<b style="display:block;margin-top:14px">Pre-screen</b><div class="small" style="margin-top:4px">' + esc(ps.state || '') + (ps.round ? ' · round ' + ps.round : '') + (ps.error ? ' · ' + esc(ps.error) : '') + (j.status === 'screened' ? ' · <a href="#" id="a_rps" onclick="return false">Run again</a>' : '') + '</div>' +
+    (r.understood ? '<p style="margin:6px 0">' + esc(r.understood) + '</p>' : '') +
+    ((r.files || []).length ? '<ul class="flist">' + r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><span class="small">' + (f.readable ? 'readable' : 'NOT READ') + (f.note ? ' · ' + esc(f.note) : '') + '</span></li>'; }).join('') + '</ul>' : '') +
+    ((r.questions || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Asked</b></p><ul style="margin:0">' + r.questions.map(function (q) { return '<li class="small">' + esc(q) + '</li>'; }).join('') + '</ul>' : '') +
+    ((j.answers || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Answers</b></p><ul style="margin:0">' + j.answers.map(function (x) { return '<li class="small">' + esc(x.q) + ' <b>' + esc(x.a) + '</b></li>'; }).join('') + '</ul>' : '') +
+    ((r.concerns || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Early flags</b></p><ul style="margin:0">' + r.concerns.map(function (c) { return '<li class="small">' + esc(c.type) + ': ' + esc(c.note) + '</li>'; }).join('') + '</ul>' : '');
 }
 
 // ---------- boot
