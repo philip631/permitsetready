@@ -331,7 +331,7 @@ function upload(kind, list) {
   }).catch(function (e) { msg(e.message, true); });
 }
 function submit() {
-  var b = $('#next'); b.disabled = true; msg('Sending…');
+  var b = $('#next'); b.disabled = true; msg('Sending…'); clearTimeout(saveT);
   S.job.status = 'screened'; S.job.submittedAt = now();
   saveNow().then(function () { return api('db.get', {path: S.path}); }).then(function (r) {
     S.job = r.data; store.set('psr_ref', null);
