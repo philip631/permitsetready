@@ -23,6 +23,7 @@
 .chips label.on{border-color:var(--amber);background:#FFF8EA}
 .opt{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}.opt label{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;display:block;font-weight:400;cursor:pointer;margin:0}.opt label b{display:block;margin:4px 0 2px}.opt label.on{border:2px solid var(--amber)}.opt input{width:auto;margin:0}
 .up{border:1.5px dashed #D6CCB8;border-radius:12px;padding:12px 14px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.up .t{font-size:14px;flex:1;min-width:200px}.up em{font-style:normal;color:var(--muted);font-size:13px}.up .names{display:block;font-size:13px;color:var(--navy);margin-top:4px}
+.up.busy{border-color:var(--amber);background:#FFF8EA}.spin{display:inline-block;width:14px;height:14px;border:2px solid #E8D9B8;border-top-color:var(--amber);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
 .req{display:inline-block;background:#FDECEA;color:#A33A2B;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:6px;padding:1px 6px;margin-left:6px}
 .quoted{border:1px dashed var(--line);border-radius:12px;padding:14px;background:#FBF8F2}
 .stepnav{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 20px}.stepnav button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;border-radius:999px;background:#fff;border:1px solid var(--line);color:var(--muted);cursor:pointer}.stepnav button.on{background:var(--navy);color:#fff;border-color:var(--navy)}.stepnav button.done{color:var(--navy)}
@@ -101,10 +102,10 @@ var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
 var QUOTED = ['addition', 'newhome', 'structural', 'model3d', 'shop', 'interior', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome'];
 var TIERS = {wl: 'White-label', cs: 'Contractor set'};
-var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Quote within 1 business day', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
+var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Being checked', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
 var STAGE = {draft: 0, screened: 1, info: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
 var MUNIS = ['Toronto', 'Mississauga', 'Brampton', 'Caledon', 'Oakville', 'Burlington', 'Milton', 'Halton Hills', 'Vaughan', 'Markham', 'Richmond Hill', 'Hamilton', 'Pickering', 'Ajax', 'Whitby', 'Oshawa', 'Barrie', 'Innisfil', 'Guelph', 'Kitchener'];
-var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['template', 'Your template and 1–2 sample projects', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
+var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['permits', 'Previous permits for this property', 'issued permits or permit drawings, if any'], ['template', 'Your template and 1–2 sample projects', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
 var S = {user: null, jobs: [], job: null, path: null, files: [], step: 1, admin: {jobs: []}};
 function scopes(it) { var a = (it && it.scopes) || []; return SCOPES.map(function (s) { return s[0]; }).filter(function (k) { return a.indexOf(k) >= 0; }); }
 function quoted(it) { return (it.job && it.job.fromBrief) ? scopes(it) : scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
@@ -327,16 +328,20 @@ function upload(kind, list) {
   var files = Array.prototype.slice.call(list || []); if (!files.length) return;
   var big = files.filter(function (f) { return f.size > 25 * 1048576; });
   if (big.length) { msg(big[0].name + ' is over 25 MB. Share a folder link for large files.', true); return; }
+  var row = $$('#app .up').filter(function (u) { return u.getAttribute('data-kind') === kind; })[0], names = row && row.querySelector('.names'), btn = row && row.querySelector('label.btn');
+  var busy = function (t) { if (!row) return; row.classList.add('busy'); if (btn) btn.style.pointerEvents = 'none'; names.innerHTML = '<span class="spin" aria-hidden="true"></span>' + esc(t); };
+  var done = function () { if (!row) return; row.classList.remove('busy'); if (btn) btn.style.pointerEvents = ''; };
+  busy('Preparing…');
   saveNow().then(function () {
-    var chain = Promise.resolve();
+    var chain = Promise.resolve(), n = 0;
     files.forEach(function (f) {
-      chain = chain.then(function () { msg('Uploading ' + f.name + '…'); return readFile(f); }).then(function (data) {
+      chain = chain.then(function () { n++; busy('Uploading ' + f.name + (files.length > 1 ? ' (' + n + ' of ' + files.length + ')' : '') + '…'); msg('Uploading ' + f.name + '…'); return readFile(f); }).then(function (data) {
         var id = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), rec = {kind: kind, name: f.name, size: f.size, createdAt: now()};
         return api('db.set', {path: S.path + '/files/' + id, data: Object.assign({dataUrl: data}, rec)}).then(function () { rec.id = id; S.files.push(rec); });
       });
     });
-    return chain.then(function () { msg('Uploaded.'); if ($('#f')) sync(); else viewJob(); });
-  }).catch(function (e) { msg(e.message, true); });
+    return chain.then(function () { done(); msg('Uploaded.'); if ($('#f')) sync(); else viewJob(); });
+  }).catch(function (e) { done(); if (names) names.textContent = 'Upload failed: ' + e.message; msg(e.message, true); });
 }
 function submit() {
   var b = $('#next'); b.disabled = true; msg('Sending…'); clearTimeout(saveT);
@@ -394,6 +399,7 @@ function viewJob() {
     si.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = 'screened'; d.answers = ans;
     api('db.set', {path: S.path, data: d}).then(function () { toast('Sent back. Pre-screening again.'); return openJob(S.job.id, false); }).catch(function (e) { si.disabled = false; msg(e.message, true); });
   };
+  if (prescreening) { clearTimeout(S.poll); var pj = S.job.id; S.poll = setTimeout(function () { if (S.job && S.job.id === pj && /^#job\//.test(location.hash)) openJob(pj, false); }, 12000); }
   if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false); }).catch(function (e) { S.prescreenBusy = false; msg(e.message, true); }); }
   var ap = $('#approve'); if (ap) ap.onclick = function () { move('approved', $('#chg').value.trim(), ap); };
   var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); if (!n) { msg('Tell us what to change.', true); return; } move('changes', n, ch); };
