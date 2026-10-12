@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en-CA">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Find a Designer | PermitSetReady</title>
+<meta name="description" content="Planning a basement, second unit, deck, garage or addition in Ontario? Tell us about it and we'll pass it to a design firm near you that works with PermitSetReady.">
+<link rel="canonical" href="https://permitsetready.ca/find-a-designer/">
+<meta name="description" content="The Ontario Residential Permit Guide: 31 plain-language pages on planning, drawing and filing a basement, second unit, walkout, deck or garage permit, with 12 construction details updated to the 2024 Building Code, and the other approvals to check (conservation, heritage, highways). $59, instant PDF.">
+<link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,600;1,9..144,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+<style>.fd{max-width:640px;display:grid;gap:14px}.fd label{font-weight:600;font-size:14px;display:block;margin-bottom:4px}.fd input,.fd select,.fd textarea{width:100%;font:inherit;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;box-sizing:border-box}.fd2{display:grid;grid-template-columns:1fr 1fr;gap:14px}@media(max-width:640px){.fd2{grid-template-columns:1fr}}</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <nav aria-label="Main">
+      <a class="logo" href="/" aria-label="PermitSetReady home"><img src="/img/logo-icon-amber.svg" alt="" width="34" height="34"><span><b>PermitSet</b>Ready</span></a>
+      <button class="burger" type="button" aria-expanded="false" aria-controls="menu" onclick="var m=document.getElementById('menu');m.classList.toggle('open');this.setAttribute('aria-expanded',m.classList.contains('open'))">Menu</button>
+      <div class="menu" id="menu">
+        <a href="/guide/">Guide</a>
+        <a class="btn btn-amber btn-sm" href="/">For professionals</a>
+      </div>
+    </nav>
+  </div>
+</header>
+<main class="wrap section last">
+  <p class="eyebrow">For homeowners</p>
+  <h1 style="font-size:clamp(28px,4vw,42px);margin:6px 0 10px;max-width:760px">Find a designer for your permit drawings.</h1>
+  <p class="muted" style="font-size:17px;max-width:680px">We draw permit sets for Ontario design firms, contractors and engineers, not directly for homeowners. Tell us about your project and we'll pass it to a firm near you that works with us. They contact you directly with their price; there is no cost to ask.</p>
+  <form class="card fd" style="margin-top:22px" id="lf" novalidate>
+    <div class="fd2">
+      <div><label for="l_name">Your name</label><input id="l_name" name="name" autocomplete="name"></div>
+      <div><label for="l_email">Email</label><input id="l_email" name="email" type="email" autocomplete="email"></div>
+    </div>
+    <div class="fd2">
+      <div><label for="l_addr">Project address</label><input id="l_addr" name="address" placeholder="12 Elm St" autocomplete="street-address"></div>
+      <div><label for="l_muni">Municipality</label><input id="l_muni" name="municipality" placeholder="Mississauga" list="munis"><datalist id="munis"><option>Toronto</option><option>Mississauga</option><option>Brampton</option><option>Oakville</option><option>Burlington</option><option>Milton</option><option>Halton Hills</option><option>Caledon</option><option>Vaughan</option><option>Hamilton</option><option>Barrie</option><option>Guelph</option><option>Kitchener</option></datalist></div>
+    </div>
+    <div class="fd2">
+      <div><label for="l_proj">Project</label><select id="l_proj" name="project"><option>Basement finish</option><option>Second unit</option><option>Below-grade entrance</option><option>Deck</option><option>Garage or shed</option><option>Addition</option><option>New home</option><option>Other</option></select></div>
+      <div><label for="l_time">When do you want to start?</label><select id="l_time" name="timing"><option>Within 3 months</option><option>3 to 6 months</option><option>Just exploring</option></select></div>
+    </div>
+    <div><label for="l_notes">Anything else (optional)</label><textarea id="l_notes" name="notes" rows="3" placeholder="e.g. we have a survey, the basement has a side door"></textarea></div>
+    <div style="position:absolute;left:-9999px" aria-hidden="true"><label>Website<input name="website" tabindex="-1" autocomplete="off"></label></div>
+    <label style="font-weight:400;display:flex;gap:8px;align-items:flex-start"><input type="checkbox" name="consent" style="width:auto;margin-top:4px"> I agree to PermitSetReady sharing these details with one design firm so they can contact me.</label>
+    <div><button class="btn btn-amber" type="submit" id="l_btn">Find me a designer</button></div>
+    <p id="l_msg" role="status" style="margin:0;font-size:14px;min-height:20px"></p>
+  </form>
+  <div class="card" style="max-width:640px;margin-top:22px;gap:8px">
+    <b>Want to understand the process first?</b>
+    <p class="muted" style="margin:0">The Ontario Residential Permit Guide explains what your permit needs, with 12 construction details. $59 + HST, instant PDF.</p>
+    <div><a class="btn btn-line btn-sm" href="/guide/">Get the Guide</a></div>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap row">
+    <a class="logo" href="/"><img src="/img/logo-icon-amber.svg" alt="" width="28" height="28"><span><b>PermitSet</b>Ready</span></a>
+    <span>Ontario residential permit drawings</span>
+    <span class="links"><a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a><a href="https://instagram.com/permitsetready" rel="noopener" target="_blank">@permitsetready</a></span>
+  </div>
+</footer>
+<script src="/assets/config.js"></script>
+<script>
+(function(){
+  var API=(window.PSR_CONFIG&&window.PSR_CONFIG.apiUrl)||'', fm=document.getElementById('lf'), m=document.getElementById('l_msg'), b=document.getElementById('l_btn');
+  fm.onsubmit=function(ev){ev.preventDefault();
+    var d={}; Array.prototype.forEach.call(fm.elements,function(e){if(!e.name)return; d[e.name]=e.type==='checkbox'?e.checked:e.value.trim();});
+    m.style.color='#A33A2B';
+    if(!d.name||!d.email||!d.address||!d.municipality){m.textContent='Add your name, email, the address and the municipality.';return;}
+    if(!d.consent){m.textContent='Tick the box so we can pass your details to one firm.';return;}
+    b.disabled=true; m.style.color=''; m.textContent='Sending…';
+    fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'lead.submit',form:d})}).then(function(r){return r.json();}).then(function(j){
+      if(!j.ok)throw new Error(j.error||'Something went wrong.');
+      fm.innerHTML='<h3 style="margin:0">Thanks, '+String(d.name).split(' ')[0].replace(/[<>&]/g,'')+'.</h3><p class="muted" style="margin:0">We\'ll pass your project to a design firm near you, and they\'ll contact you directly. If you don\'t hear back within a few business days, email admin@permitsetready.ca.</p>';
+    }).catch(function(e){b.disabled=false;m.style.color='#A33A2B';m.textContent=e.message;});
+  };
+})();
+</script>
+</body>
+</html>
