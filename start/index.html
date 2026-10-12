@@ -40,6 +40,7 @@
 .flist{list-style:none;padding:0;margin:6px 0 0;font-size:14px}.flist li{padding:7px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl th,.tbl td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.tbl tr.click{cursor:pointer}.tbl tr.click:hover{background:#FBF8F2}
 .banner{border:1px solid #F3C978;background:#FBF5E8;border-radius:12px;padding:12px 16px;font-size:14px}
+.addr-wrap{position:relative}.addr-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #E8E0D2;border-radius:12px;box-shadow:0 14px 30px rgba(14,31,54,.18);list-style:none;margin:0;padding:6px;z-index:40;max-height:300px;overflow:auto}.addr-list li{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1.35}.addr-list li small{display:block;color:#5B6B7F;font-size:13px}.addr-list li[aria-selected=true],.addr-list li:hover{background:#FBF5E8}.addr-list li.src{cursor:default;font-size:11px;color:#8A97A8;padding:4px 12px}.addr-list li.src:hover{background:none}
 .ovl{position:fixed;inset:0;background:rgba(15,30,50,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;backdrop-filter:blur(2px)}.ovl .box{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}.ovl .big,.bigspin{display:block;width:54px;height:54px;border:5px solid #E8D9B8;border-top-color:var(--amber);border-radius:50%;animation:sp .9s linear infinite;margin:0 auto 18px}.ovl b{display:block;font-size:20px;color:var(--navy)}.ovl p{margin:8px 0 0;color:var(--muted);font-size:15px}.pscard{text-align:center;padding:18px 6px}.pscard .steps{list-style:none;padding:0;margin:14px auto 0;max-width:360px;text-align:left}.pscard .steps li{padding:5px 0;color:var(--muted);font-size:15px}.pscard .steps li.on{color:var(--navy);font-weight:700}.pscard .steps li.done{color:var(--navy)}.pscard .steps li.done:before{content:'\2713  ';color:var(--amber)}.pscard .steps li.on:before{content:'\2022  ';color:var(--amber)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .reflink{display:flex;gap:8px;flex-wrap:wrap}.reflink input{flex:1;min-width:220px}
@@ -229,7 +230,7 @@ function viewForm(it) {
     '<div><label class="l">Referred by another firm? (optional)</label><input data-k="referral" placeholder="Their email or referral code"></div></div>' +
     // 2
     '<div data-step="2" class="fd hide"><h2><i>2</i>Project</h2>' +
-    '<div class="fd2"><div><label class="l">Project address</label><input data-k="property.address" autocomplete="off" placeholder="48 Maple Grove Rd"></div><div><label class="l">Municipality</label><input data-k="property.municipality" list="munis" placeholder="Oakville"><datalist id="munis">' + munis + '</datalist></div></div>' +
+    '<div class="fd2"><div><label class="l" for="p_addr">Project address</label><div class="addr-wrap"><input id="p_addr" data-k="property.address" autocomplete="off" placeholder="Start typing, e.g. 48 Maple Grove Rd, Oakville" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addr-list"><ul id="addr-list" class="addr-list hide" role="listbox"></ul></div></div><div><label class="l" for="p_muni">Municipality</label><input id="p_muni" data-k="property.municipality" list="munis" placeholder="Fills in when you pick an address"><datalist id="munis">' + munis + '</datalist></div></div>' +
     '<div><span class="lbl">What are we drawing? (pick all that apply)</span><div class="chips" id="scopes">' + SCOPES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"> ' + s[1] + '</label>'; }).join('') + '</div></div>' +
     '<label style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" id="brief" style="width:auto;margin-top:4px"> <span><b>No design yet: design it from our description.</b> We prepare a layout for you to approve before drafting. Quoted per job or $85/hour.</span></label>' +
     '<div class="fd2"><div><label class="l">Existing building</label><input data-k="job.existing" placeholder="e.g. detached house, 1990"></div><div><label class="l">Approx. area of work</label><input data-k="job.area" placeholder="e.g. 85 m² basement"></div></div>' +
@@ -260,7 +261,7 @@ function viewForm(it) {
     '<label><input type="checkbox" data-ack="terms"> I have read and agree to the <a href="/terms/" target="_blank" rel="noopener">Terms for firms</a>, including that payments are non-refundable.</label></div></div>' +
     '<p class="msg" id="fmsg" role="status"></p><div class="navrow"><button type="button" class="btn btn-line" id="back">Back</button><button type="button" class="btn btn-amber" id="next">Continue</button></div></form>';
   setMain(h);
-  fillForm(); bindForm(); showStep();
+  fillForm(); bindForm(); addrSetup(); showStep();
 }
 function fillForm() {
   var j = S.job;
@@ -283,6 +284,31 @@ function sync() {
   $$('#f .wlonly').forEach(function (e) { e.classList.toggle('hide', j.tier !== 'wl'); });
   $('#sqbox').classList.toggle('hide', !(j.measure && j.measure.want));
   $$('#f .up').forEach(function (u) { var k = u.getAttribute('data-kind'); var names = S.files.filter(function (f) { return f.kind === k; }).map(function (f) { return f.name; }); u.querySelector('.names').textContent = names.length ? '✓ ' + names.join(', ') : ''; });
+}
+// address lookup (OpenStreetMap / Photon: free, no key). Picking a result fills the address, municipality, postcode and coordinates.
+function addrSetup() {
+  var inp = $('#p_addr'), list = $('#addr-list'); if (!inp || !list || inp._addr) return; inp._addr = true;
+  var timer = null, items = [], sel = -1, seq = 0;
+  var close = function () { list.classList.add('hide'); inp.setAttribute('aria-expanded', 'false'); sel = -1; };
+  var town = function (p) { return p.city || p.town || p.village || p.locality || p.district || p.county || ''; };
+  var line = function (p) { return [p.housenumber, p.street || p.name].filter(Boolean).join(' '); };
+  var render = function () { if (!items.length) { close(); return; } list.innerHTML = items.map(function (f, i) { var p = f.properties; return '<li role="option" data-i="' + i + '" aria-selected="' + (i === sel) + '">' + esc(line(p) || p.name || '') + '<small>' + esc([town(p), p.state, p.postcode].filter(Boolean).join(', ')) + '</small></li>'; }).join('') + '<li class="src" aria-hidden="true">Address search © OpenStreetMap contributors</li>'; list.classList.remove('hide'); inp.setAttribute('aria-expanded', 'true'); };
+  var pick = function (i) {
+    var f = items[i]; if (!f) return; var p = f.properties, c = f.geometry && f.geometry.coordinates, tw = town(p);
+    inp.value = line(p) || p.name || ''; setv(S.job, 'property.address', inp.value); setv(S.job, 'property.postcode', p.postcode || ''); setv(S.job, 'property.town', tw);
+    if (c) { setv(S.job, 'property.lat', c[1]); setv(S.job, 'property.lon', c[0]); }
+    var cands = [p.city, p.town, p.village, p.locality, p.district, p.county].filter(Boolean).map(function (x) { return String(x).replace(/^(City|Town|Township|Municipality) of /i, ''); });
+    var m = MUNIS.filter(function (o) { return cands.some(function (x) { return x.toLowerCase() === o.toLowerCase(); }); })[0] || cands[0] || '';
+    if (m) { setv(S.job, 'property.municipality', m); $('#p_muni').value = m; }
+    close(); sync(); queueSave();
+  };
+  inp.addEventListener('input', function () {
+    clearTimeout(timer); var q = inp.value.trim(); if (q.length < 4) { items = []; close(); return; }
+    timer = setTimeout(function () { var my = ++seq; fetch('https://photon.komoot.io/api/?limit=6&lang=en&bbox=-95.16,41.67,-74.34,56.86&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) { if (my !== seq) return; items = (j.features || []).filter(function (f) { var p = f.properties || {}; return p.countrycode === 'CA' && (!p.state || /ontario/i.test(p.state)) && (p.street || p.housenumber || p.name); }); sel = -1; render(); }).catch(function () { items = []; close(); }); }, 300);
+  });
+  inp.addEventListener('keydown', function (e) { if (list.classList.contains('hide')) return; if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); } else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); render(); } else if (e.key === 'Enter' && sel >= 0) { e.preventDefault(); pick(sel); } else if (e.key === 'Escape') close(); });
+  list.addEventListener('mousedown', function (e) { var li = e.target.closest('[data-i]'); if (li) { e.preventDefault(); pick(Number(li.getAttribute('data-i'))); } });
+  inp.addEventListener('blur', function () { setTimeout(close, 150); });
 }
 function bindForm() {
   $$('#f [data-k]').forEach(function (el) {
