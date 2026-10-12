@@ -493,6 +493,7 @@ function adminPrescreen(j) {
   var r = ps.result || {};
   return '<b style="display:block;margin-top:14px">Pre-screen</b><div class="small" style="margin-top:4px">' + esc(ps.state || '') + (ps.round ? ' · round ' + ps.round : '') + (ps.error ? ' · ' + esc(ps.error) : '') + (j.status === 'screened' ? ' · <a href="#" id="a_rps" onclick="return false">Run again</a>' : '') + '</div>' +
     (r.understood ? '<p style="margin:6px 0">' + esc(r.understood) + '</p>' : '') +
+    (r.unsure ? '<p class="banner" style="margin:6px 0"><b>Not sure, needs your look:</b> ' + esc(r.reviewNote || '') + '</p>' : '') +
     ((r.files || []).length ? '<ul class="flist">' + r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><span class="small">' + (f.readable ? 'readable' : 'NOT READ') + (f.note ? ' · ' + esc(f.note) : '') + '</span></li>'; }).join('') + '</ul>' : '') +
     ((r.questions || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Asked</b></p><ul style="margin:0">' + r.questions.map(function (q) { return '<li class="small">' + esc(q) + '</li>'; }).join('') + '</ul>' : '') +
     ((j.answers || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Answers</b></p><ul style="margin:0">' + j.answers.map(function (x) { return '<li class="small">' + esc(x.q) + ' <b>' + esc(x.a) + '</b></li>'; }).join('') + '</ul>' : '') +
