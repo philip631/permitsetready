@@ -146,6 +146,7 @@ function route() {
   if (h.indexOf('job/') === 0) return openJob(h.slice(4), false);
   if (h === 'refer') return viewRefer();
   if (h === 'admin') return viewAdmin();
+  if (h === 'admin/costs') return viewCosts();
   if (h.indexOf('admin/') === 0) return viewAdminJob(decodeURIComponent(h.slice(6)));
   if (h === 'project' && S.lastPid) return openJob(S.lastPid, false);
   return viewJobs();
@@ -498,8 +499,22 @@ function viewAdmin() {
     setMain('<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><h1 style="font-size:clamp(26px,4vw,36px);margin:0">Admin · jobs</h1><div class="chips"><label class="' + (f === 'open' ? 'on' : '') + '"><input type="radio" name="af" value="open"' + (f === 'open' ? ' checked' : '') + '> Open</label><label class="' + (f === 'all' ? 'on' : '') + '"><input type="radio" name="af" value="all"' + (f === 'all' ? ' checked' : '') + '> All</label></div></div>' +
       '<div class="card" style="margin-top:16px;overflow:auto"><table class="tbl"><thead><tr><th>PSR</th><th>Client</th><th>Address</th><th>Package</th><th>Price</th><th>Status</th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Client) + '<div class="small">' + esc(x.Email) + '</div></td><td>' + esc(x.Address) + ', ' + esc(x.Municipality) + '</td><td>' + esc(x.Package) + '</td><td>' + esc(typeof x.Price === 'number' ? money(x.Price) : x.Price) + '</td><td>' + esc(x.Status) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="muted">No jobs.</td></tr>') + '</tbody></table></div>' +
-      '<p class="small" style="margin-top:12px">Homeowner leads, referrals, credits and reviews are on the Leads, Referrals, Credits and Reviews tabs of the Jobs sheet.</p>');
+      '<p class="small" style="margin-top:12px"><a href="#admin/costs">Costs and averages per project type</a> · Homeowner leads, referrals, credits and reviews are on the Leads, Referrals, Credits and Reviews tabs of the Jobs sheet.</p>');
     $$('input[name=af]').forEach(function (i) { i.onchange = function () { store.set('psr_adm_filter', i.value); viewAdmin(); }; });
+    $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
+  }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
+}
+function money2(n) { return 'US$' + (Number(n) || 0).toFixed(2); }
+function viewCosts() {
+  if (!S.user.isAdmin) return viewJobs();
+  setMain('<p class="muted">Loading…</p>');
+  api('admin.jobcosts').then(function (r) {
+    var h = '<p><a href="#admin">← All jobs</a></p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 4px">Costs and averages</h1><p class="muted" style="margin:0 0 16px">Per project type, from every job on the Job Costs tab. AI cost is the list-price equivalent of the Claude usage (pre-screen + drafting runner). Averages firm up after three or more jobs of a type.</p>' +
+      '<div class="card" style="overflow:auto"><table class="tbl"><thead><tr><th>Service · type</th><th>Jobs</th><th>Avg days to deliver</th><th>Avg AI cost</th><th>Avg drafting h</th><th>Avg your h</th><th>Avg price</th></tr></thead><tbody>' +
+      (r.averages.length ? r.averages.map(function (g) { return '<tr><td>' + esc(g.type) + '</td><td>' + g.jobs + '</td><td>' + (g.avgDays == null ? '–' : g.avgDays) + '</td><td>' + money2(g.avgAiUsd) + '</td><td>' + g.avgDraftHours + '</td><td>' + g.avgPhilipHours + '</td><td>' + money(g.avgPrice) + '</td></tr>'; }).join('') : '<tr><td colspan="7" class="muted">No jobs yet.</td></tr>') + '</tbody></table></div>' +
+      '<div class="card" style="overflow:auto;margin-top:16px"><b>Jobs</b><table class="tbl" style="margin-top:8px"><thead><tr><th>PSR</th><th>Type</th><th>Days</th><th>Draft rounds</th><th>Revisions</th><th>AI cost</th><th>Drafting h</th><th>Your h</th></tr></thead><tbody>' +
+      r.rows.slice().reverse().map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Service + ' · ' + x['Project type']) + '</td><td>' + esc(x['Days to deliver']) + '</td><td>' + esc(x['Draft rounds']) + '</td><td>' + esc(x.Revisions) + '</td><td>' + money2(x['Total AI US$']) + '</td><td>' + esc(x['Drafting hours']) + '</td><td>' + esc(x['Philip hours']) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    setMain(h);
     $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
@@ -508,7 +523,7 @@ function viewAdminJob(path) {
   Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'}), api('files.draft', {path: path})]).then(function (r) {
     var j = r[0].data, files = (r[1].docs || []).map(function (d) { return d.data; }), drafts = r[2].files || [], sv = j.server || {}, row = S.admin.jobs.filter(function (x) { return x.Path === path; })[0] || {};
     var lp = listPrice(j), dep = j.quote && j.quote.deposit != null ? j.quote.deposit : (typeof row.Deposit === 'number' ? row.Deposit : Math.round((lp || 0) * 0.5));
-    var qd = (j.admin || {}).quoteDraft || {};
+    var qd = (j.admin || {}).quoteDraft || {}, jc = (j.admin || {}).costs || {};
     var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
       '<div class="grid-2" style="margin-top:16px;align-items:start"><div class="card"><b>Job</b><dl class="sum" style="margin-top:8px"><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + ' · ' + esc(j.contact.name || '') + '</dd><dt>Email</dt><dd>' + esc(j.contact.email || '') + ' ' + esc(j.contact.phone || '') + '</dd><dt>Role</dt><dd>' + esc(j.contact.role || '') + '</dd>' +
       '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + '</dd><dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
@@ -523,9 +538,21 @@ function viewAdminJob(path) {
       '<div class="card fd"><b>Quote</b><div class="fd2"><div><label class="l">Price (before HST)</label><input id="q_a" type="number" value="' + esc(qd.amount != null ? qd.amount : ((j.quote && j.quote.amount) || lp || '')) + '"></div><div><label class="l">Deposit</label><input id="q_d" type="number" value="' + esc(qd.deposit != null ? qd.deposit : dep) + '"></div></div><div><label class="l">Delivery</label><input id="q_t" value="' + esc(qd.days != null ? qd.days : ((j.quote && j.quote.days) || '7–10 business days')) + '"></div><div><label class="l">Note to the client (optional)</label><textarea id="q_n" rows="3">' + esc(qd.note != null ? qd.note : ((j.quote && j.quote.note) || '')) + '</textarea></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-amber btn-sm" id="q_send">' + (j.quote ? 'Update and resend quote' : 'Send quote') + '</button><button type="button" class="btn btn-line btn-sm" id="q_save">Save draft</button><span class="small" id="q_state">' + (qd.at ? 'Draft saved ' + esc(new Date(qd.at).toLocaleString()) : '') + '</span></div>' +
       '<b style="margin-top:8px">Progress</b><div class="chips">' + [['drafting', 'Start drafting'], ['review', 'Quality check'], ['draftready', 'Send draft (' + drafts.length + ' file' + (drafts.length === 1 ? '' : 's') + ' in Draft)'], ['ready', 'Balance due'], ['delivered', 'Release finals'], ['revising', 'Revising'], ['declined', 'Decline']].map(function (s) { return '<button type="button" class="btn btn-line btn-sm" data-st="' + s[0] + '">' + esc(s[1]) + '</button>'; }).join('') + '</div>' +
       '<div><label class="l">Expected draft date (shown to the client)</label><input id="a_eta" value="' + esc((j.admin || {}).eta || '') + '" placeholder="e.g. Oct 24"></div><div><label class="l">Internal notes</label><textarea id="a_n" rows="3">' + esc((j.admin || {}).notes || '') + '</textarea></div><div><button class="btn btn-line btn-sm" id="a_save">Save notes</button></div>' +
+      '<b style="margin-top:8px">Job costs</b><p class="small" style="margin:0">Pre-screen AI: ' + money2(((sv.usage || {}).ai || {}).usd || 0) + ' (' + (((sv.usage || {}).ai || {}).calls || 0) + ' run' + ((((sv.usage || {}).ai || {}).calls || 0) === 1 ? '' : 's') + '). The drafting runner adds its Claude cost and time here after each session.</p>' +
+      '<div class="fd2"><div><label class="l">Drafting Claude cost (US$)</label><input id="c_du" type="number" step="0.01" value="' + esc(jc.draftUsd != null ? jc.draftUsd : '') + '"></div><div><label class="l">Drafting time (hours)</label><input id="c_dh" type="number" step="0.1" value="' + esc(jc.draftHours != null ? jc.draftHours : '') + '"></div></div>' +
+      '<div class="fd2"><div><label class="l">Your time (hours)</label><input id="c_ph" type="number" step="0.1" value="' + esc(jc.philipHours != null ? jc.philipHours : '') + '"></div><div><label class="l">Cost notes</label><input id="c_n" value="' + esc(jc.notes || '') + '" placeholder="e.g. two review passes"></div></div>' +
+      '<div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn btn-line btn-sm" id="c_save">Save costs</button><span class="small" id="c_state"></span></div>' +
       '<p class="small" style="margin:0">Put the watermarked review PDF in the job folder\'s <b>Draft</b> subfolder before sending the draft, and the final PDF and DWG files plus the job notes sheet in <b>PDF</b> before releasing finals.</p><p class="msg" id="fmsg"></p></div></div>';
     setMain(h);
     var upd = function (data, btn) { btn.disabled = true; return api('db.set', {path: path, data: data, merge: true}).then(function () { toast('Saved'); viewAdminJob(path); }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); };
+    var cSave = function (quiet) {
+      var nv = function (id) { return $(id).value === '' ? null : Number($(id).value); };
+      var c = Object.assign({}, jc, {draftUsd: nv('#c_du'), draftHours: nv('#c_dh'), philipHours: nv('#c_ph'), notes: $('#c_n').value});
+      $('#c_state').textContent = 'Saving…';
+      return api('db.set', {path: path, data: {admin: Object.assign({}, j.admin || {}, {costs: c})}, merge: true}).then(function () { jc = c; j.admin = Object.assign({}, j.admin || {}, {costs: c}); $('#c_state').textContent = 'Saved'; if (!quiet) toast('Costs saved'); }).catch(function (e) { $('#c_state').textContent = 'Not saved: ' + e.message; });
+    };
+    var cT = null; ['#c_du', '#c_dh', '#c_ph', '#c_n'].forEach(function (id) { $(id).addEventListener('input', function () { clearTimeout(cT); $('#c_state').textContent = 'Unsaved changes'; cT = setTimeout(function () { cSave(true); }, 2500); }); });
+    $('#c_save').onclick = function () { clearTimeout(cT); cSave(false); };
     var qSave = function (quiet) {
       var draft = {amount: $('#q_a').value === '' ? null : Number($('#q_a').value), deposit: $('#q_d').value === '' ? null : Number($('#q_d').value), days: $('#q_t').value, note: $('#q_n').value, at: now()};
       $('#q_state').textContent = 'Saving…';
