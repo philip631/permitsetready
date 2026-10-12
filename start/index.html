@@ -23,6 +23,7 @@
 .chips label.on{border-color:var(--amber);background:#FFF8EA}
 .opt{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}.opt label{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;display:block;font-weight:400;cursor:pointer;margin:0}.opt label b{display:block;margin:4px 0 2px}.opt label.on{border:2px solid var(--amber)}.opt input{width:auto;margin:0}
 .up{border:1.5px dashed #D6CCB8;border-radius:12px;padding:12px 14px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.up .t{font-size:14px;flex:1;min-width:200px}.up em{font-style:normal;color:var(--muted);font-size:13px}.up .names{display:block;font-size:13px;color:var(--navy);margin-top:4px}
+.mk{margin-top:14px}.mk .pg{position:relative;margin:0 0 14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;cursor:crosshair}.mk .pg.ro{cursor:default}.mk canvas{display:block;width:100%;height:auto}.mk .pin{position:absolute;transform:translate(-50%,-100%);background:#C2410C;color:#fff;font:700 12px/1 Inter,sans-serif;border-radius:12px 12px 12px 0;padding:5px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none}.mk .lbl2{font-size:12px;color:var(--muted);margin:0 0 4px}.mklist{list-style:none;padding:0;margin:8px 0 0}.mklist li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;margin:6px 0}.mklist b{background:#C2410C;color:#fff;border-radius:10px;padding:2px 7px;font-size:12px}.mklist textarea{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px}
 .up.busy{border-color:var(--amber);background:#FFF8EA}.spin{display:inline-block;width:14px;height:14px;border:2px solid #E8D9B8;border-top-color:var(--amber);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
 .req{display:inline-block;background:#FDECEA;color:#A33A2B;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:6px;padding:1px 6px;margin-left:6px}
 .quoted{border:1px dashed var(--line);border-radius:12px;padding:14px;background:#FBF8F2}
@@ -74,6 +75,7 @@
 </footer>
 
 <script src="/assets/config.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
 (function () {
 'use strict';
@@ -383,7 +385,10 @@ function viewJob() {
       '<p class="muted" style="margin:0 0 12px">Delivery: ' + esc((j.quote && j.quote.days) || '7–10 business days') + ' from your go-ahead. ' + (dep > 0 ? 'Deposit to start: <b>' + money(dep) + '</b> + HST. Balance due when you approve the draft.' : 'No deposit: the full amount is due when you approve the draft.') + '</p>' +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' + (dep > 0 ? '<button class="btn btn-amber" id="paydep">' + (isAuto ? 'Pay the deposit and start' : 'Accept and pay the deposit') + '</button>' : '<button class="btn btn-amber" id="accept">' + (isAuto ? 'Start the job' : 'Accept the quote') + '</button>') + '<a class="btn btn-line" href="mailto:admin@permitsetready.ca?subject=' + encodeURIComponent('Question about ' + (sv.psr || 'my quote')) + '">Ask a question</a></div>';
   } else if (['confirmed', 'measuring', 'drafting', 'review', 'consultant'].indexOf(st) >= 0) card = '<b>Your job is underway.</b><p class="muted" style="margin:6px 0 0">' + (st === 'measuring' ? 'Our measuring partner will contact you to book the site visit. ' : '') + 'You\'ll get a watermarked draft to check' + (j.admin && j.admin.eta ? ' around ' + esc(j.admin.eta) : ' in about 7–10 business days') + '.</p>';
-  else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or tell us what to change.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul><div class="fd" style="margin-top:12px"><label class="l" for="chg">Changes (if any)</label><textarea id="chg" rows="3" placeholder="e.g. move the bathroom door to the hall side"></textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-amber" id="approve">Approve the draft</button><button class="btn btn-line" id="changes">Send changes</button></div>';
+  else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or mark up what to change: click anywhere on a sheet to drop a numbered pin and type the change.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul>' +
+    '<div style="margin-top:10px"><button type="button" class="btn btn-line btn-sm" id="mkopen">Mark up the draft</button></div><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading the drawings…</p><div id="mkpages"></div></div><ol class="mklist" id="mklist"></ol>' +
+    '<div class="up" data-kind="markup" style="margin-top:10px"><span class="t"><b>Or upload a marked-up PDF</b> <em>· from Bluebeam, Acrobat or a scan</em><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png"></label></div>' +
+    '<div class="fd" style="margin-top:12px"><label class="l" for="chg">General notes (optional)</label><textarea id="chg" rows="3" placeholder="e.g. use the client\'s preferred stair layout"></textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-amber" id="approve">Approve the draft</button><button class="btn btn-line" id="changes">Send changes</button></div>';
   else if (st === 'changes') card = '<b>We\'re making your changes.</b><p class="muted" style="margin:6px 0 0">You\'ll get an updated draft to check.</p>';
   else if (st === 'ready') { var bal = Math.max(0, price - paidDeposit(j)); card = '<b>Draft approved. Balance due: ' + money(bal) + ' + HST.</b><p class="muted" style="margin:6px 0 12px">The final PDF and DWG files are released as soon as it\'s paid.</p><div><button class="btn btn-amber" id="paybal">Pay the balance</button></div>'; }
   else if (st === 'delivered' || st === 'revising') card = '<b>' + (st === 'revising' ? 'We\'re revising the set for the City comments (no charge).' : 'Your final files are ready.') + '</b><ul class="flist" id="finals"><li class="small">Loading…</li></ul><p class="small" style="margin:10px 0 6px">City comments? Upload them here. Code revisions are included at no extra cost.</p><div class="up" data-kind="comments"><span class="t"><b>Examiner comments</b><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide"></label></div>';
@@ -407,9 +412,47 @@ function viewJob() {
   if (prescreening) { clearTimeout(S.poll); var pj = S.job.id; S.poll = setTimeout(function () { if (S.job && S.job.id === pj && /^#job\//.test(location.hash)) openJob(pj, false); }, 12000); }
   if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false); }).catch(function (e) { S.prescreenBusy = false; msg(e.message, true); }); }
   var ap = $('#approve'); if (ap) ap.onclick = function () { move('approved', $('#chg').value.trim(), ap); };
-  var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); if (!n) { msg('Tell us what to change.', true); return; } move('changes', n, ch); };
+  var mo = $('#mkopen'); if (mo) { if (S.mkJob !== S.job.id) { S.markups = []; S.mkJob = S.job.id; } mo.onclick = function () { mo.disabled = true; openMarkup(S.path, false); }; if (S.markups.length) { mo.disabled = true; openMarkup(S.path, false); } }
+  var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); var mk = (S.markups || []).filter(function (m) { return m.text.trim(); }); var upl = S.files.some(function (f) { return f.kind === 'markup'; }); if (!n && !mk.length && !upl) { msg('Drop a pin on the drawings, upload a marked-up PDF, or write what to change.', true); return; } if ((S.markups || []).some(function (m) { return !m.text.trim(); })) { msg('Type the change for each pin (or remove it).', true); return; } S.sendMarkups = mk; move('changes', n, ch); };
   if ($('#draftlist')) api('files.draft', {path: S.path}).then(function (r) { $('#draftlist').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Open</a></li>'; }).join('') : '<li class="small">The draft file is on its way.</li>'; bindDl('files.draftDownload'); });
   if ($('#finals')) api('files.deliverables', {path: S.path}).then(function (r) { $('#finals').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Download</a></li>'; }).join('') : '<li class="small">Files are being prepared.</li>'; bindDl('files.download'); });
+}
+// ---------- draft markup (pins on the watermarked draft; pdf.js renders it)
+function openMarkup(path, readOnly, pins, fileId) {
+  var box = $('#mk'); box.classList.remove('hide');
+  var go = function (fid) {
+    api('files.draftDownload', {path: path, fileId: fid}).then(function (r) {
+      if (!window.pdfjsLib) throw new Error('The viewer could not load. Upload a marked-up PDF instead.');
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+      var bin = atob(r.dataUrl.split(',')[1]), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+      return pdfjsLib.getDocument({data: arr}).promise;
+    }).then(function (pdf) {
+      $('#mkmsg').textContent = readOnly ? 'Pins the client placed on the draft:' : 'Click on a sheet to drop a pin, then type the change below it in the list.';
+      var host = $('#mkpages'); host.innerHTML = '';
+      var chain = Promise.resolve();
+      for (var n = 1; n <= pdf.numPages; n++) (function (n) {
+        chain = chain.then(function () { return pdf.getPage(n); }).then(function (page) {
+          var vp = page.getViewport({scale: 1.6}), wrap = document.createElement('div'), lab = document.createElement('p'), c = document.createElement('canvas');
+          lab.className = 'lbl2'; lab.textContent = 'Sheet ' + n + ' of ' + pdf.numPages; wrap.className = 'pg' + (readOnly ? ' ro' : ''); wrap.setAttribute('data-page', n);
+          c.width = vp.width; c.height = vp.height; wrap.appendChild(c); host.appendChild(lab); host.appendChild(wrap);
+          if (!readOnly) wrap.onclick = function (ev) { var b = wrap.getBoundingClientRect(); S.markups.push({page: n, x: (ev.clientX - b.left) / b.width, y: (ev.clientY - b.top) / b.height, text: ''}); drawPins(readOnly); var t = $$('#mklist textarea'); if (t.length) t[t.length - 1].focus(); };
+          return page.render({canvasContext: c.getContext('2d'), viewport: vp}).promise;
+        });
+      })(n);
+      return chain.then(function () { drawPins(readOnly); });
+    }).catch(function (e) { $('#mkmsg').textContent = e.message; });
+  };
+  if (fileId) go(fileId); else api('files.draft', {path: path}).then(function (r) { if (!r.files.length) throw new Error('No draft file yet.'); go(r.files[0].id); }).catch(function (e) { $('#mkmsg').textContent = e.message; });
+  if (pins) S.markups = pins;
+}
+function drawPins(readOnly) {
+  $$('#mkpages .pin').forEach(function (p) { p.remove(); });
+  (S.markups || []).forEach(function (m, i) { var w = $('#mkpages .pg[data-page="' + m.page + '"]'); if (!w) return; var p = document.createElement('span'); p.className = 'pin'; p.textContent = i + 1; p.style.left = (m.x * 100) + '%'; p.style.top = (m.y * 100) + '%'; w.appendChild(p); });
+  var l = $('#mklist'); if (!l) return;
+  l.innerHTML = (S.markups || []).map(function (m, i) { return '<li><b>' + (i + 1) + '</b>' + (readOnly ? '<span>Sheet ' + m.page + ': ' + esc(m.text) + '</span><span></span>' : '<textarea rows="2" data-i="' + i + '" placeholder="Sheet ' + m.page + ': what should change here?">' + esc(m.text) + '</textarea><button type="button" class="btn btn-line btn-sm" data-rm="' + i + '">Remove</button>') + '</li>'; }).join('');
+  if (readOnly) return;
+  $$('#mklist textarea').forEach(function (t) { t.oninput = function () { S.markups[Number(t.getAttribute('data-i'))].text = t.value; }; });
+  $$('#mklist [data-rm]').forEach(function (b) { b.onclick = function () { S.markups.splice(Number(b.getAttribute('data-rm')), 1); drawPins(false); }; });
 }
 function bindDl(action) {
   $$('#app a.dl').forEach(function (a) { a.onclick = function (ev) { ev.preventDefault(); a.textContent = 'Preparing…';
@@ -423,7 +466,7 @@ function bindDl(action) {
 }
 function pay(kind, btn) { btn.disabled = true; msg('Opening secure payment…'); api('pay.checkout', {path: S.path, kind: kind}).then(function (r) { if (r.amount === 0) { toast('Paid with your credit.'); openJob(S.job.id, false); } else location.href = r.url; }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); }
 function move(status, notes, btn) {
-  btn.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = status; d.clientNotes = notes || '';
+  btn.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = status; d.clientNotes = notes || ''; if (status === 'changes') { d.markups = S.sendMarkups || []; }
   api('db.set', {path: S.path, data: d}).then(function () { return openJob(S.job.id, false); }).catch(function (e) { btn.disabled = false; msg(e.message, true); });
 }
 
@@ -474,6 +517,7 @@ function viewAdminJob(path) {
       '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
       '<dt>Links</dt><dd>' + (j.docs && j.docs.link ? '<a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared folder</a> ' : '') + (j.docs && j.docs.inspiration ? '<a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Inspiration</a> ' : '') + (sv.folderUrl ? '<a href="' + esc(sv.folderUrl) + '" target="_blank" rel="noopener">Job folder</a>' : '') + '</dd>' +
       '<dt>Notes</dt><dd style="font-weight:400">' + esc((j.docs || {}).notes || '') + '</dd>' + (j.clientNotes ? '<dt>Changes</dt><dd style="font-weight:400">' + esc(j.clientNotes) + '</dd>' : '') + '</dl>' +
+      ((j.markups || []).length ? '<b style="display:block;margin-top:14px">Pins on the draft (' + j.markups.length + ')</b><ol class="mklist" id="mklist"></ol><button type="button" class="btn btn-line btn-sm" id="mkview">Show the pins on the draft</button><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading…</p><div id="mkpages"></div></div>' : '') +
       adminPrescreen(j) +
       '<b style="display:block;margin-top:14px">Files</b><ul class="flist">' + files.map(function (f) { return '<li><span>' + esc(f.kind) + ' · ' + esc(f.name) + '</span>' + (f.driveUrl ? '<a href="' + esc(f.driveUrl) + '" target="_blank" rel="noopener">Open</a>' : '') + '</li>'; }).join('') + '</ul></div>' +
       '<div class="card fd"><b>Quote</b><div class="fd2"><div><label class="l">Price (before HST)</label><input id="q_a" type="number" value="' + esc(qd.amount != null ? qd.amount : ((j.quote && j.quote.amount) || lp || '')) + '"></div><div><label class="l">Deposit</label><input id="q_d" type="number" value="' + esc(qd.deposit != null ? qd.deposit : dep) + '"></div></div><div><label class="l">Delivery</label><input id="q_t" value="' + esc(qd.days != null ? qd.days : ((j.quote && j.quote.days) || '7–10 business days')) + '"></div><div><label class="l">Note to the client (optional)</label><textarea id="q_n" rows="3">' + esc(qd.note != null ? qd.note : ((j.quote && j.quote.note) || '')) + '</textarea></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-amber btn-sm" id="q_send">' + (j.quote ? 'Update and resend quote' : 'Send quote') + '</button><button type="button" class="btn btn-line btn-sm" id="q_save">Save draft</button><span class="small" id="q_state">' + (qd.at ? 'Draft saved ' + esc(new Date(qd.at).toLocaleString()) : '') + '</span></div>' +
@@ -492,6 +536,7 @@ function viewAdminJob(path) {
     $('#q_send').onclick = function () { clearTimeout(qT); var a = Number($('#q_a').value); if (!(a > 0)) { msg('Enter the price.', true); return; } upd({status: 'quoted', quote: {amount: a, deposit: Number($('#q_d').value) || 0, days: $('#q_t').value.trim(), note: $('#q_n').value.trim(), at: now()}}, this); };
     var pso = $('#ps_ok'); if (pso) pso.onclick = function () { pso.disabled = true; api('ai.feedback', {path: path, ok: true, rule: $('#ps_fb').value.trim()}).then(function () { toast('Thanks, noted'); viewAdminJob(path); }).catch(function (e) { pso.disabled = false; msg(e.message, true); }); };
     var psb = $('#ps_bad'); if (psb) psb.onclick = function () { var t = $('#ps_fb').value.trim(); if (!t) { msg('Say what it should have done.', true); return; } psb.disabled = true; api('ai.feedback', {path: path, wrong: '[pre-screen] ' + t, rule: t}).then(function () { toast('Lesson saved for review'); viewAdminJob(path); }).catch(function (e) { psb.disabled = false; msg(e.message, true); }); };
+    if ((j.markups || []).length) { S.markups = j.markups; drawPins(true); $('#mkview').onclick = function () { this.disabled = true; openMarkup(path, true, j.markups); }; }
     var rp = $('#a_rps'); if (rp) rp.onclick = function () { rp.disabled = true; rp.textContent = 'Running…'; api('job.prescreen', {path: path, force: true}).then(function () { viewAdminJob(path); }).catch(function (e) { rp.disabled = false; msg(e.message, true); }); };
     $('#a_save').onclick = function () { upd({admin: Object.assign({}, j.admin || {}, {notes: $('#a_n').value, eta: $('#a_eta').value.trim()})}, this); };
     $$('#app [data-st]').forEach(function (b) { b.onclick = function () {
