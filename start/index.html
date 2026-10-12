@@ -505,16 +505,31 @@ function viewAdmin() {
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
 function money2(n) { return 'US$' + (Number(n) || 0).toFixed(2); }
+function calibCard(r) {
+  return '<div class="card fd" style="margin-bottom:16px"><b>Weekly plan calibration</b><p class="small" style="margin:4px 0 10px">' +
+    (r.planWeeklyUsd ? 'Your weekly Claude plan is worth about <b>' + money2(r.planWeeklyUsd) + '</b> of API-equivalent usage' + (r.calibratedAt ? ' (calibrated ' + esc(r.calibratedAt) + ')' : '') + '. Re-calibrate every month or two, or when the plan changes.'
+      : 'Not calibrated yet. Note the weekly usage % on claude.ai (Settings › Usage) before a drafting session, and again after it. Enter both, plus the Claude cost the runner logged for that session, and every job type gets a "% of plan" figure, so you never have to estimate it per job.') + '</p>' +
+    '<div class="fd2" style="grid-template-columns:repeat(3,minmax(0,1fr))"><div><label class="l">Weekly usage % before</label><input id="cb_a" type="number" step="0.1"></div><div><label class="l">Weekly usage % after</label><input id="cb_b" type="number" step="0.1"></div><div><label class="l">Claude cost in between (US$)</label><input id="cb_u" type="number" step="0.01"></div></div>' +
+    '<div style="display:flex;gap:8px;align-items:center;margin-top:8px"><button type="button" class="btn btn-line btn-sm" id="cb_go">Calibrate</button><span class="small" id="cb_state"></span></div></div>';
+}
+function bindCalib() {
+  var b = $('#cb_go'); if (!b) return;
+  b.onclick = function () {
+    $('#cb_state').textContent = 'Saving…';
+    api('admin.calibrate', {pctStart: Number($('#cb_a').value), pctEnd: Number($('#cb_b').value), usd: Number($('#cb_u').value)}).then(function () { viewCosts(); })
+      .catch(function (e) { $('#cb_state').textContent = e.message; });
+  };
+}
 function viewCosts() {
   if (!S.user.isAdmin) return viewJobs();
   setMain('<p class="muted">Loading…</p>');
   api('admin.jobcosts').then(function (r) {
-    var h = '<p><a href="#admin">← All jobs</a></p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 4px">Costs and averages</h1><p class="muted" style="margin:0 0 16px">Per project type, from every job on the Job Costs tab. AI cost is the list-price equivalent of the Claude usage (pre-screen + drafting runner). Averages firm up after three or more jobs of a type.</p>' +
-      '<div class="card" style="overflow:auto"><table class="tbl"><thead><tr><th>Service · type</th><th>Jobs</th><th>Avg days to deliver</th><th>Avg AI cost</th><th>Avg drafting h</th><th>Avg your h</th><th>Avg price</th></tr></thead><tbody>' +
-      (r.averages.length ? r.averages.map(function (g) { return '<tr><td>' + esc(g.type) + '</td><td>' + g.jobs + '</td><td>' + (g.avgDays == null ? '–' : g.avgDays) + '</td><td>' + money2(g.avgAiUsd) + '</td><td>' + g.avgDraftHours + '</td><td>' + g.avgPhilipHours + '</td><td>' + money(g.avgPrice) + '</td></tr>'; }).join('') : '<tr><td colspan="7" class="muted">No jobs yet.</td></tr>') + '</tbody></table></div>' +
+    var h = '<p><a href="#admin">← All jobs</a></p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 4px">Costs and averages</h1><p class="muted" style="margin:0 0 16px">Per project type, from every job on the Job Costs tab. AI cost is the list-price equivalent of the Claude usage (pre-screen + drafting runner). Averages firm up after three or more jobs of a type.</p>' + calibCard(r) +
+      '<div class="card" style="overflow:auto"><table class="tbl"><thead><tr><th>Service · type</th><th>Jobs</th><th>Avg days to deliver</th><th>Avg AI cost</th><th>Avg drafting h</th><th>Avg your h</th><th>Avg price</th>' + (r.planWeeklyUsd ? '<th>% of weekly plan per job</th><th>Jobs/week at 60%</th>' : '') + '</tr></thead><tbody>' +
+      (r.averages.length ? r.averages.map(function (g) { return '<tr><td>' + esc(g.type) + '</td><td>' + g.jobs + '</td><td>' + (g.avgDays == null ? '–' : g.avgDays) + '</td><td>' + money2(g.avgAiUsd) + '</td><td>' + g.avgDraftHours + '</td><td>' + g.avgPhilipHours + '</td><td>' + money(g.avgPrice) + '</td>' + (r.planWeeklyUsd ? '<td>' + (g.planPct == null ? '–' : g.planPct === 0 && g.avgAiUsd > 0 ? '&lt;0.1%' : g.planPct + '%') + '</td><td>' + (g.perWeek60 == null ? '–' : g.perWeek60) + '</td>' : '') + '</tr>'; }).join('') : '<tr><td colspan="9" class="muted">No jobs yet.</td></tr>') + '</tbody></table></div>' +
       '<div class="card" style="overflow:auto;margin-top:16px"><b>Jobs</b><table class="tbl" style="margin-top:8px"><thead><tr><th>PSR</th><th>Type</th><th>Days</th><th>Draft rounds</th><th>Revisions</th><th>AI cost</th><th>Drafting h</th><th>Your h</th></tr></thead><tbody>' +
-      r.rows.slice().reverse().map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Service + ' · ' + x['Project type']) + '</td><td>' + esc(x['Days to deliver']) + '</td><td>' + esc(x['Draft rounds']) + '</td><td>' + esc(x.Revisions) + '</td><td>' + money2(x['Total AI US$']) + '</td><td>' + esc(x['Drafting hours']) + '</td><td>' + esc(x['Philip hours']) + '</td></tr>'; }).join('') + '</tbody></table></div>';
-    setMain(h);
+      r.rows.slice().reverse().map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Service + ' · ' + x['Project type']) + '</td><td>' + esc(x['Days to deliver']) + '</td><td>' + esc(x['Draft rounds']) + '</td><td>' + esc(x.Revisions) + '</td><td>' + money2(x['Total AI US$']) + '</td><td>' + esc(x['Drafting hours']) + '</td><td>' + (x['Philip hours'] === '' && x.Delivered ? '<b style="color:#A33A2B">missing</b>' : esc(x['Philip hours'])) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+    setMain(h); bindCalib();
     $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
@@ -525,6 +540,7 @@ function viewAdminJob(path) {
     var lp = listPrice(j), dep = j.quote && j.quote.deposit != null ? j.quote.deposit : (typeof row.Deposit === 'number' ? row.Deposit : Math.round((lp || 0) * 0.5));
     var qd = (j.admin || {}).quoteDraft || {}, jc = (j.admin || {}).costs || {};
     var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
+      ((j.tier === 'wl' || j.tier === 'cs') && ['delivered', 'revising'].indexOf(j.status) >= 0 && (jc.philipHours == null || jc.philipHours === '') ? '<div class="msg" id="timeask" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>How much of your time went into this job?</b> Enter it under Job costs (0 if none) so the averages stay right.</span><button type="button" class="btn btn-line btn-sm" id="timego">Enter my time</button></div>' : '') +
       '<div class="grid-2" style="margin-top:16px;align-items:start"><div class="card"><b>Job</b><dl class="sum" style="margin-top:8px"><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + ' · ' + esc(j.contact.name || '') + '</dd><dt>Email</dt><dd>' + esc(j.contact.email || '') + ' ' + esc(j.contact.phone || '') + '</dd><dt>Role</dt><dd>' + esc(j.contact.role || '') + '</dd>' +
       '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + '</dd><dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
       (j.job && j.job.budget ? '<dt>Their budget</dt><dd>' + esc(j.job.budget) + ' (' + esc(j.job.budgetType || '') + ')</dd>' : '') + (j.job && j.job.pricing === 'hourly' ? '<dt>Pricing</dt><dd>$85/hour requested</dd>' : '') +
@@ -553,6 +569,7 @@ function viewAdminJob(path) {
     };
     var cT = null; ['#c_du', '#c_dh', '#c_ph', '#c_n'].forEach(function (id) { $(id).addEventListener('input', function () { clearTimeout(cT); $('#c_state').textContent = 'Unsaved changes'; cT = setTimeout(function () { cSave(true); }, 2500); }); });
     $('#c_save').onclick = function () { clearTimeout(cT); cSave(false); };
+    if ($('#timego') && $('#c_ph')) $('#timego').onclick = function () { $('#c_ph').scrollIntoView({block: 'center'}); $('#c_ph').focus(); };
     var qSave = function (quiet) {
       var draft = {amount: $('#q_a').value === '' ? null : Number($('#q_a').value), deposit: $('#q_d').value === '' ? null : Number($('#q_d').value), days: $('#q_t').value, note: $('#q_n').value, at: now()};
       $('#q_state').textContent = 'Saving…';
