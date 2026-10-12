@@ -40,6 +40,7 @@
 .flist{list-style:none;padding:0;margin:6px 0 0;font-size:14px}.flist li{padding:7px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl th,.tbl td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.tbl tr.click{cursor:pointer}.tbl tr.click:hover{background:#FBF8F2}
 .banner{border:1px solid #F3C978;background:#FBF5E8;border-radius:12px;padding:12px 16px;font-size:14px}
+.ovl{position:fixed;inset:0;background:rgba(15,30,50,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;backdrop-filter:blur(2px)}.ovl .box{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}.ovl .big,.bigspin{display:block;width:54px;height:54px;border:5px solid #E8D9B8;border-top-color:var(--amber);border-radius:50%;animation:sp .9s linear infinite;margin:0 auto 18px}.ovl b{display:block;font-size:20px;color:var(--navy)}.ovl p{margin:8px 0 0;color:var(--muted);font-size:15px}.pscard{text-align:center;padding:18px 6px}.pscard .steps{list-style:none;padding:0;margin:14px auto 0;max-width:360px;text-align:left}.pscard .steps li{padding:5px 0;color:var(--muted);font-size:15px}.pscard .steps li.on{color:var(--navy);font-weight:700}.pscard .steps li.done{color:var(--navy)}.pscard .steps li.done:before{content:'\2713  ';color:var(--amber)}.pscard .steps li.on:before{content:'\2022  ';color:var(--amber)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2)}
 .reflink{display:flex;gap:8px;flex-wrap:wrap}.reflink input{flex:1;min-width:220px}
 </style>
@@ -93,6 +94,8 @@ function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function
 function money(n) { return '$' + Number(n || 0).toLocaleString('en-CA'); }
 function now() { return new Date().toISOString(); }
 function fmtDate(iso) { if (!iso) return ''; return new Date(iso).toLocaleDateString('en-CA', {month: 'short', day: 'numeric', year: 'numeric'}); }
+function overlay(title, sub) { hideOverlay(); var o = document.createElement('div'); o.className = 'ovl'; o.id = 'ovl'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-busy', 'true'); o.innerHTML = '<div class="box"><span class="big" aria-hidden="true"></span><b>' + esc(title) + '</b>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div>'; document.body.appendChild(o); }
+function hideOverlay() { var o = document.getElementById('ovl'); if (o) o.remove(); }
 function toast(m) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600); }
 function get(o, k) { return k.split('.').reduce(function (a, b) { return a == null ? undefined : a[b]; }, o); }
 function setv(o, k, v) { var p = k.split('.'), x = o; for (var i = 0; i < p.length - 1; i++) { if (typeof x[p[i]] !== 'object' || !x[p[i]]) x[p[i]] = {}; x = x[p[i]]; } x[p[p.length - 1]] = v; }
@@ -188,15 +191,21 @@ function viewJobs() {
 }
 
 // ---------- job form
-function openJob(pid, edit) {
+function jobSig(j, files) { var ps = ((j || {}).server || {}).prescreen || {}; return [(j || {}).status, ps.state, ps.round, (files || []).length].join('|'); }
+function openJob(pid, edit, quiet) {
   S.lastPid = pid; var path = projPath(S.user.id, pid);
-  setMain('<p class="muted">Loading…</p>');
-  Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'})]).then(function (r) {
+  if (!quiet) setMain('<p class="muted">Loading…</p>');
+  var before = quiet && S.job && S.job.id === pid ? jobSig(S.job, S.files) : null;
+  return Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'})]).then(function (r) {
     if (!r[0].exists) throw new Error('Job not found.');
-    S.job = r[0].data; S.path = path; S.files = (r[1].docs || []).map(function (d) { var x = d.data; x.id = d.id; return x; });
+    var files = (r[1].docs || []).map(function (d) { var x = d.data; x.id = d.id; return x; });
+    if (quiet && (S.lastPid !== pid || !/^#job\//.test(location.hash))) return; // user moved on
+    if (before !== null && jobSig(r[0].data, files) === before) { S.job = r[0].data; S.files = files; if (S.job.status === 'screened') schedulePoll(); return; } // nothing changed: don't redraw
+    S.job = r[0].data; S.path = path; S.files = files;
     if (S.job.status === 'draft' || edit) viewForm(S.job); else viewJob();
-  }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p><p><a href="#jobs">Back to your jobs</a></p>'); });
+  }).catch(function (e) { if (quiet) { schedulePoll(); return; } setMain('<p class="msg err">' + esc(e.message) + '</p><p><a href="#jobs">Back to your jobs</a></p>'); });
 }
+function schedulePoll() { clearTimeout(S.poll); var pj = S.job && S.job.id; if (!pj) return; S.poll = setTimeout(function () { if (S.job && S.job.id === pj && /^#job\//.test(location.hash)) openJob(pj, false, true); }, 15000); }
 var saveT = null;
 function queueSave() { clearTimeout(saveT); saveT = setTimeout(saveNow, 700); var s = $('#savestate'); if (s) s.textContent = 'Saving…'; }
 function saveNow() {
@@ -348,20 +357,22 @@ function upload(kind, list) {
         return api('db.set', {path: S.path + '/files/' + id, data: Object.assign({dataUrl: data}, rec)}).then(function () { rec.id = id; S.files.push(rec); });
       });
     });
-    return chain.then(function () { done(); msg('Uploaded.'); if ($('#f')) sync(); else viewJob(); });
+    return chain.then(function () { done(); msg('Uploaded.'); if ($('#f')) sync(); else { keepQa(); viewJob(); } });
   }).catch(function (e) { done(); if (names) names.textContent = 'Upload failed: ' + e.message; msg(e.message, true); });
 }
 function submit() {
-  var b = $('#next'); b.disabled = true; msg('Sending…'); clearTimeout(saveT);
+  var b = $('#next'); b.disabled = true; msg(''); clearTimeout(saveT);
+  overlay('Sending your job…', 'Saving the details and starting the pre-screen. Please keep this page open; it takes a few seconds.');
   S.job.status = 'screened'; S.job.submittedAt = now();
   saveNow().then(function () { return api('db.get', {path: S.path}); }).then(function (r) {
     S.job = r.data; store.set('psr_ref', null);
     if (S.job.status !== 'screened' && S.job.status !== 'quoted') throw new Error('The job could not be sent. Please try again.');
-    toast('Sent. Pre-screening your files now.'); location.hash = 'job/' + S.job.id;
-  }).catch(function (e) { S.job.status = 'draft'; b.disabled = false; msg(e.message, true); });
+    hideOverlay(); location.hash = 'job/' + S.job.id;
+  }).catch(function (e) { hideOverlay(); S.job.status = 'draft'; b.disabled = false; msg(e.message, true); });
 }
 
 // ---------- job view
+function keepQa() { if (!$('#qa')) return; S.qa = {}; $$('#qa textarea').forEach(function (t) { S.qa[t.id + '|' + (t.getAttribute('data-q') || '')] = t.value; }); }
 function viewJob() {
   var j = S.job, st = j.status, stg = STAGE[st] || 0, sv = j.server || {}, price = priceOf(j);
   var auto = !quoted(j).length && !(j.measure && j.measure.want);
@@ -371,8 +382,8 @@ function viewJob() {
   var card = '';
   var ps = sv.prescreen || {}, pr = ps.result || {}, prescreening = st === 'screened' && (ps.state === 'pending' || ps.state === 'running');
   var understood = pr.understood ? '<div class="banner" style="margin:12px 0 0"><b>What we understood:</b> ' + esc(pr.understood) + ((pr.concerns || []).length ? '<br><b>Early notes</b> (we confirm these while drafting): ' + pr.concerns.map(function (c) { return esc(c.note); }).join(' · ') : '') + '</div>' : '';
-  if (prescreening) card = '<b>Pre-screening your files…</b><p class="muted" style="margin:6px 0 0">We\'re checking that everything is legible and we have what we need. You\'ll have your price, or any questions, within one business day. You can leave this page; we email you.</p>';
-  else if (st === 'info') card = '<b>A few questions before we start</b><p class="muted" style="margin:6px 0 10px">Answer below and add any files, then send it back. We pick it up right away.</p>' + understood +
+  if (prescreening) card = '<div class="pscard" aria-live="polite"><span class="bigspin" aria-hidden="true"></span><b style="font-size:20px;color:var(--navy)">Pre-screening your files</b><p class="muted" style="margin:6px 0 0">This usually takes about a minute. The page updates by itself when it\'s done; you can also leave and we\'ll email you.</p><ul class="steps" id="psteps"><li>Job received</li><li>Reading your drawings and photos</li><li>Checking they\'re legible and complete</li><li>Preparing your price or questions</li></ul></div>';
+  else if (st === 'info') card = '<b>A few questions before we start</b><p class="muted" style="margin:6px 0 10px">Your price comes once we have these. Answer below and add any files, then send it back. We pick it up right away.</p>' + (ps.adminNote ? '<div class="banner" style="margin:0 0 10px">' + esc(ps.adminNote) + '</div>' : '') + (ps.askedBy === 'admin' ? '' : understood) +
     '<div class="fd" id="qa" style="margin-top:12px">' + (pr.questions || []).map(function (q, i) { return '<div><label class="l" for="qa' + i + '">' + esc(q) + '</label><textarea id="qa' + i + '" data-q="' + esc(q) + '" rows="2"></textarea></div>'; }).join('') +
     ((pr.missing || []).length ? '<div><span class="lbl">Still needed</span><ul style="margin:4px 0 0">' + pr.missing.map(function (m) { return '<li>' + esc(m) + '</li>'; }).join('') + '</ul></div>' : '') +
     '<div class="up" data-kind="other"><span class="t"><b>Upload the missing files</b><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide"></label></div>' +
@@ -399,19 +410,22 @@ function viewJob() {
   h += '<div class="card" style="max-width:780px;margin-top:18px"><b>What you sent</b><dl class="sum" style="margin-top:10px"><dt>Scope</dt><dd>' + esc(pkg(j)) + '</dd><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd>' + (j.docs && j.docs.link ? '<dt>Folder</dt><dd><a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared link</a></dd>' : '') + (j.docs && j.docs.inspiration ? '<dt>Inspiration</dt><dd><a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Board / photos</a></dd>' : '') + '<dt>Files</dt><dd>' + (S.files.length ? S.files.map(function (f) { return esc(f.name); }).join(', ') : 'none') + '</dd></dl>' +
     '<div class="up" data-kind="other" style="margin-top:12px"><span class="t"><b>Add more files</b><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide"></label></div></div>';
   setMain(h);
+  if (S.qa && $('#qa')) { $$('#qa textarea').forEach(function (t) { var v = S.qa[t.id + '|' + (t.getAttribute('data-q') || '')]; if (v) t.value = v; }); } S.qa = null;
   $$('#app .up input[type=file]').forEach(function (inp) { inp.onchange = function () { upload(inp.closest('.up').getAttribute('data-kind'), inp.files); inp.value = ''; }; });
   var pd = $('#paydep'); if (pd) pd.onclick = function () { pay('deposit', pd); };
   var pb = $('#paybal'); if (pb) pb.onclick = function () { pay('balance', pb); };
   var ac = $('#accept'); if (ac) ac.onclick = function () { move('accepted', '', ac); };
+  if ($('#psteps')) { var pli = $$('#psteps li'), started = new Date(((sv.prescreen || {}).startedAt) || ((sv.prescreen || {}).at) || Date.now()).getTime(); var tick = function () { if (!document.body.contains(pli[0])) return; var e = (Date.now() - started) / 1000, k = e < 8 ? 1 : e < 30 ? 2 : 3; pli.forEach(function (li, i) { li.className = i < k ? 'done' : i === k ? 'on' : ''; }); setTimeout(tick, 2000); }; tick(); }
   var si = $('#sendinfo'); if (si) si.onclick = function () {
     var ans = $$('#qa textarea[data-q]').map(function (t) { return {q: t.getAttribute('data-q'), a: t.value.trim()}; });
     if ($('#qa_more').value.trim()) ans.push({q: 'Anything else', a: $('#qa_more').value.trim()});
     if (ans.some(function (x) { return x.q !== 'Anything else' && !x.a; })) { msg('Answer each question (or write "see uploaded file").', true); return; }
     si.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = 'screened'; d.answers = ans;
-    api('db.set', {path: S.path, data: d}).then(function () { toast('Sent back. Pre-screening again.'); return openJob(S.job.id, false); }).catch(function (e) { si.disabled = false; msg(e.message, true); });
+    overlay('Sending your answers…', 'One moment.');
+    api('db.set', {path: S.path, data: d}).then(function () { hideOverlay(); return openJob(S.job.id, false); }).catch(function (e) { hideOverlay(); si.disabled = false; msg(e.message, true); });
   };
-  if (prescreening) { clearTimeout(S.poll); var pj = S.job.id; S.poll = setTimeout(function () { if (S.job && S.job.id === pj && /^#job\//.test(location.hash)) openJob(pj, false); }, 12000); }
-  if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false); }).catch(function (e) { S.prescreenBusy = false; msg(e.message, true); }); }
+  if (st === 'screened') schedulePoll();
+  if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false, true); }).catch(function () { S.prescreenBusy = false; schedulePoll(); }); }
   var ap = $('#approve'); if (ap) ap.onclick = function () { move('approved', $('#chg').value.trim(), ap); };
   var mo = $('#mkopen'); if (mo) { if (S.mkJob !== S.job.id) { S.markups = []; S.mkJob = S.job.id; } mo.onclick = function () { mo.disabled = true; openMarkup(S.path, false); }; if (S.markups.length) { mo.disabled = true; openMarkup(S.path, false); } }
   var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); var mk = (S.markups || []).filter(function (m) { return m.text.trim(); }); var upl = S.files.some(function (f) { return f.kind === 'markup'; }); if (!n && !mk.length && !upl) { msg('Drop a pin on the drawings, upload a marked-up PDF, or write what to change.', true); return; } if ((S.markups || []).some(function (m) { return !m.text.trim(); })) { msg('Type the change for each pin (or remove it).', true); return; } S.sendMarkups = mk; move('changes', n, ch); };
@@ -549,7 +563,7 @@ function viewAdminJob(path) {
       '<dt>Links</dt><dd>' + (j.docs && j.docs.link ? '<a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared folder</a> ' : '') + (j.docs && j.docs.inspiration ? '<a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Inspiration</a> ' : '') + (sv.folderUrl ? '<a href="' + esc(sv.folderUrl) + '" target="_blank" rel="noopener">Job folder</a>' : '') + '</dd>' +
       '<dt>Notes</dt><dd style="font-weight:400">' + esc((j.docs || {}).notes || '') + '</dd>' + (j.clientNotes ? '<dt>Changes</dt><dd style="font-weight:400">' + esc(j.clientNotes) + '</dd>' : '') + '</dl>' +
       ((j.markups || []).length ? '<b style="display:block;margin-top:14px">Pins on the draft (' + j.markups.length + ')</b><ol class="mklist" id="mklist"></ol><button type="button" class="btn btn-line btn-sm" id="mkview">Show the pins on the draft</button><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading…</p><div id="mkpages"></div></div>' : '') +
-      adminPrescreen(j) +
+      adminPrescreen(j) + askInfoBox(j) +
       '<b style="display:block;margin-top:14px">Files</b><ul class="flist">' + files.map(function (f) { return '<li><span>' + esc(f.kind) + ' · ' + esc(f.name) + '</span>' + (f.driveUrl ? '<a href="' + esc(f.driveUrl) + '" target="_blank" rel="noopener">Open</a>' : '') + '</li>'; }).join('') + '</ul></div>' +
       '<div class="card fd"><b>Quote</b><div class="fd2"><div><label class="l">Price (before HST)</label><input id="q_a" type="number" value="' + esc(qd.amount != null ? qd.amount : ((j.quote && j.quote.amount) || lp || '')) + '"></div><div><label class="l">Deposit</label><input id="q_d" type="number" value="' + esc(qd.deposit != null ? qd.deposit : dep) + '"></div></div><div><label class="l">Delivery</label><input id="q_t" value="' + esc(qd.days != null ? qd.days : ((j.quote && j.quote.days) || '7–10 business days')) + '"></div><div><label class="l">Note to the client (optional)</label><textarea id="q_n" rows="3">' + esc(qd.note != null ? qd.note : ((j.quote && j.quote.note) || '')) + '</textarea></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-amber btn-sm" id="q_send">' + (j.quote ? 'Update and resend quote' : 'Send quote') + '</button><button type="button" class="btn btn-line btn-sm" id="q_save">Save draft</button><span class="small" id="q_state">' + (qd.at ? 'Draft saved ' + esc(new Date(qd.at).toLocaleString()) : '') + '</span></div>' +
       '<b style="margin-top:8px">Progress</b><div class="chips">' + [['drafting', 'Start drafting'], ['review', 'Quality check'], ['draftready', 'Send draft (' + drafts.length + ' file' + (drafts.length === 1 ? '' : 's') + ' in Draft)'], ['ready', 'Balance due'], ['delivered', 'Release finals'], ['revising', 'Revising'], ['declined', 'Decline']].map(function (s) { return '<button type="button" class="btn btn-line btn-sm" data-st="' + s[0] + '">' + esc(s[1]) + '</button>'; }).join('') + '</div>' +
@@ -578,6 +592,13 @@ function viewAdminJob(path) {
     var qT = null; ['#q_a', '#q_d', '#q_t', '#q_n'].forEach(function (id) { $(id).addEventListener('input', function () { clearTimeout(qT); $('#q_state').textContent = 'Unsaved changes'; qT = setTimeout(function () { qSave(true); }, 2500); }); });
     $('#q_save').onclick = function () { clearTimeout(qT); qSave(false); };
     $('#q_send').onclick = function () { clearTimeout(qT); var a = Number($('#q_a').value); if (!(a > 0)) { msg('Enter the price.', true); return; } upd({status: 'quoted', quote: {amount: a, deposit: Number($('#q_d').value) || 0, days: $('#q_t').value.trim(), note: $('#q_n').value.trim(), at: now()}}, this); };
+    var ais = $('#ai_send'); if (ais) ais.onclick = function () {
+      var lines = function (id) { return $(id).value.split('\n').map(function (x) { return x.trim(); }).filter(Boolean); };
+      var q = lines('#ai_q'), m = lines('#ai_m'); if (!q.length && !m.length) { msg('Add at least one question or missing item.', true); return; }
+      if (!confirm('Email ' + (j.contact.email || 'the firm') + ' these ' + (q.length + m.length) + ' item(s) and hold the price until they answer?')) return;
+      ais.disabled = true; overlay('Sending the questions…');
+      api('job.askInfo', {path: path, questions: q, missing: m, note: $('#ai_n').value.trim()}).then(function () { hideOverlay(); toast('Sent to the firm'); viewAdminJob(path); }).catch(function (e) { hideOverlay(); ais.disabled = false; msg(e.message, true); });
+    };
     var pso = $('#ps_ok'); if (pso) pso.onclick = function () { pso.disabled = true; api('ai.feedback', {path: path, ok: true, rule: $('#ps_fb').value.trim()}).then(function () { toast('Thanks, noted'); viewAdminJob(path); }).catch(function (e) { pso.disabled = false; msg(e.message, true); }); };
     var psb = $('#ps_bad'); if (psb) psb.onclick = function () { var t = $('#ps_fb').value.trim(); if (!t) { msg('Say what it should have done.', true); return; } psb.disabled = true; api('ai.feedback', {path: path, wrong: '[pre-screen] ' + t, rule: t}).then(function () { toast('Lesson saved for review'); viewAdminJob(path); }).catch(function (e) { psb.disabled = false; msg(e.message, true); }); };
     if ((j.markups || []).length) { S.markups = j.markups; drawPins(true); $('#mkview').onclick = function () { this.disabled = true; openMarkup(path, true, j.markups); }; }
@@ -592,6 +613,15 @@ function viewAdminJob(path) {
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
 
+function askInfoBox(j) {
+  if (['screened', 'quoted', 'info'].indexOf(j.status) < 0) return '';
+  var ps = (j.server || {}).prescreen || {}, r = ps.result || {};
+  return '<div class="fd" style="margin-top:14px;gap:8px;border:1px dashed var(--amber);border-radius:12px;padding:12px"><b>Ask the firm for information</b><p class="small" style="margin:0">Holds the price: the job moves to <i>Needs info</i>, the firm is emailed, and their answers come back to you (no automatic re-check). ' + (j.status === 'info' ? 'Already waiting on the firm; sending again replaces the questions.' : '') + '</p>' +
+    '<div><label class="l" for="ai_q">Questions (one per line)</label><textarea id="ai_q" rows="4">' + esc((r.questions || []).join('\n')) + '</textarea></div>' +
+    '<div><label class="l" for="ai_m">Missing files or items (one per line)</label><textarea id="ai_m" rows="3">' + esc((r.missing || []).join('\n')) + '</textarea></div>' +
+    '<div><label class="l" for="ai_n">Short note shown above the questions (optional)</label><input id="ai_n" value="' + esc(ps.adminNote || '') + '" placeholder="e.g. Thanks! Just two things before we can price this."></div>' +
+    '<div><button type="button" class="btn btn-amber btn-sm" id="ai_send">Send questions to the firm</button></div></div>';
+}
 function adminPrescreen(j) {
   var ps = (j.server || {}).prescreen; if (!ps) return '';
   var r = ps.result || {};
