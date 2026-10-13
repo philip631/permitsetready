@@ -103,9 +103,9 @@ function setv(o, k, v) { var p = k.split('.'), x = o; for (var i = 0; i < p.leng
 
 // ---------- data
 var PRO = {wl: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750}, cs: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750}, addon: 0.6, rush: 0.3, template: 300}; // one permit-set price list (cs kept for older jobs)
-var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['addition', 'Addition'], ['newhome', 'New home'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['other', 'Other']];
+var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['addition', 'Addition'], ['newhome', 'New home'], ['drafting', 'General drafting'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['other', 'Other']];
 var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
-var QUOTED = ['addition', 'newhome', 'structural', 'model3d', 'shop', 'interior', 'other'];
+var QUOTED = ['addition', 'newhome', 'drafting', 'structural', 'model3d', 'shop', 'interior', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome'];
 var TIERS = {wl: 'Drafting & permit set', cs: 'Drafting & permit set'};
 var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Being checked', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
