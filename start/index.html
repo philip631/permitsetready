@@ -102,16 +102,16 @@ function get(o, k) { return k.split('.').reduce(function (a, b) { return a == nu
 function setv(o, k, v) { var p = k.split('.'), x = o; for (var i = 0; i < p.length - 1; i++) { if (typeof x[p[i]] !== 'object' || !x[p[i]]) x[p[i]] = {}; x = x[p[i]]; } x[p[p.length - 1]] = v; }
 
 // ---------- data
-var PRO = {wl: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750}, cs: {finish: 1150, unit: 1600, bge: 900, garage: 900, deck: 800}, addon: 0.6, rush: 0.3};
+var PRO = {wl: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750}, cs: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750}, addon: 0.6, rush: 0.3}; // one permit-set price list (cs kept for older jobs)
 var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['addition', 'Addition'], ['newhome', 'New home'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['other', 'Other']];
 var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
 var QUOTED = ['addition', 'newhome', 'structural', 'model3d', 'shop', 'interior', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome'];
-var TIERS = {wl: 'White-label', cs: 'Contractor set'};
+var TIERS = {wl: 'Permit set', cs: 'Permit set'};
 var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Being checked', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
 var STAGE = {draft: 0, screened: 1, info: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
 var MUNIS = ['Toronto', 'Mississauga', 'Brampton', 'Caledon', 'Oakville', 'Burlington', 'Milton', 'Halton Hills', 'Vaughan', 'Markham', 'Richmond Hill', 'Hamilton', 'Pickering', 'Ajax', 'Whitby', 'Oshawa', 'Barrie', 'Innisfil', 'Guelph', 'Kitchener'];
-var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['permits', 'Previous permits for this property', 'issued permits or permit drawings, if any'], ['template', 'Your template and 1–2 sample projects', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
+var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['permits', 'Previous permits for this property', 'issued permits or permit drawings, if any'], ['template', 'Your title block or template', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
 var S = {user: null, jobs: [], job: null, path: null, files: [], step: 1, admin: {jobs: []}};
 function scopes(it) { var a = (it && it.scopes) || []; return SCOPES.map(function (s) { return s[0]; }).filter(function (k) { return a.indexOf(k) >= 0; }); }
 function quoted(it) { return (it.job && it.job.fromBrief) ? scopes(it) : scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
@@ -130,7 +130,7 @@ function projPath(uid, pid) { return 'intakes/' + uid + '/projects/' + pid; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function blank() {
   var ref = store.get('psr_ref') || '';
-  return {id: newId(), owner: S.user.id, createdAt: now(), updatedAt: now(), status: 'draft', tier: 'wl', scopes: [], contact: {email: S.user.email}, property: {}, job: {rush: 'No', deliver: ['pdf', 'dwg'], pricing: 'fixed'}, docs: {}, measure: {want: false}, referral: ref, ack: {}};
+  return {id: newId(), owner: S.user.id, createdAt: now(), updatedAt: now(), status: 'draft', tier: 'wl', scopes: [], contact: {email: S.user.email}, property: {}, job: {rush: 'No', titleblock: 'ours', deliver: ['pdf', 'dwg'], pricing: 'fixed'}, docs: {}, measure: {want: false}, referral: ref, ack: {}};
 }
 function jobPill(j) {
   var st = j.status, ps = (j.server || {}).prescreen || {};
@@ -237,14 +237,14 @@ function viewForm(it) {
     '<div class="fd2"><div><label class="l">Date you need it</label><input data-k="job.due" type="date"></div><div><label class="l">Rush (5 business days, +30%)</label><select data-k="job.rush"><option>No</option><option>Yes</option></select></div></div></div>' +
     // 3
     '<div data-step="3" class="fd hide"><h2><i>3</i>Service</h2>' +
-    '<div class="opt"><label><input type="radio" name="tier" data-k="tier" value="wl"> <b>White-label</b>Drafted in your template and title block. You review, stamp and submit.</label><label><input type="radio" name="tier" data-k="tier" value="cs"> <b>Contractor set</b>Drafted and checked by us, ready for you to file.</label></div>' +
+    '<span class="lbl">Title block</span><div class="opt"><label><input type="radio" name="tb" data-k="job.titleblock" value="ours"> <b>Our clean format</b>A plain, unbranded title block with your firm\'s name. Nothing to set up.</label><label><input type="radio" name="tb" data-k="job.titleblock" value="yours"> <b>Your template</b>Drafted in your title block, text and line styles. Send it once with your first job; no setup fee.</label></div>' +
     '<div><span class="lbl">What you want back</span><div class="chips" id="deliver">' + [['pdf', 'PDF set'], ['dwg', 'DWG files'], ['stats', 'Zoning stats table']].map(function (d) { return '<label><input type="checkbox" value="' + d[0] + '"> ' + d[1] + '</label>'; }).join('') + '</div></div>' +
     '<div class="quoted hide" id="qbox"><span class="small" style="display:block;margin-bottom:8px">Quoted work: <span id="qlist"></span></span><span class="lbl">How should we price it?</span><div class="chips"><label><input type="radio" name="pricing" data-k="job.pricing" value="fixed"> Fixed quote</label><label><input type="radio" name="pricing" data-k="job.pricing" value="hourly"> $85/hour</label></div>' +
     '<label class="l" style="margin-top:12px">Your budget for this job (optional)</label><div class="fd2"><input data-k="job.budget" placeholder="e.g. $2,500"><select data-k="job.budgetType"><option>Firm budget</option><option>Rough idea</option><option>Prefer not to say</option></select></div><p class="small" style="margin:6px 0 0">Helps us scope the set to fit: if your number is tight, we\'ll say what fits in it before quoting.</p></div></div>' +
     // 4
     '<div data-step="4" class="fd hide"><h2><i>4</i>Files &amp; inspiration</h2>' + KINDS.map(function (k) {
       if (k[0] === 'template' && !first) return '';
-      return '<div class="up' + (k[0] === 'template' ? ' wlonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'template' ? '<span class="req">Required for your first white-label job</span><br><em>Your template in Revit or AutoCAD (a .rte/.rvt, or DWG sheets with your title block), 1–2 recent permit sets, ideally issued without comments, and your text, dimension and line styles if they differ. We build the template from these and send a sample sheet to approve.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.rvt,.zip"></label></div>';
+      return '<div class="up' + (k[0] === 'template' ? ' tbonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'template' ? '<span class="req">Needed once, with your first job in your template</span><br><em>Your title block or template in Revit or AutoCAD (a .rte/.rvt, or DWG sheets), ideally with 1–2 recent permit sets and your text, dimension and line styles. We set it up and send a sample sheet to approve.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.rvt,.zip"></label></div>';
     }).join('') +
     '<div><label class="l">Or share a folder (Drive, Dropbox, WeTransfer)</label><input data-k="docs.link" type="url" placeholder="https://"></div>' +
     '<div><label class="l">Inspiration: Pinterest board or photo link (optional)</label><input data-k="docs.inspiration" type="url" placeholder="https://pinterest.com/…  or a link to photos"><p class="small" style="margin:6px 0 0">Helps us match the finishes, details and look you and your client expect.</p></div>' +
@@ -281,7 +281,7 @@ function sync() {
   $$('#f .chips label,#f .opt label').forEach(function (l) { var i = l.querySelector('input'); l.classList.toggle('on', !!(i && i.checked)); });
   var q = quoted(j); $('#qbox').classList.toggle('hide', !q.length); $('#qlist').textContent = q.map(function (k) { return SNAME[k]; }).join(', ');
   var sv = $('#svreq'); if (sv) sv.classList.toggle('hide', !surveyNeeded(j));
-  $$('#f .wlonly').forEach(function (e) { e.classList.toggle('hide', j.tier !== 'wl'); });
+  $$('#f .tbonly').forEach(function (e) { e.classList.toggle('hide', (j.job || {}).titleblock !== 'yours'); });
   $('#sqbox').classList.toggle('hide', !(j.measure && j.measure.want));
   $$('#f .up').forEach(function (u) { var k = u.getAttribute('data-kind'); var names = S.files.filter(function (f) { return f.kind === k; }).map(function (f) { return f.name; }); u.querySelector('.names').textContent = names.length ? '✓ ' + names.join(', ') : ''; });
 }
@@ -351,7 +351,7 @@ function check(step) {
     if (j.job && j.job.fromBrief) { if (String((j.docs || {}).notes || '').trim().length < 40) return 'Describe what your client wants in "Anything we should know": rooms, sizes, style, anything fixed.'; }
     else if (!has('design') && !link) return 'Upload the design (or share a folder link) so we can quote.';
     if (surveyNeeded(j) && !has('survey') && !link) return 'A survey is required for this job. Upload it or share a folder link.';
-    if (j.tier === 'wl' && firstJob(j) && !has('template') && !link) return 'For your first white-label job, add your template and 1–2 sample projects (or share a folder link).';
+    if ((j.job || {}).titleblock === 'yours' && firstJob(j) && !has('template') && !link) return 'Add your title block or template (or share a folder link), or choose our clean format.';
   }
   if (step === 5 && j.measure && j.measure.want && !(Number(j.measure.sqft) > 0)) return 'Add the approximate house size so we can price the visit.';
   if (step === 6) { var a = j.ack || {}; if (!(a.revisions && a.zoning && a.finals && a.responsible && a.terms)) return 'Tick all five boxes to send the job.'; }
@@ -360,7 +360,7 @@ function check(step) {
 function summary() {
   var j = S.job, lp = listPrice(j), q = quoted(j);
   $('#sum').innerHTML = '<dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd><dt>Project</dt><dd>' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</dd>' +
-    '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job.rush === 'Yes' ? ' · rush' : '') + '</dd>' +
+    '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job.rush === 'Yes' ? ' · rush' : '') + '</dd><dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'Your template' : 'Our clean format') + '</dd>' +
     '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST' + (j.measure && j.measure.want ? ' + site visit (priced in your quote)' : ' (list price; pre-screened as soon as you send it)')) + '</dd>' +
     '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes, priced in the quote' : 'No') + '</dd>' +
     '<dt>Delivery</dt><dd>' + (j.job.rush === 'Yes' ? '5 business days' : '7–10 business days') + ' from your go-ahead</dd>' +
@@ -582,7 +582,7 @@ function viewAdminJob(path) {
     var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
       ((j.tier === 'wl' || j.tier === 'cs') && ['delivered', 'revising'].indexOf(j.status) >= 0 && (jc.philipHours == null || jc.philipHours === '') ? '<div class="msg" id="timeask" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>How much of your time went into this job?</b> Enter it under Job costs (0 if none) so the averages stay right.</span><button type="button" class="btn btn-line btn-sm" id="timego">Enter my time</button></div>' : '') +
       '<div class="grid-2" style="margin-top:16px;align-items:start"><div class="card"><b>Job</b><dl class="sum" style="margin-top:8px"><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + ' · ' + esc(j.contact.name || '') + '</dd><dt>Email</dt><dd>' + esc(j.contact.email || '') + ' ' + esc(j.contact.phone || '') + '</dd><dt>Role</dt><dd>' + esc(j.contact.role || '') + '</dd>' +
-      '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + '</dd><dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
+      '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + '</dd><dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'THEIR template' : 'Our clean format') + '</dd><dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
       (j.job && j.job.budget ? '<dt>Their budget</dt><dd>' + esc(j.job.budget) + ' (' + esc(j.job.budgetType || '') + ')</dd>' : '') + (j.job && j.job.pricing === 'hourly' ? '<dt>Pricing</dt><dd>$85/hour requested</dd>' : '') +
       '<dt>Needed by</dt><dd>' + esc((j.job || {}).due || '') + '</dd><dt>Building</dt><dd>' + esc((j.job || {}).existing || '') + ' · ' + esc((j.job || {}).area || '') + '</dd><dt>Deliver</dt><dd>' + esc(((j.job || {}).deliver || []).join(', ')) + '</dd>' +
       '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
