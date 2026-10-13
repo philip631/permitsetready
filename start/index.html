@@ -370,7 +370,7 @@ function summary() {
     '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST' + (j.measure && j.measure.want ? ' + site visit (priced in your quote)' : ' (list price; pre-screened as soon as you send it)')) + '</dd>' +
     '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes, priced in the quote' : 'No') + '</dd>' +
     '<dt>Delivery</dt><dd>' + (j.job.rush === 'Yes' ? '5 business days' : '7–10 business days') + ' from your go-ahead</dd>' +
-    '<dt>Payment</dt><dd>First job: 50% to start. Every job: balance due when you approve the draft.</dd><dt>Before finals</dt><dd>Watermarked draft for your check</dd>';
+    '<dt>Payment</dt><dd>Deposit to start: 50% on your first job, 25% after that. Balance due when you approve the draft.</dd><dt>Before finals</dt><dd>Watermarked draft for your check</dd>';
 }
 function readFile(f) { return new Promise(function (ok, bad) { var r = new FileReader(); r.onload = function () { ok(r.result); }; r.onerror = function () { bad(new Error('Could not read ' + f.name)); }; r.readAsDataURL(f); }); }
 function upload(kind, list) {
@@ -583,7 +583,7 @@ function viewAdminJob(path) {
   setMain('<p class="muted">Loading…</p>');
   Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'}), api('files.draft', {path: path})]).then(function (r) {
     var j = r[0].data, files = (r[1].docs || []).map(function (d) { return d.data; }), drafts = r[2].files || [], sv = j.server || {}, row = S.admin.jobs.filter(function (x) { return x.Path === path; })[0] || {};
-    var lp = listPrice(j), dep = j.quote && j.quote.deposit != null ? j.quote.deposit : (typeof row.Deposit === 'number' ? row.Deposit : Math.round((lp || 0) * 0.5));
+    var lp = listPrice(j), dep = j.quote && j.quote.deposit != null ? j.quote.deposit : (typeof row.Deposit === 'number' ? row.Deposit : Math.round((lp || 0) * (row.Repeat === 'Yes' ? 0.25 : 0.5)));
     var qd = (j.admin || {}).quoteDraft || {}, jc = (j.admin || {}).costs || {};
     var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
       ((j.tier === 'wl' || j.tier === 'cs') && ['delivered', 'revising'].indexOf(j.status) >= 0 && (jc.philipHours == null || jc.philipHours === '') ? '<div class="msg" id="timeask" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>How much of your time went into this job?</b> Enter it under Job costs (0 if none) so the averages stay right.</span><button type="button" class="btn btn-line btn-sm" id="timego">Enter my time</button></div>' : '') +
