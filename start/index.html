@@ -38,6 +38,7 @@
 .tl{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;margin:10px 0 4px}.tl div{font-size:12px;font-weight:600;color:var(--muted);border-top:4px solid var(--line);padding-top:6px}.tl div.on{border-color:var(--amber);color:var(--navy)}
 @media(max-width:640px){.tl{grid-template-columns:repeat(3,1fr)}}
 .flist{list-style:none;padding:0;margin:6px 0 0;font-size:14px}.flist li{padding:7px 0;border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}.kpi .v{font-family:Georgia,serif;font-size:26px;line-height:1.2;margin-top:2px}.kpi .s{font-size:12px;color:var(--muted,#5B6B7F)}.neg{color:#A33A2B}.tbl td.n,.tbl th.n{text-align:right;white-space:nowrap}
 .tbl{width:100%;border-collapse:collapse;font-size:14px}.tbl th,.tbl td{text-align:left;padding:8px;border-bottom:1px solid var(--line);vertical-align:top}.tbl tr.click{cursor:pointer}.tbl tr.click:hover{background:#FBF8F2}
 .banner{border:1px solid #F3C978;background:#FBF5E8;border-radius:12px;padding:12px 16px;font-size:14px}
 .addr-wrap{position:relative}.addr-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #E8E0D2;border-radius:12px;box-shadow:0 14px 30px rgba(14,31,54,.18);list-style:none;margin:0;padding:6px;z-index:40;max-height:300px;overflow:auto}.addr-list li{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1.35}.addr-list li small{display:block;color:#5B6B7F;font-size:13px}.addr-list li[aria-selected=true],.addr-list li:hover{background:#FBF5E8}.addr-list li.src{cursor:default;font-size:11px;color:#8A97A8;padding:4px 12px}.addr-list li.src:hover{background:none}
@@ -164,6 +165,7 @@ function route() {
   if (h === 'refer') return viewRefer();
   if (h === 'admin') return viewAdmin();
   if (h === 'admin/costs') return viewCosts();
+  if (h === 'admin/business') return viewBusiness();
   if (h.indexOf('admin/') === 0) return S.user && S.user.isAdmin ? viewAdminJob(decodeURIComponent(h.slice(6))) : viewJobs();
   if (h === 'project' && S.lastPid) return openJob(S.lastPid, false);
   return viewJobs();
@@ -604,14 +606,49 @@ function viewAdmin() {
     var open = function (x) { return ['Delivered', 'Not eligible', 'Declined', LABEL.delivered].indexOf(x.Status) < 0; };
     var rows = S.admin.jobs.slice().reverse().filter(function (x) { return f === 'all' || open(x); });
     setMain('<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><h1 style="font-size:clamp(26px,4vw,36px);margin:0">Admin · jobs</h1><div class="chips"><label class="' + (f === 'open' ? 'on' : '') + '"><input type="radio" name="af" value="open"' + (f === 'open' ? ' checked' : '') + '> Open</label><label class="' + (f === 'all' ? 'on' : '') + '"><input type="radio" name="af" value="all"' + (f === 'all' ? ' checked' : '') + '> All</label></div></div>' +
+      (isOwner() ? '<div id="bizstrip" style="margin-top:16px"></div>' : '') +
       '<div class="card" style="margin-top:16px;overflow:auto"><table class="tbl"><thead><tr><th>PSR</th><th>Client</th><th>Address</th><th>Package</th><th>Price</th><th>Status</th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Client) + '<div class="small">' + esc(x.Email) + '</div></td><td>' + esc(x.Address) + ', ' + esc(x.Municipality) + '</td><td>' + esc(x.Package) + '</td><td>' + esc(typeof x.Price === 'number' ? money(x.Price) : x.Price) + '</td><td>' + esc(sheetStatus(x.Status)) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="muted">No jobs.</td></tr>') + '</tbody></table></div>' +
-      '<p class="small" style="margin-top:12px"><a href="#admin/costs">Costs and averages per project type</a> · Homeowner leads, referrals, credits and reviews are on the Leads, Referrals, Credits and Reviews tabs of the Jobs sheet.</p>');
+      '<p class="small" style="margin-top:12px">' + (isOwner() ? '<a href="#admin/business">Business: revenue, costs and profit</a> · ' : '') + '<a href="#admin/costs">Costs and averages per project type</a> · Homeowner leads, referrals, credits and reviews are on the Leads, Referrals, Credits and Reviews tabs of the Jobs sheet.</p>');
     $$('input[name=af]').forEach(function (i) { i.onchange = function () { store.set('psr_adm_filter', i.value); viewAdmin(); }; });
+    if (isOwner()) api('admin.business').then(function (b) { var el = $('#bizstrip'); if (!el) return; var m = b.month;
+      el.innerHTML = '<div class="kpis">' + kpi(m.label + ' revenue', cad(m.revenue), m.jobs + ' job' + (m.jobs === 1 ? '' : 's') + ' started') + kpi(m.label + ' profit', cad(m.profit), m.margin == null ? 'after costs of ' + cad(m.costs) : m.margin + '% margin') + kpi('Still to collect', cad(b.all.due), 'balances on jobs under way') + kpi('All-time profit', cad(b.all.profit), b.all.label) + '</div><p class="small" style="margin:8px 0 0"><a href="#admin/business">Full business page →</a></p>'; }).catch(function () {});
     $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
 function money2(n) { return 'US$' + (Number(n) || 0).toFixed(2); }
+function isOwner() { return !!(S.user && S.user.role === 'admin'); }
+function cad(n) { n = Number(n) || 0; return (n < 0 ? '−' : '') + '$' + Math.abs(Math.round(n)).toLocaleString('en-CA'); }
+function kpi(label, v, sub) { return '<div class="kpi"><div class="s">' + esc(label) + '</div><div class="v' + (/^−/.test(v) ? ' neg' : '') + '">' + esc(v) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>'; }
+function viewBusiness() {
+  if (!isOwner()) return viewJobs();
+  setMain('<p class="muted">Loading…</p>');
+  api('admin.business').then(function (b) {
+    var P = [b.month, b.lastMonth, b.all], st = b.settings;
+    var line = function (label, k, opt) { opt = opt || {}; return '<tr' + (opt.b ? ' style="font-weight:700"' : '') + '><td>' + label + '</td>' + P.map(function (p) { var v = p[k]; return '<td class="n' + (opt.sign && v < 0 ? ' neg' : '') + '">' + (v == null ? '–' : opt.fmt ? opt.fmt(v) : (opt.minus && Math.round(v) ? '−' : '') + cad(v)) + '</td>'; }).join('') + '</tr>'; };
+    var h = '<p><a href="#admin">← All jobs</a></p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 4px">Business</h1><p class="muted" style="margin:0 0 16px">Revenue before HST, by the month a job started. Test jobs are left out. Only you see this page (not reviewers).</p>' +
+      '<div class="kpis">' + kpi(b.month.label + ' revenue', cad(b.month.revenue), b.month.jobs + ' job' + (b.month.jobs === 1 ? '' : 's') + ' started') + kpi(b.month.label + ' profit', cad(b.month.profit), b.month.margin == null ? '' : b.month.margin + '% margin') + kpi('Still to collect', cad(b.all.due), 'balances on jobs under way') + kpi('All-time profit', cad(b.all.profit), b.all.label) + (b.all.perHour != null ? kpi('Profit per hour of your time', cad(b.all.perHour), b.all.hours + ' h logged') : '') + '</div>' +
+      '<div class="card" style="margin-top:16px;overflow:auto"><b>Profit and loss</b><table class="tbl" style="margin-top:8px"><thead><tr><th></th>' + P.map(function (p) { return '<th class="n">' + esc(p.label) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      line('Jobs started', 'jobs', {fmt: String}) + line('Jobs delivered', 'delivered', {fmt: String}) +
+      line('Value of work booked (list price)', 'value') + line('Given free (pilot / tester codes)', 'freeValue', {minus: true}) +
+      line('Drafting revenue', 'jobRevenue') + line('Guide and review sales', 'otherSales') + line('Total revenue', 'revenue', {b: true}) +
+      line('Collected so far', 'collected') + line('Still to collect', 'due') +
+      line('Pre-screen AI (API, in CA$)', 'aiCad', {minus: true}) + line('Card fees (Stripe, estimated)', 'cardFees', {minus: true}) + line('Other job costs (engineer, printing…)', 'otherCad', {minus: true}) +
+      line('Running costs (Claude plan, insurance, Revit…)', 'running', {minus: true}) + line('Total costs', 'costs', {b: true, minus: true}) +
+      line('Profit', 'profit', {b: true, sign: true}) + line('Margin', 'margin', {fmt: function (v) { return v + '%'; }}) +
+      line('Your time (hours)', 'hours', {fmt: String}) + line('Profit per hour of your time', 'perHour', {sign: true}) + line('Profit after your time at ' + cad(st.ownerRate) + '/h', 'afterTime', {sign: true}) +
+      '</tbody></table></div>' +
+      '<div class="card" style="margin-top:16px;overflow:auto"><b>Per job</b><table class="tbl" style="margin-top:8px"><thead><tr><th>PSR</th><th>Firm · type</th><th class="n">Revenue</th><th class="n">Collected</th><th class="n">Job costs</th><th class="n">Profit before running costs</th><th class="n">Your h</th><th class="n">Claude used (API-equiv.)</th></tr></thead><tbody>' +
+      (b.jobs.length ? b.jobs.map(function (j) { return '<tr class="click" data-p="' + esc(j.path) + '"><td>' + esc(j.psr) + '</td><td>' + esc(j.firm) + '<div class="small">' + esc(j.type) + '</div></td><td class="n">' + (j.free ? '<span class="small">free (' + cad(j.value) + ')</span>' : cad(j.revenue)) + '</td><td class="n">' + cad(j.collected) + '</td><td class="n">' + cad(j.costs) + '</td><td class="n' + (j.profit < 0 ? ' neg' : '') + '">' + cad(j.profit) + '</td><td class="n">' + (j.philipHours == null ? (j.delivered ? '<b class="neg">missing</b>' : '–') : j.philipHours) + '</td><td class="n">' + (j.claudeApiUsd ? money2(j.claudeApiUsd) : '–') + '</td></tr>'; }).join('') : '<tr><td colspan="8" class="muted">No jobs started yet.</td></tr>') + '</tbody></table>' +
+      '<p class="small" style="margin:8px 0 0">"Claude used" is the API-equivalent of the drafting sessions, for reference only: the Claude plan is a fixed monthly cost, counted once under running costs.</p></div>' +
+      '<div class="card" style="margin-top:16px"><b>Running costs</b><p class="small" style="margin:0">Counted per day from each item\'s start date. Edit them on the <a href="' + esc(b.sheetUrl) + '" target="_blank" rel="noopener">Running costs tab</a> of the Jobs sheet.</p><ul class="flist">' +
+      b.running.map(function (r) { return '<li><span>' + esc(r.item) + '</span><span>' + cad(r.monthly) + '/month' + (r.since ? ' · since ' + esc(r.since) : '') + '</span></li>'; }).join('') + '</ul>' +
+      (b.unsetRunning.length ? '<p class="msg">Not filled in yet: <b>' + esc(b.unsetRunning.join(', ')) + '</b>. Add the monthly cost on the Running costs tab so the profit is right.</p>' : '') +
+      '<p class="small" style="margin:0">Rates (Settings tab): US$1 = CA$' + st.usdCad + ' · card fees ' + st.cardPct + '% + ' + cad(st.cardFixed * 100).replace('$', '') + '¢ · your time ' + cad(st.ownerRate) + '/h.</p></div>';
+    setMain(h);
+    $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
+  }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
+}
 function calibCard(r) {
   return '<div class="card fd" style="margin-bottom:16px"><b>Weekly plan calibration</b><p class="small" style="margin:4px 0 10px">' +
     (r.planWeeklyUsd ? 'Your weekly Claude plan is worth about <b>' + money2(r.planWeeklyUsd) + '</b> of API-equivalent usage' + (r.calibratedAt ? ' (calibrated ' + esc(r.calibratedAt) + ')' : '') + '. Re-calibrate every month or two, or when the plan changes.'
@@ -663,18 +700,19 @@ function viewAdminJob(path) {
       '<div><label class="l">Expected draft date (shown to the client)</label><input id="a_eta" value="' + esc((j.admin || {}).eta || '') + '" placeholder="e.g. Oct 24"></div><div><label class="l">Internal notes</label><textarea id="a_n" rows="3">' + esc((j.admin || {}).notes || '') + '</textarea></div><div><button class="btn btn-line btn-sm" id="a_save">Save notes</button></div>' +
       '<b style="margin-top:8px">Job costs</b><p class="small" style="margin:0">Pre-screen AI: ' + money2(((sv.usage || {}).ai || {}).usd || 0) + ' (' + (((sv.usage || {}).ai || {}).calls || 0) + ' run' + ((((sv.usage || {}).ai || {}).calls || 0) === 1 ? '' : 's') + '). The drafting runner adds its Claude cost and time here after each session.</p>' +
       '<div class="fd2"><div><label class="l">Drafting Claude cost (US$)</label><input id="c_du" type="number" step="0.01" value="' + esc(jc.draftUsd != null ? jc.draftUsd : '') + '"></div><div><label class="l">Drafting time (hours)</label><input id="c_dh" type="number" step="0.1" value="' + esc(jc.draftHours != null ? jc.draftHours : '') + '"></div></div>' +
-      '<div class="fd2"><div><label class="l">Your time (hours)</label><input id="c_ph" type="number" step="0.1" value="' + esc(jc.philipHours != null ? jc.philipHours : '') + '"></div><div><label class="l">Cost notes</label><input id="c_n" value="' + esc(jc.notes || '') + '" placeholder="e.g. two review passes"></div></div>' +
+      '<div class="fd2"><div><label class="l">Your time (hours)</label><input id="c_ph" type="number" step="0.1" value="' + esc(jc.philipHours != null ? jc.philipHours : '') + '"></div><div><label class="l">Other job costs (CA$)</label><input id="c_oc" type="number" step="0.01" value="' + esc(jc.otherCad != null ? jc.otherCad : '') + '" placeholder="engineer, printing…"></div></div>' +
+      '<div><label class="l">Cost notes</label><input id="c_n" value="' + esc(jc.notes || '') + '" placeholder="e.g. two review passes"></div>' +
       '<div style="display:flex;gap:8px;align-items:center"><button type="button" class="btn btn-line btn-sm" id="c_save">Save costs</button><span class="small" id="c_state"></span></div>' +
       '<p class="small" style="margin:0">Put the watermarked review PDF in the job folder\'s <b>Draft</b> subfolder before sending the draft, and the final PDF and DWG files plus the job notes sheet in <b>PDF</b> before releasing finals.</p><p class="msg" id="fmsg"></p></div></div>';
     setMain(h);
     var upd = function (data, btn) { btn.disabled = true; return api('db.set', {path: path, data: data, merge: true}).then(function () { toast('Saved'); viewAdminJob(path); }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); };
     var cSave = function (quiet) {
       var nv = function (id) { return $(id).value === '' ? null : Number($(id).value); };
-      var c = Object.assign({}, jc, {draftUsd: nv('#c_du'), draftHours: nv('#c_dh'), philipHours: nv('#c_ph'), notes: $('#c_n').value});
+      var c = Object.assign({}, jc, {draftUsd: nv('#c_du'), draftHours: nv('#c_dh'), philipHours: nv('#c_ph'), otherCad: nv('#c_oc'), notes: $('#c_n').value});
       $('#c_state').textContent = 'Saving…';
       return api('db.set', {path: path, data: {admin: Object.assign({}, j.admin || {}, {costs: c})}, merge: true}).then(function () { jc = c; j.admin = Object.assign({}, j.admin || {}, {costs: c}); $('#c_state').textContent = 'Saved'; if (!quiet) toast('Costs saved'); }).catch(function (e) { $('#c_state').textContent = 'Not saved: ' + e.message; });
     };
-    var cT = null; ['#c_du', '#c_dh', '#c_ph', '#c_n'].forEach(function (id) { $(id).addEventListener('input', function () { clearTimeout(cT); $('#c_state').textContent = 'Unsaved changes'; cT = setTimeout(function () { cSave(true); }, 2500); }); });
+    var cT = null; ['#c_du', '#c_dh', '#c_ph', '#c_oc', '#c_n'].forEach(function (id) { $(id).addEventListener('input', function () { clearTimeout(cT); $('#c_state').textContent = 'Unsaved changes'; cT = setTimeout(function () { cSave(true); }, 2500); }); });
     $('#c_save').onclick = function () { clearTimeout(cT); cSave(false); };
     if ($('#timego') && $('#c_ph')) $('#timego').onclick = function () { $('#c_ph').scrollIntoView({block: 'center'}); $('#c_ph').focus(); };
     var qSave = function (quiet) {
