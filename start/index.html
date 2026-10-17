@@ -111,7 +111,7 @@ var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
 var QUOTED = ['addition', 'newhome', 'drafting', 'structural', 'model3d', 'shop', 'interior', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome', 'lower'];
 var TIERS = {wl: 'Drafting & permit set', cs: 'Drafting & permit set'};
-var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Being checked', quoted: 'Ready to start', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
+var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Being checked', quoted: 'Quote to accept', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined'};
 var STAGE = {draft: 0, screened: 1, info: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
 var MUNIS = ['Toronto', 'Mississauga', 'Brampton', 'Caledon', 'Oakville', 'Burlington', 'Milton', 'Halton Hills', 'Vaughan', 'Markham', 'Richmond Hill', 'Hamilton', 'Pickering', 'Ajax', 'Whitby', 'Oshawa', 'Barrie', 'Innisfil', 'Guelph', 'Kitchener'];
 var KINDS = [['design', 'Design', 'sketch, markups or SD drawings with dimensions'], ['existing', 'Existing drawings or as-built', 'for renovations'], ['survey', 'Survey', ''], ['permits', 'Previous permits for this property', 'issued permits or permit drawings, if any'], ['template', 'Your title block or template', ''], ['engineer', 'Engineer\'s design or notes', ''], ['notes', 'City comments, engineer notes, truss or HVAC layouts', 'if you have them']];
@@ -144,8 +144,12 @@ function blank() {
 function jobPill(j) {
   var st = j.status, ps = (j.server || {}).prescreen || {};
   if (st === 'screened') { var t = (ps.state === 'pending' || ps.state === 'running') ? 'Pre-screening' : (listPrice(j) ? (ps.state === 'review' ? 'Pre-screen: needs your look' : 'Price check') : 'Quote needed'); return '<span class="status act">' + esc(t) + '</span>'; }
+  if (st === 'quoted' && S.user && S.user.isAdmin) { var dq = Number((j.quote || {}).deposit) || 0; return '<span class="status act">' + (dq > 0 ? 'Quote sent · awaiting deposit' : 'Quote sent · awaiting approval') + '</span>'; }
+  if (st === 'confirmed' && S.user && S.user.isAdmin) return '<span class="status act">' + (paidDeposit(j) > 0 ? 'Deposit paid · ready to start' : 'Quote accepted · ready to start') + '</span>';
   return statusPill(st);
 }
+// older Jobs-sheet rows still carry the 1.9.0 wording
+function sheetStatus(t) { t = String(t || ''); if (t.indexOf('Ready to start') === 0) return 'Quote sent, awaiting approval'; if (t === 'Deposit received') return 'Accepted, ready to start'; return t; }
 function statusPill(st) { var cls = st === 'delivered' ? 'done' : (['quoted', 'draftready', 'ready'].indexOf(st) >= 0 ? 'act' : ''); return '<span class="status ' + cls + '">' + esc(LABEL[st] || st) + '</span>'; }
 
 // ---------- routing
@@ -598,7 +602,7 @@ function viewAdmin() {
     var rows = S.admin.jobs.slice().reverse().filter(function (x) { return f === 'all' || open(x); });
     setMain('<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><h1 style="font-size:clamp(26px,4vw,36px);margin:0">Admin · jobs</h1><div class="chips"><label class="' + (f === 'open' ? 'on' : '') + '"><input type="radio" name="af" value="open"' + (f === 'open' ? ' checked' : '') + '> Open</label><label class="' + (f === 'all' ? 'on' : '') + '"><input type="radio" name="af" value="all"' + (f === 'all' ? ' checked' : '') + '> All</label></div></div>' +
       '<div class="card" style="margin-top:16px;overflow:auto"><table class="tbl"><thead><tr><th>PSR</th><th>Client</th><th>Address</th><th>Package</th><th>Price</th><th>Status</th></tr></thead><tbody>' +
-      (rows.length ? rows.map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Client) + '<div class="small">' + esc(x.Email) + '</div></td><td>' + esc(x.Address) + ', ' + esc(x.Municipality) + '</td><td>' + esc(x.Package) + '</td><td>' + esc(typeof x.Price === 'number' ? money(x.Price) : x.Price) + '</td><td>' + esc(x.Status) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="muted">No jobs.</td></tr>') + '</tbody></table></div>' +
+      (rows.length ? rows.map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Client) + '<div class="small">' + esc(x.Email) + '</div></td><td>' + esc(x.Address) + ', ' + esc(x.Municipality) + '</td><td>' + esc(x.Package) + '</td><td>' + esc(typeof x.Price === 'number' ? money(x.Price) : x.Price) + '</td><td>' + esc(sheetStatus(x.Status)) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="muted">No jobs.</td></tr>') + '</tbody></table></div>' +
       '<p class="small" style="margin-top:12px"><a href="#admin/costs">Costs and averages per project type</a> · Homeowner leads, referrals, credits and reviews are on the Leads, Referrals, Credits and Reviews tabs of the Jobs sheet.</p>');
     $$('input[name=af]').forEach(function (i) { i.onchange = function () { store.set('psr_adm_filter', i.value); viewAdmin(); }; });
     $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
@@ -652,7 +656,7 @@ function viewAdminJob(path) {
       adminPrescreen(j) + askInfoBox(j) +
       '<b style="display:block;margin-top:14px">Files</b><ul class="flist">' + files.map(function (f) { return '<li><span>' + esc(f.kind) + ' · ' + esc(f.name) + '</span>' + (f.driveUrl ? '<a href="' + esc(f.driveUrl) + '" target="_blank" rel="noopener">Open</a>' : '') + '</li>'; }).join('') + '</ul></div>' +
       '<div class="card fd"><b>Quote</b><div class="fd2"><div><label class="l">Price (before HST)</label><input id="q_a" type="number" value="' + esc(qd.amount != null ? qd.amount : ((j.quote && j.quote.amount) || lp || '')) + '"></div><div><label class="l">Deposit</label><input id="q_d" type="number" value="' + esc(qd.deposit != null ? qd.deposit : dep) + '"></div></div><div><label class="l">Delivery</label><input id="q_t" value="' + esc(qd.days != null ? qd.days : ((j.quote && j.quote.days) || '7–10 business days')) + '"></div><div><label class="l">Note to the client (optional)</label><textarea id="q_n" rows="3">' + esc(qd.note != null ? qd.note : ((j.quote && j.quote.note) || '')) + '</textarea></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-amber btn-sm" id="q_send">' + (j.quote ? 'Update and resend quote' : 'Send quote') + '</button><button type="button" class="btn btn-line btn-sm" id="q_save">Save draft</button><span class="small" id="q_state">' + (qd.at ? 'Draft saved ' + esc(new Date(qd.at).toLocaleString()) : '') + '</span></div>' +
-      '<b style="margin-top:8px">Progress</b><div class="chips">' + [['drafting', 'Start drafting'], ['review', 'Quality check'], ['draftready', 'Send draft (' + drafts.length + ' file' + (drafts.length === 1 ? '' : 's') + ' in Draft)'], ['ready', 'Balance due'], ['delivered', 'Release finals'], ['revising', 'Revising'], ['declined', 'Decline']].map(function (s) { return '<button type="button" class="btn btn-line btn-sm" data-st="' + s[0] + '">' + esc(s[1]) + '</button>'; }).join('') + '</div>' +
+      '<b style="margin-top:8px">Progress</b><div class="chips">' + (j.status === 'quoted' ? '<button type="button" class="btn btn-amber btn-sm" id="markacc">Mark accepted (by email)</button>' : '') + [['drafting', 'Start drafting'], ['review', 'Quality check'], ['draftready', 'Send draft (' + drafts.length + ' file' + (drafts.length === 1 ? '' : 's') + ' in Draft)'], ['ready', 'Balance due'], ['delivered', 'Release finals'], ['revising', 'Revising'], ['declined', 'Decline']].map(function (s) { return '<button type="button" class="btn btn-line btn-sm" data-st="' + s[0] + '">' + esc(s[1]) + '</button>'; }).join('') + '</div>' +
       '<div><label class="l">Expected draft date (shown to the client)</label><input id="a_eta" value="' + esc((j.admin || {}).eta || '') + '" placeholder="e.g. Oct 24"></div><div><label class="l">Internal notes</label><textarea id="a_n" rows="3">' + esc((j.admin || {}).notes || '') + '</textarea></div><div><button class="btn btn-line btn-sm" id="a_save">Save notes</button></div>' +
       '<b style="margin-top:8px">Job costs</b><p class="small" style="margin:0">Pre-screen AI: ' + money2(((sv.usage || {}).ai || {}).usd || 0) + ' (' + (((sv.usage || {}).ai || {}).calls || 0) + ' run' + ((((sv.usage || {}).ai || {}).calls || 0) === 1 ? '' : 's') + '). The drafting runner adds its Claude cost and time here after each session.</p>' +
       '<div class="fd2"><div><label class="l">Drafting Claude cost (US$)</label><input id="c_du" type="number" step="0.01" value="' + esc(jc.draftUsd != null ? jc.draftUsd : '') + '"></div><div><label class="l">Drafting time (hours)</label><input id="c_dh" type="number" step="0.1" value="' + esc(jc.draftHours != null ? jc.draftHours : '') + '"></div></div>' +
@@ -692,10 +696,16 @@ function viewAdminJob(path) {
     $('#a_save').onclick = function () { upd({admin: Object.assign({}, j.admin || {}, {notes: $('#a_n').value, eta: $('#a_eta').value.trim()})}, this); };
     $$('#app [data-st]').forEach(function (b) { b.onclick = function () {
       var st = b.getAttribute('data-st');
+      if (j.status === 'quoted' && st !== 'declined' && !confirm('The client hasn\'t accepted the quote yet' + ((Number((j.quote || {}).deposit) || 0) > 0 ? ' or paid the deposit' : '') + '. Move the job on anyway?')) return;
       if (st === 'draftready' && !drafts.length) { msg('Put the watermarked draft PDF in the job folder\'s Draft subfolder first.', true); return; }
       if (st === 'declined') { var why = prompt('Reason shown to the client:'); if (why == null) return; return upd({status: 'declined', admin: Object.assign({}, j.admin || {}, {declineNote: why})}, b); }
       upd({status: st}, b);
     }; });
+    var ma = $('#markacc'); if (ma) ma.onclick = function () {
+      var dq = Number((j.quote || {}).deposit) || 0;
+      if (!confirm('Mark this quote as accepted by the client outside the portal?' + (dq > 0 ? ' The ' + money(dq) + ' deposit has NOT been paid through the portal; only do this if you have it.' : ''))) return;
+      upd({status: 'confirmed', admin: Object.assign({}, j.admin || {}, {acceptedBy: 'admin (by email)', acceptedAt: now()})}, ma);
+    };
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
 
