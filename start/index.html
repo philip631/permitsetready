@@ -321,7 +321,10 @@ function sync() {
   $('#engcon').classList.toggle('hide', !isContractor(j)); $('#engme').classList.toggle('hide', isContractor(j));
   $$('#f .lowonly').forEach(function (e) { e.classList.toggle('hide', !lw); });
   var ex = $('#exreq'); if (ex) ex.classList.toggle('hide', !lw);
-  $$('#f .up').forEach(function (u) { var k = u.getAttribute('data-kind'); var names = S.files.filter(function (f) { return f.kind === k; }).map(function (f) { return f.name; }); u.querySelector('.names').textContent = names.length ? '✓ ' + names.join(', ') : ''; });
+  $$('#f .up').forEach(function (u) { var k = u.getAttribute('data-kind'); var names = S.files.filter(function (f) { return f.kind === k; }).map(function (f) { return f.name; }); u.querySelector('.names').textContent = names.length ? '✓ ' + names.join(', ') : '';
+    var dwgOnly = names.some(function (n) { return /\.dwg$/i.test(n); }) && !names.some(function (n) { return /\.pdf$/i.test(n); }), note = u.querySelector('.dwgnote');
+    if (dwgOnly && !note) { note = document.createElement('span'); note.className = 'dwgnote small'; note.style.cssText = 'display:block;margin-top:6px;color:var(--warn)'; note.textContent = 'Please also upload a PDF of these sheets. Our pre-screen reads PDFs, not DWG files, so without one your job waits for a manual check.'; u.querySelector('.t').appendChild(note); }
+    if (!dwgOnly && note) note.remove(); });
 }
 // address lookup (OpenStreetMap / Photon: free, no key). Picking a result fills the address, municipality, postcode and coordinates.
 function addrSetup() {
