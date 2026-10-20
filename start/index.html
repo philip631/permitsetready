@@ -110,11 +110,15 @@ var ENG_CHECK = ['Underpinning or benching method suits the existing foundation 
 function setv(o, k, v) { var p = k.split('.'), x = o; for (var i = 0; i < p.length - 1; i++) { if (typeof x[p[i]] !== 'object' || !x[p[i]]) x[p[i]] = {}; x = x[p[i]]; } x[p[p.length - 1]] = v; }
 
 // ---------- data
-var PRO = {wl: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750, lower: 650}, cs: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750, lower: 650}, addon: 0.6, rush: 0.3, template: 300}; // one permit-set price list (cs kept for older jobs)
-var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['lower', 'Basement lowering (underpinning or benching)'], ['addition', 'Addition'], ['newhome', 'New home'], ['drafting', 'General drafting'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['feasibility', 'Schematic Design feasibility package (Beta)'], ['other', 'Other']];
+var PRO = {wl: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750, shed: 750, lower: 650}, cs: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750, shed: 750, lower: 650}, shedSmall: 350, addon: 0.6, rush: 0.3, template: 300}; // one permit-set price list (cs kept for older jobs)
+var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['shed', 'Shed, cabana, gazebo or pergola'], ['lower', 'Basement lowering (underpinning or benching)'], ['addition', 'Addition'], ['newhome', 'New home'], ['drafting', 'General drafting'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['feasibility', 'Schematic Design feasibility package (Beta)'], ['other', 'Other']];
 var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
 var QUOTED = ['addition', 'newhome', 'drafting', 'structural', 'model3d', 'shop', 'interior', 'feasibility', 'other'];
-var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'addition', 'newhome', 'lower'];
+var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'shed', 'addition', 'newhome', 'lower'];
+function isShed(j) { return scopes(j).indexOf('shed') >= 0; }
+function shedArea(j) { var o = j.out || {}; return Math.round((Number(o.width) || 0) * (Number(o.length) || 0) * 0.0929 * 10) / 10; }
+// same rule as the backend: 15 m² or less with no plumbing = build drawings, no permit
+function smallOut(j) { var a = shedArea(j); return isShed(j) && a > 0 && a <= 15 && ((j.out || {}).plumbing || 'None') === 'None'; }
 var TIERS = {wl: 'Drafting & permit set', cs: 'Drafting & permit set'};
 var LABEL = {info: 'Needs your input', draft: 'Not sent yet', screened: 'Being checked', quoted: 'Quote to accept', confirmed: 'Started', measuring: 'Site visit', drafting: 'Drafting', review: 'Quality check', consultant: 'With engineer', draftready: 'Draft ready to check', changes: 'Making your changes', ready: 'Balance due', delivered: 'Final files ready', revising: 'Revising for City comments', declined: 'Declined', closed: 'Closed'};
 var STAGE = {draft: 0, screened: 1, info: 1, quoted: 1, confirmed: 2, measuring: 2, drafting: 2, review: 2, consultant: 2, changes: 3, draftready: 3, ready: 4, delivered: 5, revising: 5};
@@ -127,7 +131,7 @@ function exterior(it) { return scopes(it).some(function (k) { return EXTERIOR.in
 function surveyNeeded(it) { return exterior(it); }
 function listPrice(it) {
   if (!scopes(it).length || quoted(it).length) return 0;
-  var p = PRO[it.tier] || PRO.wl, sum = scopes(it).reduce(function (s, k, i) { var b = p[k] || 0; return s + (i === 0 ? b : Math.round(b * PRO.addon / 50) * 50); }, 0);
+  var p = PRO[it.tier] || PRO.wl, sum = scopes(it).reduce(function (s, k, i) { var b = (k === 'shed' && smallOut(it)) ? PRO.shedSmall : (p[k] || 0); return s + (i === 0 ? b : Math.round(b * PRO.addon / 50) * 50); }, 0);
   if (it.job && it.job.rush === 'Yes') sum = Math.round(sum * (1 + PRO.rush) / 10) * 10;
   if (templateFee(it)) sum += PRO.template;
   return sum;
@@ -264,6 +268,11 @@ function viewForm(it, preset) {
     '<div class="fd2"><div><label class="l" for="l_nside">Which side</label><select id="l_nside" data-k="lower.nSide"><option>Left</option><option>Right</option><option>Both</option></select></div><div><label class="l" for="l_ndist">Distance from our wall to the neighbour\'s wall</label><input id="l_ndist" data-k="lower.nDist" placeholder="e.g. 1.8 m"></div></div>' +
     '<div class="fd2"><div><label class="l" for="l_ntype">Neighbour\'s lower level</label><select id="l_ntype" data-k="lower.nType"><option value="">Choose…</option><option>Full basement</option><option>Crawl space</option><option>Slab on grade</option><option>Don\'t know</option></select></div><div><label class="l" for="l_ndepth">Neighbour\'s basement floor below outside grade (approx.)</label><input id="l_ndepth" data-k="lower.nDepth" placeholder="e.g. about 5 ft"></div></div>' +
     '<p class="small" style="margin:0">Not sure? Measure from the ground to the bottom of the neighbour\'s basement window well, or ask the engineer. The survey shows the distances.</p></div></div>' +
+    '<div class="card hide" id="shedbox" style="gap:14px;background:var(--paper)"><b>Shed, cabana, gazebo or pergola</b>' +
+    '<div><span class="lbl">Type</span><div class="chips">' + ['Shed', 'Cabana', 'Gazebo', 'Pergola', 'Other'].map(function (o) { return '<label><input type="radio" name="otype" data-k="out.type" value="' + o + '"> ' + o + '</label>'; }).join('') + '</div></div>' +
+    '<div class="fd2"><div><label class="l" for="o_w">Width (ft)</label><input id="o_w" data-k="out.width" type="number" min="1" step="0.5" placeholder="e.g. 10"></div><div><label class="l" for="o_l">Length (ft)</label><input id="o_l" data-k="out.length" type="number" min="1" step="0.5" placeholder="e.g. 12"></div></div>' +
+    '<div><label class="l" for="o_p">Plumbing</label><select id="o_p" data-k="out.plumbing"><option>None</option><option>Sink only</option><option>Washroom</option><option>Outdoor kitchen or bar</option></select></div>' +
+    '<p class="small" id="o_note" style="margin:0"></p></div>' +
     '<div class="card hide" id="feasbox" style="gap:14px;background:var(--paper)"><b>Schematic Design feasibility package <span class="small">(Beta)</span></b>' +
     '<div><span class="lbl">Level</span><div class="opt">' + [['summary', 'Zoning and Code summary', 'What the by-law and Code allow, unit count thresholds, key Code triggers.'], ['fit', 'Summary plus one test fit', 'Plus schematic plans for one option: every floor, unit areas, stair and exit strategy.'], ['full', 'Full package', 'Two or three options with plans, plus a feasibility workbook: cost, rent, value, profit, break-even rent, cash needed.']].map(function (o) { return '<label><input type="radio" name="flev" data-k="feas.level" value="' + o[0] + '"> <b>' + o[1] + '</b>' + o[2] + '</label>'; }).join('') + '</div></div>' +
     '<div><span class="lbl">Site status</span><div class="chips">' + [['own', 'Owned'], ['buying', 'Under consideration'], ['keep', 'Owned, existing building to keep or renovate']].map(function (o) { return '<label><input type="radio" name="fhold" data-k="feas.hold" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
@@ -300,6 +309,7 @@ function viewForm(it, preset) {
     '<label class="nfeas"><input type="checkbox" data-ack="finals"> You check a watermarked draft first; final files are released once the balance is paid.</label>' +
     '<label class="nfeas"><input type="checkbox" data-ack="responsible"> I am the designer, contractor or engineer responsible for this project and its submission.</label>' +
     '<label class="lowonly"><input type="checkbox" data-ack="lower"> Basement lowering: the set is drafted to PermitSetReady\'s standard underpinning or benching details (or to my engineer\'s design if I sent it) for my engineer to review, mark up and stamp. The engineer is responsible for the design, sequencing, shoring and field reviews. One round of the engineer\'s markups is included once the job is paid in full, if uploaded within 6 weeks of the final files; a change of method or design is $85/hour.</label>' +
+    '<label class="smallonly"><input type="checkbox" data-ack="small"> Small structure (15 m² or less, no plumbing): these are build drawings only, not for permit, and have not been reviewed by a building official. I will confirm with the municipality whether a permit is needed, and zoning (setbacks, height, lot coverage) still applies.</label>' +
     '<label class="feasonly"><input type="checkbox" data-ack="feas"> Schematic Design feasibility package: ' + FEAS_DISC + '</label>' +
     '<label><input type="checkbox" data-ack="terms"> I have read and agree to the <a href="/terms/" target="_blank" rel="noopener">Terms for firms</a>, including that payments are non-refundable.</label></div></div>' +
     '<p class="msg" id="fmsg" role="status"></p><div class="navrow"><button type="button" class="btn btn-line" id="back">Back</button><button type="button" class="btn btn-amber" id="next">Continue</button></div></form>';
@@ -334,6 +344,9 @@ function sync() {
   $('#l_neigh').classList.toggle('hide', !(lo.close === 'yes' || lo.close === 'unsure'));
   $('#engcon').classList.toggle('hide', !isContractor(j)); $('#engme').classList.toggle('hide', isContractor(j));
   $$('#f .lowonly').forEach(function (e) { e.classList.toggle('hide', !lw); });
+  var sh = isShed(j), sa = shedArea(j), sm = smallOut(j); $('#shedbox').classList.toggle('hide', !sh);
+  $('#o_note').textContent = !sa ? 'Enter the size to see the price. Over 15 m² or with plumbing needs a permit set ($750). 15 m² or less with no plumbing: build drawings, no permit needed ($350).' : (sa + ' m². ' + (sm ? 'Build drawings, no permit needed: $350. Zoning still applies.' : 'Needs a building permit: full permit set, $750.'));
+  $$('#f .smallonly').forEach(function (e) { e.classList.toggle('hide', !sm); });
   var fz = isFeas(j), fo = feasOnly(j); $('#feasbox').classList.toggle('hide', !fz);
   $$('#f .feasonly').forEach(function (e) { e.classList.toggle('hide', !(e.tagName === 'LABEL' ? fz : fo)); }); $$('#f .nfeas').forEach(function (e) { if (e.id !== 'qbox') e.classList.toggle('hide', fo); });
   $('#qbox').classList.toggle('hide', !q.length || fo);
@@ -415,6 +428,7 @@ function check(step) {
     if (!lo.close) return 'Basement lowering: tell us if a lowered wall is close to the lot line or the neighbour\'s house.';
     if ((lo.close === 'yes' || lo.close === 'unsure') && (!lo.nDist || !lo.nType)) return 'Add the distance to the neighbour\'s house and their lower level (basement, crawl space or slab).';
   }
+  if (step === 2 && isShed(j)) { var oo = j.out || {}; if (!oo.type) return 'Shed, cabana, gazebo or pergola: pick the type.'; if (!(Number(oo.width) > 0 && Number(oo.length) > 0)) return 'Shed, cabana, gazebo or pergola: add the width and length in feet.'; }
   if (step === 2 && isFeas(j)) { var fe = j.feas || {}; if (!fe.level) return 'Feasibility: pick the level you want.'; if (!fe.hold) return 'Feasibility: pick the site status.'; if (!String(fe.units || '').trim()) return 'Feasibility: add the target number of units.'; }
   if (step === 3 && isLower(j) && isContractor(j) && !(j.lower || {}).engineer) return 'Tell us who will stamp the drawings: your project engineer, or we refer one.';
   if (step === 4) {
@@ -426,7 +440,7 @@ function check(step) {
     if ((j.job || {}).titleblock === 'yours' && firstJob(j) && !has('template') && !link) return 'Add your title block or template (or share a folder link), or choose our clean format.';
   }
   if (step === 5 && j.measure && j.measure.want && !(Number(j.measure.sqft) > 0)) return 'Add the approximate house size so we can price the visit.';
-  if (step === 6) { var a = j.ack || {}; if (!((feasOnly(j) || (a.revisions && a.zoning && a.finals && a.responsible)) && a.terms && (!isLower(j) || a.lower) && (!isFeas(j) || a.feas))) return 'Tick all the boxes to send the job.'; }
+  if (step === 6) { var a = j.ack || {}; if (!((feasOnly(j) || (a.revisions && a.zoning && a.finals && a.responsible)) && a.terms && (!isLower(j) || a.lower) && (!smallOut(j) || a.small) && (!isFeas(j) || a.feas))) return 'Tick all the boxes to send the job.'; }
   return '';
 }
 function engCard(j) {
@@ -446,7 +460,7 @@ function lowerSummary(j) {
 function summary() {
   var j = S.job, lp = listPrice(j), q = quoted(j);
   $('#sum').innerHTML = '<dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd><dt>Project</dt><dd>' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</dd>' +
-    '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job.rush === 'Yes' ? ' · rush' : '') + '</dd>' + (isLower(j) ? lowerSummary(j) : '') + (isFeas(j) ? feasSummary(j) : '') + (feasOnly(j) ? '' : '<dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'Your template' + (templateFee(j) ? ' (includes the $300 one-time template setup)' : ' (on file)') : 'Our clean format') + '</dd>') +
+    '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job.rush === 'Yes' ? ' · rush' : '') + '</dd>' + (isLower(j) ? lowerSummary(j) : '') + (isShed(j) ? '<dt>Structure</dt><dd>' + esc(((j.out || {}).type || 'Structure') + ' · ' + ((j.out || {}).width || '?') + ' × ' + ((j.out || {}).length || '?') + ' ft (' + shedArea(j) + ' m²) · plumbing: ' + ((j.out || {}).plumbing || 'None')) + (smallOut(j) ? '<br><span class="small">Build drawings, no permit needed</span>' : '') + '</dd>' : '') + (isFeas(j) ? feasSummary(j) : '') + (feasOnly(j) ? '' : '<dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'Your template' + (templateFee(j) ? ' (includes the $300 one-time template setup)' : ' (on file)') : 'Our clean format') + '</dd>') +
     '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST' + (j.measure && j.measure.want ? ' + site visit (priced in your quote)' : ' (list price; pre-screened as soon as you send it)')) + '</dd>' +
     '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes, priced in the quote' : 'No') + '</dd>' +
     '<dt>Delivery</dt><dd>' + (feasOnly(j) ? 'Set in your quote' : (j.job.rush === 'Yes' ? '3 business days' : '4–7 business days') + ' from your go-ahead') + '</dd>' +
