@@ -569,7 +569,7 @@ function openMarkup(path, readOnly, pins, fileId) {
       if (!window.pdfjsLib) throw new Error('The viewer could not load. Upload a marked-up PDF instead.');
       pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
       var bin = atob(r.dataUrl.split(',')[1]), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-      return pdfjsLib.getDocument({data: arr}).promise;
+      return pdfjsLib.getDocument({data: arr, isEvalSupported: false}).promise;
     }).then(function (pdf) {
       $('#mkmsg').textContent = readOnly ? 'Pins the client placed on the draft:' : 'Click on a sheet to drop a pin, then type the change below it in the list.';
       var host = $('#mkpages'); host.innerHTML = '';
