@@ -209,6 +209,11 @@
     </div>
   </section>
 
+  <section class="wrap section hide" id="testimonials" hidden>
+    <div class="section-head"><h2>What firms say</h2><p>From design firms, contractors and engineers we've drafted for.</p></div>
+    <div class="grid-3" id="tlist"></div>
+  </section>
+
   <section class="wrap section" id="refer">
     <div class="card dark" style="gap:8px;padding:34px">
       <span class="pill">Referral program</span>
@@ -273,6 +278,17 @@
 </footer>
 <script src="/assets/config.js"></script>
 <script src="/assets/buy.js"></script>
+<script>
+(function () {
+  var API = (window.PSR_CONFIG && window.PSR_CONFIG.apiUrl) || ''; if (!API || !window.fetch) return;
+  var esc = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
+  fetch(API, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({action: 'testimonials.list'})}).then(function (r) { return r.json(); }).then(function (j) {
+    var items = (j && j.ok && j.items) || []; if (items.length < 3) return;
+    document.getElementById('tlist').innerHTML = items.slice(0, 6).map(function (x) { return '<figure class="card" style="margin:0;gap:10px"><div aria-label="' + x.rating + ' out of 5" style="color:var(--amber);letter-spacing:2px">' + '★★★★★'.slice(0, x.rating) + '</div><blockquote style="margin:0;font-size:16px">“' + esc(x.text) + '”</blockquote><figcaption class="small">' + esc(x.by) + '</figcaption></figure>'; }).join('');
+    var s = document.getElementById('testimonials'); s.hidden = false; s.classList.remove('hide');
+  }).catch(function () {});
+})();
+</script>
 <script>
 (function(){try{var r=new URLSearchParams(location.search).get('ref');if(r&&/^[A-Za-z0-9@._+-]{4,80}$/.test(r))localStorage.setItem('psr_ref',r);}catch(e){}})();
 </script>
