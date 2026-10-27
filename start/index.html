@@ -162,7 +162,7 @@ function templateFee(it) {
 }
 function priceOf(it) { return (it.quote && Number(it.quote.amount) > 0) ? Number(it.quote.amount) : listPrice(it); }
 function paidDeposit(it) { var d = (it.payment || {}).deposit; if (!d) return 0; if (d.comped) return priceOf(it); if (d.net != null && d.net !== '') return Number(d.net) || 0; return Math.round(Number(d.total || 0) / 100 / 1.13); }
-function pkg(it) { if (feasOnly(it)) return SNAME.feasibility; return (TIERS[it.tier] || 'Job') + ' · ' + (scopes(it).map(function (k) { return SNAME[k]; }).join(' + ') || 'Project'); }
+function pkg(it) { if (it.job && it.job.title) return (TIERS[it.tier] || 'Job') + ' · ' + it.job.title; if (feasOnly(it)) return SNAME.feasibility; return (TIERS[it.tier] || 'Job') + ' · ' + (scopes(it).map(function (k) { return SNAME[k]; }).join(' + ') || 'Project'); }
 function projPath(uid, pid) { return 'intakes/' + uid + '/projects/' + pid; }
 function newId() { return 'p' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 function blank() {
@@ -194,6 +194,7 @@ function route() {
   if (h === 'admin') return viewAdmin();
   if (h === 'admin/costs') return viewCosts();
   if (h === 'admin/business') return viewBusiness();
+  if (h === 'admin/new') return S.user && S.user.role === 'admin' ? viewAdminNew() : viewJobs();
   if (h.indexOf('admin/') === 0) return S.user && S.user.isAdmin ? viewAdminJob(decodeURIComponent(h.slice(6))) : viewJobs();
   if (h === 'project' && S.lastPid) return openJob(S.lastPid, false);
   return viewJobs();
@@ -575,6 +576,7 @@ function viewJob() {
     var isAuto = !!(j.quote && j.quote.auto);
     card = understood + '<b style="display:block;margin-top:' + (understood ? '14px' : '0') + '">' + (isAuto ? 'Pre-screened: ready to start' : 'Your fixed quote') + '</b><p style="font-size:30px;font-weight:800;color:var(--navy);margin:6px 0">' + money(price) + ' <small style="font-size:15px;color:var(--muted)">+ HST</small></p>' + (j.quote && j.quote.note ? '<p style="margin:0 0 8px">' + esc(j.quote.note) + '</p>' : '') +
       '<p class="muted" style="margin:0 0 12px">Delivery: ' + esc((j.quote && j.quote.days) || '4–7 business days') + ' from your go-ahead. ' + (dep > 0 ? 'Deposit to start: <b>' + money(dep) + '</b> + HST. Balance due when you approve the draft.' : 'No deposit: the full amount is due when you approve the draft.') + '</p>' +
+      (sv.adminCreated && !(j.ack && j.ack.terms) ? '<label class="small" style="display:block;margin:0 0 12px"><input type="checkbox" id="qterms"> I have read and agree to the <a href="/terms/" target="_blank" rel="noopener">Terms for firms</a>, including that payments are non-refundable.</label>' : '') +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' + (dep > 0 ? '<button class="btn btn-amber" id="paydep">' + (isAuto ? 'Pay the deposit and start' : 'Accept and pay the deposit') + '</button>' : '<button class="btn btn-amber" id="accept">' + (isAuto ? 'Start the job' : 'Accept the quote') + '</button>') + '<a class="btn btn-line" href="mailto:admin@permitsetready.ca?subject=' + encodeURIComponent('Question about ' + (sv.psr || 'my quote')) + '">Ask a question</a></div>';
   } else if (['confirmed', 'measuring', 'drafting', 'review', 'consultant'].indexOf(st) >= 0) card = '<b>Your job is underway.</b><p class="muted" style="margin:6px 0 0">' + (st === 'measuring' ? 'Our measuring partner will contact you to book the site visit. ' : '') + 'You\'ll get a watermarked draft to check' + (j.admin && j.admin.eta ? ' around ' + esc(j.admin.eta) : ' in about 4–7 business days') + '.</p>';
   else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or mark up what to change: click anywhere on a sheet to drop a numbered pin and type the change.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul>' +
@@ -590,7 +592,7 @@ function viewJob() {
   h += '<div class="card" style="max-width:780px;margin-top:18px">' + card + '<p class="msg" id="fmsg" role="status"></p></div>';
   if (st === 'delivered' || st === 'revising') h += fbCard(j);
   var lp = listPrice(j);
-  h += '<div class="card" style="max-width:780px;margin-top:18px"><b>What you sent</b><dl class="sum" style="margin-top:10px"><dt>Scope</dt><dd>' + esc(pkg(j)) + '</dd><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd>' + (j.docs && j.docs.link ? '<dt>Folder</dt><dd><a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared link</a></dd>' : '') + (j.docs && j.docs.inspiration ? '<dt>Inspiration</dt><dd><a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Board / photos</a></dd>' : '') + '<dt>Files</dt><dd>' + (S.files.length ? S.files.map(function (f) { var u = FUSE.filter(function (x) { return x[0] === f.use; })[0]; return esc(f.name) + (u ? ' <span class="small">(' + esc(u[1]) + ')</span>' : ''); }).join('<br>') : 'none') + '</dd></dl>' +
+  h += '<div class="card" style="max-width:780px;margin-top:18px"><b>' + (sv.adminCreated ? 'The job' : 'What you sent') + '</b><dl class="sum" style="margin-top:10px"><dt>Scope</dt><dd>' + esc(pkg(j)) + '</dd>' + (sv.adminCreated && j.docs && j.docs.notes ? '<dt>Details</dt><dd style="font-weight:400">' + esc(j.docs.notes) + '</dd>' : '') + '<dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd>' + (j.docs && j.docs.link ? '<dt>Folder</dt><dd><a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared link</a></dd>' : '') + (j.docs && j.docs.inspiration ? '<dt>Inspiration</dt><dd><a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Board / photos</a></dd>' : '') + '<dt>Files</dt><dd>' + (S.files.length ? S.files.map(function (f) { var u = FUSE.filter(function (x) { return x[0] === f.use; })[0]; return esc(f.name) + (u ? ' <span class="small">(' + esc(u[1]) + ')</span>' : ''); }).join('<br>') : 'none') + '</dd></dl>' +
     '<div class="up" data-kind="other" style="margin-top:12px"><span class="t"><b>Add more files</b><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide"></label></div></div>';
   setMain(h);
   if (S.qa && $('#qa')) { $$('#qa textarea').forEach(function (t) { var v = S.qa[t.id + '|' + (t.getAttribute('data-q') || '')]; if (v) t.value = v; }); } S.qa = null;
@@ -610,7 +612,7 @@ function viewJob() {
   }
   var ro = $('#reopen'); if (ro) ro.onclick = function () { ro.disabled = true; api('job.reopen', {path: S.path}).then(function () { toast('Reopened'); openJob(S.job.id, false); }).catch(function (e) { ro.disabled = false; msg(e.message, true); }); };
   var pb = $('#paybal'); if (pb) pb.onclick = function () { pay('balance', pb); };
-  var ac = $('#accept'); if (ac) ac.onclick = function () { move('accepted', '', ac); };
+  var ac = $('#accept'); if (ac) ac.onclick = function () { var qt = $('#qterms'); if (qt && !qt.checked) { msg('Tick the box to accept the terms.', true); return; } if (qt) S.job.ack = Object.assign({}, S.job.ack || {}, {terms: true}); move('accepted', '', ac); };
   if ($('#psteps')) { var pli = $$('#psteps li'), started = new Date(((sv.prescreen || {}).startedAt) || ((sv.prescreen || {}).at) || Date.now()).getTime(); var tick = function () { if (!document.body.contains(pli[0])) return; var e = (Date.now() - started) / 1000, k = e < 8 ? 1 : e < 30 ? 2 : 3; pli.forEach(function (li, i) { li.className = i < k ? 'done' : i === k ? 'on' : ''; }); setTimeout(tick, 2000); }; tick(); }
   var spq = $('#sendpq'); if (spq) spq.onclick = function () {
     var qs = ((S.job.server || {}).predraft || {}).questions || [];
@@ -683,7 +685,7 @@ function bindDl(action) {
       a.textContent = action === 'files.draftDownload' ? 'Open' : 'Download';
     }).catch(function (e) { a.textContent = 'Try again'; msg(e.message, true); }); }; });
 }
-function pay(kind, btn) { btn.disabled = true; msg('Opening secure payment…'); api('pay.checkout', {path: S.path, kind: kind}).then(function (r) { if (r.amount === 0) { toast('Paid with your credit.'); openJob(S.job.id, false); } else location.href = r.url; }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); }
+function pay(kind, btn) { var qt = document.getElementById('qterms'); if (qt && !qt.checked) { msg('Tick the box to accept the terms.', true); return; } btn.disabled = true; msg('Opening secure payment…'); api('pay.checkout', {path: S.path, kind: kind, terms: !!(qt && qt.checked)}).then(function (r) { if (r.amount === 0) { toast('Paid with your credit.'); openJob(S.job.id, false); } else location.href = r.url; }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); }
 function move(status, notes, btn) {
   btn.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = status; d.clientNotes = notes || ''; if (status === 'changes') { d.markups = S.sendMarkups || []; }
   api('db.set', {path: S.path, data: d}).then(function () { return openJob(S.job.id, false); }).catch(function (e) { btn.disabled = false; msg(e.message, true); });
@@ -714,7 +716,7 @@ function viewAdmin() {
     var f = store.get('psr_adm_filter') || 'open';
     var open = function (x) { return ['Delivered', 'Not eligible', 'Declined', 'Closed (no response)', LABEL.delivered].indexOf(x.Status) < 0; };
     var rows = S.admin.jobs.slice().reverse().filter(function (x) { return f === 'all' || open(x); });
-    setMain('<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><h1 style="font-size:clamp(26px,4vw,36px);margin:0">Admin · jobs</h1><div class="chips"><label class="' + (f === 'open' ? 'on' : '') + '"><input type="radio" name="af" value="open"' + (f === 'open' ? ' checked' : '') + '> Open</label><label class="' + (f === 'all' ? 'on' : '') + '"><input type="radio" name="af" value="all"' + (f === 'all' ? ' checked' : '') + '> All</label></div></div>' +
+    setMain('<div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><h1 style="font-size:clamp(26px,4vw,36px);margin:0">Admin · jobs</h1><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">' + (isOwner() ? '<a class="btn btn-amber btn-sm" href="#admin/new">+ New job for a firm</a>' : '') + '<div class="chips"><label class="' + (f === 'open' ? 'on' : '') + '"><input type="radio" name="af" value="open"' + (f === 'open' ? ' checked' : '') + '> Open</label><label class="' + (f === 'all' ? 'on' : '') + '"><input type="radio" name="af" value="all"' + (f === 'all' ? ' checked' : '') + '> All</label></div></div></div>' +
       (isOwner() ? '<div id="bizstrip" style="margin-top:16px"></div>' : '') +
       '<div class="card" style="margin-top:16px;overflow:auto"><table class="tbl"><thead><tr><th>PSR</th><th>Client</th><th>Address</th><th>Package</th><th>Price</th><th>Status</th></tr></thead><tbody>' +
       (rows.length ? rows.map(function (x) { return '<tr class="click" data-p="' + esc(x.Path) + '"><td>' + esc(x.PSR) + '</td><td>' + esc(x.Client) + '<div class="small">' + esc(x.Email) + '</div></td><td>' + esc(x.Address) + ', ' + esc(x.Municipality) + '</td><td>' + esc(x.Package) + '</td><td>' + esc(typeof x.Price === 'number' ? money(x.Price) : x.Price) + '</td><td>' + esc(sheetStatus(x.Status)) + '</td></tr>'; }).join('') : '<tr><td colspan="6" class="muted">No jobs.</td></tr>') + '</tbody></table></div>' +
@@ -724,6 +726,51 @@ function viewAdmin() {
       el.innerHTML = '<div class="kpis">' + kpi(m.label + ' revenue', cad(m.revenue), m.jobs + ' job' + (m.jobs === 1 ? '' : 's') + ' started') + kpi(m.label + ' profit', cad(m.profit), m.margin == null ? 'after costs of ' + cad(m.costs) : m.margin + '% margin') + kpi('Still to collect', cad(b.all.due), 'balances on jobs under way') + kpi('All-time profit', cad(b.all.profit), b.all.label) + '</div><p class="small" style="margin:8px 0 0"><a href="#admin/business">Full business page →</a></p>'; }).catch(function () {});
     $$('#app tr.click').forEach(function (tr) { tr.onclick = function () { location.hash = 'admin/' + encodeURIComponent(tr.getAttribute('data-p')); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
+}
+// Admin: create a job under an existing firm's account (add-ons, work agreed by phone or email). Nothing is emailed until you send the quote or questions.
+function viewAdminNew() {
+  if (!(S.admin.jobs || []).length) { setMain('<p class="muted">Loading…</p>'); return api('admin.jobs').then(function (r) { S.admin.jobs = r.jobs || []; if (!S.admin.jobs.length) S.admin.jobs = [{}]; viewAdminNew(); }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); }); }
+  var rows = S.admin.jobs.filter(function (x) { return x && x.Email && x.Path; }), emails = [];
+  rows.forEach(function (x) { var e = String(x.Email).toLowerCase(); if (emails.indexOf(e) < 0) emails.push(e); });
+  var opt = function (v, t, sel) { return '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+  setMain('<p><a href="#admin">← All jobs</a></p><h1 style="font-size:clamp(24px,4vw,34px);margin:0">New job for a firm</h1>' +
+    '<p class="muted" style="margin:6px 0 0;max-width:720px">Creates the job under the firm\'s own portal account, with its own PSR number and job folder. Nothing is emailed yet: on the next page enter the price and press <b>Send quote</b>, or use <b>Ask the firm for information</b>. The firm accepts the terms and pays through its job page as usual.</p>' +
+    '<div class="card fd" style="max-width:780px;margin-top:16px">' +
+    '<div><label class="l" for="nj_e">Firm email (their portal login)</label><input id="nj_e" type="email" list="nj_el" autocomplete="off" placeholder="name@firm.com"><datalist id="nj_el">' + emails.map(function (e) { return '<option value="' + esc(e) + '">'; }).join('') + '</datalist></div>' +
+    '<div><label class="l" for="nj_l">Add-on to (optional)</label><select id="nj_l">' + opt('', 'Not linked to another job') + '</select><p class="small" style="margin:4px 0 0">Picking a job fills in the firm and the address from it.</p></div>' +
+    '<div class="fd2"><div><label class="l" for="nj_f">Firm</label><input id="nj_f"></div><div><label class="l" for="nj_n">Contact name</label><input id="nj_n"></div></div>' +
+    '<div class="fd2"><div><label class="l" for="nj_p">Phone</label><input id="nj_p"></div><div><label class="l" for="nj_tb">Title block</label><select id="nj_tb">' + opt('ours', 'Our clean format') + opt('yours', 'Their template (on file)') + '</select></div></div>' +
+    '<div class="fd2"><div><label class="l" for="nj_a">Address</label><input id="nj_a"></div><div><label class="l" for="nj_m">Municipality</label><input id="nj_m"></div></div>' +
+    '<div class="fd2"><div><label class="l" for="nj_t">Title of the work (shown to the firm)</label><input id="nj_t" maxlength="120" placeholder="e.g. HVAC and plumbing drawings"></div><div><label class="l" for="nj_s">Type</label><select id="nj_s">' + SCOPES.filter(function (x) { return x[0] !== 'feasibility'; }).map(function (x) { return opt(x[0], x[1], x[0] === 'drafting'); }).join('') + '</select></div></div>' +
+    '<div><label class="l" for="nj_d">Scope (shown to the firm on the job page)</label><textarea id="nj_d" rows="4" placeholder="What we will draw, what the firm provides, who reviews and seals it"></textarea></div>' +
+    '<div><label class="l"><input type="checkbox" id="nj_r"> Rush (3 business days, add 30% to the price)</label></div>' +
+    '<div><label class="l" for="nj_i">Internal notes (not shown to the firm)</label><textarea id="nj_i" rows="2"></textarea></div>' +
+    '<div><button type="button" class="btn btn-amber" id="nj_go">Create the job</button></div><p class="msg" id="fmsg"></p></div>');
+  var lastE = null;
+  var fill = function () {
+    var e = $('#nj_e').value.trim().toLowerCase(), mine = rows.filter(function (x) { return String(x.Email).toLowerCase() === e; }).reverse();
+    if (e === lastE) return; lastE = e;
+    $('#nj_l').innerHTML = opt('', 'Not linked to another job') + mine.map(function (x) { return opt(x.Path, (x.PSR || '') + ' · ' + (x.Address || '') + ' · ' + (x.Package || '')); }).join('');
+    if (mine[0] && !$('#nj_n').value) $('#nj_n').value = mine[0].Client || '';
+  };
+  $('#nj_e').addEventListener('change', fill); $('#nj_e').addEventListener('input', function () { if (emails.indexOf($('#nj_e').value.trim().toLowerCase()) >= 0) fill(); });
+  $('#nj_l').onchange = function () {
+    var lp = $('#nj_l').value; if (!lp) return;
+    api('db.get', {path: lp}).then(function (r) { var d = r.data || {}, c = d.contact || {}, pr = d.property || {};
+      $('#nj_f').value = c.firm || ''; $('#nj_n').value = c.name || ''; $('#nj_p').value = c.phone || ''; $('#nj_a').value = pr.address || ''; $('#nj_m').value = pr.municipality || '';
+      $('#nj_tb').value = (d.job || {}).titleblock === 'yours' ? 'yours' : 'ours';
+    }).catch(function (e) { msg(e.message, true); });
+  };
+  $('#nj_go').onclick = function () {
+    var b = this, v = function (id) { return $(id).value.trim(); };
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v('#nj_e'))) { msg('Enter the firm\'s email.', true); return; }
+    if (!v('#nj_a')) { msg('Enter the address (or pick a linked job).', true); return; }
+    if (!v('#nj_t')) { msg('Enter a short title for the work.', true); return; }
+    b.disabled = true; overlay('Creating the job…', 'Making the PSR number and the job folder.');
+    api('admin.newJob', {email: v('#nj_e'), linkPath: $('#nj_l').value, firm: v('#nj_f'), name: v('#nj_n'), phone: v('#nj_p'), address: v('#nj_a'), municipality: v('#nj_m'), title: v('#nj_t'), scope: $('#nj_s').value, description: v('#nj_d'), titleblock: $('#nj_tb').value, rush: $('#nj_r').checked ? 'Yes' : 'No', internal: v('#nj_i')})
+      .then(function (r) { hideOverlay(); toast('Created ' + (r.psr || 'the job')); S.admin.jobs = []; location.hash = 'admin/' + encodeURIComponent(r.path); })
+      .catch(function (e) { hideOverlay(); b.disabled = false; msg(/Unknown action/.test(e.message) ? 'The backend needs the 1.11.1 deploy before this button works.' : e.message, true); });
+  };
 }
 function money2(n) { return 'US$' + (Number(n) || 0).toFixed(2); }
 function isOwner() { return !!(S.user && S.user.role === 'admin'); }
@@ -796,7 +843,7 @@ function viewAdminJob(path) {
     var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
       ((j.tier === 'wl' || j.tier === 'cs') && ['delivered', 'revising'].indexOf(j.status) >= 0 && (jc.philipHours == null || jc.philipHours === '') ? '<div class="msg" id="timeask" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>How much of your time went into this job?</b> Enter it under Job costs (0 if none) so the averages stay right.</span><button type="button" class="btn btn-line btn-sm" id="timego">Enter my time</button></div>' : '') +
       '<div class="grid-2" style="margin-top:16px;align-items:start"><div class="card"><b>Job</b><dl class="sum" style="margin-top:8px"><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + ' · ' + esc(j.contact.name || '') + '</dd><dt>Email</dt><dd>' + esc(j.contact.email || '') + ' ' + esc(j.contact.phone || '') + '</dd><dt>Role</dt><dd>' + esc(j.contact.role || '') + '</dd>' +
-      '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + '</dd><dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'THEIR template' + (sv.templateSetup ? ' · FIRST TIME: $300 setup' + (lp ? ' (in the list price)' : ' (add it to the quote)') : ' · on file') : 'Our clean format') + '</dd>' + (j.feedback ? '<dt>Feedback</dt><dd>' + '★★★★★'.slice(0, j.feedback.rating) + '☆☆☆☆☆'.slice(0, 5 - j.feedback.rating) + (j.feedback.good ? '<br><span style="font-weight:400">Good: ' + esc(j.feedback.good) + '</span>' : '') + (j.feedback.better ? '<br><span style="font-weight:400">Better: ' + esc(j.feedback.better) + '</span>' : '') + (j.feedback.quote ? '<br><span style="font-weight:400">Quote' + (j.feedback.publish ? ' (may publish)' : ' (private)') + ': "' + esc(j.feedback.quote) + '"</span>' : '') + '</dd>' : (sv.feedbackAskAt ? '<dt>Feedback</dt><dd>Asked ' + esc(fmtDate(sv.feedbackAskAt)) + (sv.feedbackRemindAt ? ', reminded ' + esc(fmtDate(sv.feedbackRemindAt)) : '') + '</dd>' : '')) + (isFeas(j) ? feasSummary(j) : '') + (isLower(j) ? lowerSummary(j) + (sv.engRevAt ? '<dt>Engineer markups</dt><dd>' + (sv.engRevPaid ? 'Received · $85/hour revision to quote' : 'Received · included round') + '</dd>' : '') : '') + '<dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
+      '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + (sv.adminCreated ? '<br><span class="small">Created from the admin page' + (sv.linkedPsr ? ' · add-on to <a href="#admin/' + encodeURIComponent(sv.linkedTo) + '">' + esc(sv.linkedPsr) + '</a>' : '') + (j.ack && j.ack.terms ? ' · terms accepted' : ' · terms not yet accepted (asked at accept or deposit)') + '</span>' : '') + '</dd><dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'THEIR template' + (sv.templateSetup ? ' · FIRST TIME: $300 setup' + (lp ? ' (in the list price)' : ' (add it to the quote)') : ' · on file') : 'Our clean format') + '</dd>' + (j.feedback ? '<dt>Feedback</dt><dd>' + '★★★★★'.slice(0, j.feedback.rating) + '☆☆☆☆☆'.slice(0, 5 - j.feedback.rating) + (j.feedback.good ? '<br><span style="font-weight:400">Good: ' + esc(j.feedback.good) + '</span>' : '') + (j.feedback.better ? '<br><span style="font-weight:400">Better: ' + esc(j.feedback.better) + '</span>' : '') + (j.feedback.quote ? '<br><span style="font-weight:400">Quote' + (j.feedback.publish ? ' (may publish)' : ' (private)') + ': "' + esc(j.feedback.quote) + '"</span>' : '') + '</dd>' : (sv.feedbackAskAt ? '<dt>Feedback</dt><dd>Asked ' + esc(fmtDate(sv.feedbackAskAt)) + (sv.feedbackRemindAt ? ', reminded ' + esc(fmtDate(sv.feedbackRemindAt)) : '') + '</dd>' : '')) + (isFeas(j) ? feasSummary(j) : '') + (isLower(j) ? lowerSummary(j) + (sv.engRevAt ? '<dt>Engineer markups</dt><dd>' + (sv.engRevPaid ? 'Received · $85/hour revision to quote' : 'Received · included round') + '</dd>' : '') : '') + '<dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
       (j.job && j.job.budget ? '<dt>Their budget</dt><dd>' + esc(j.job.budget) + ' (' + esc(j.job.budgetType || '') + ')</dd>' : '') + (j.job && j.job.pricing === 'hourly' ? '<dt>Pricing</dt><dd>$85/hour requested</dd>' : '') +
       '<dt>Needed by</dt><dd>' + esc((j.job || {}).due || '') + '</dd><dt>Building</dt><dd>' + esc((j.job || {}).existing || '') + ' · ' + esc((j.job || {}).area || '') + '</dd><dt>Deliver</dt><dd>' + esc(((j.job || {}).deliver || []).join(', ')) + '</dd>' +
       '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
