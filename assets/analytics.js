@@ -81,6 +81,7 @@
       else if (h.indexOf('mailto:') === 0) name = 'email_click';
       else if (h.indexOf('instagram.com') > -1) name = 'instagram_click';
       if (name) gtag('event', 'cta_click', { cta: name, link_text: (a.textContent || '').trim().slice(0, 60), page: location.pathname });
+      if (name === 'book_job') gtag('event', 'book_job_click', { page: location.pathname });
     });
   }
 
