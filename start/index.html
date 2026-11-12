@@ -24,6 +24,7 @@
 .opt{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:12px}.opt label{border:1px solid var(--line);border-radius:12px;padding:14px;background:#fff;display:block;font-weight:400;cursor:pointer;margin:0}.opt label b{display:block;margin:4px 0 2px}.opt label.on{border:2px solid var(--amber)}.opt input{width:auto;margin:0}
 .up{border:1.5px dashed #D6CCB8;border-radius:12px;padding:12px 14px;background:#fff;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.up .t{font-size:14px;flex:1;min-width:200px}.up em{font-style:normal;color:var(--muted);font-size:13px}.up .names{display:block;font-size:13px;color:var(--navy);margin-top:4px}
 .mk{margin-top:14px}.mk .pg{position:relative;margin:0 0 14px;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:#fff;cursor:crosshair}.mk .pg.ro{cursor:default}.mk canvas{display:block;width:100%;height:auto}.mk .pin{position:absolute;transform:translate(-50%,-100%);background:#C2410C;color:#fff;font:700 12px/1 Inter,sans-serif;border-radius:12px 12px 12px 0;padding:5px 8px;box-shadow:0 2px 6px rgba(0,0,0,.3);pointer-events:none}.mk .lbl2{font-size:12px;color:var(--muted);margin:0 0 4px}.mklist{list-style:none;padding:0;margin:8px 0 0}.mklist li{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:start;margin:6px 0}.mklist b{background:#C2410C;color:#fff;border-radius:10px;padding:2px 7px;font-size:12px}.mklist textarea{width:100%;font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+.mk .ink{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}.mk.draw .pg{cursor:crosshair}.mk.draw .ink{pointer-events:auto;touch-action:none}.mkbar{position:sticky;top:72px;z-index:5;display:flex;gap:8px;flex-wrap:wrap;align-items:center;background:var(--paper,#F6F1E8);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin:0 0 10px}.mkbar .on{background:var(--navy);color:#fff;border-color:var(--navy)}.mkbar .small{margin-left:auto}
 .up.busy{border-color:var(--amber);background:#FFF8EA}.spin{display:inline-block;width:14px;height:14px;border:2px solid #E8D9B8;border-top-color:var(--amber);border-radius:50%;animation:sp .8s linear infinite;vertical-align:-2px;margin-right:6px}@keyframes sp{to{transform:rotate(360deg)}}
 .req{display:inline-block;background:#FDECEA;color:#A33A2B;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:6px;padding:1px 6px;margin-left:6px}
 .quoted{border:1px dashed var(--line);border-radius:12px;padding:14px;background:#FBF8F2}
@@ -533,7 +534,7 @@ function upload(kind, list) {
   saveNow().then(function () {
     var chain = Promise.resolve(), n = 0;
     files.forEach(function (f) {
-      chain = chain.then(function () { n++; busy('Uploading ' + f.name + (files.length > 1 ? ' (' + n + ' of ' + files.length + ')' : '') + '…'); msg('Uploading ' + f.name + '…'); return readFile(f); }).then(function (data) {
+      chain = chain.then(function () { n++; busy('Uploading ' + f.name + (files.length > 1 ? ' (' + n + ' of ' + files.length + ')' : '') + '…'); msg('Uploading ' + f.name + '…'); return readFile(f); }).then(function (data) { return kind === 'markup' ? shrinkImage(f, data) : data; }).then(function (data) {
         var id = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5), rec = {kind: kind, name: f.name, size: f.size, createdAt: now(), use: FDEF[kind] || '', covers: [], issued: ((f.name.match(/(20\d\d)[-_.]?([01]\d)[-_.]?([0-3]\d)/) || []).slice(1).join('-')) || ''};
         return api('db.set', {path: S.path + '/files/' + id, data: Object.assign({dataUrl: data}, rec)}).then(function () { rec.id = id; S.files.push(rec); });
       });
@@ -582,9 +583,9 @@ function viewJob() {
       (sv.adminCreated && !(j.ack && j.ack.terms) ? '<label class="small" style="display:block;margin:0 0 12px"><input type="checkbox" id="qterms"> I have read and agree to the <a href="/terms/" target="_blank" rel="noopener">Terms for firms</a>, including that payments are non-refundable.</label>' : '') +
       '<div style="display:flex;gap:10px;flex-wrap:wrap">' + (dep > 0 ? '<button class="btn btn-amber" id="paydep">' + (isAuto ? 'Pay the deposit and start' : 'Accept and pay the deposit') + '</button>' : '<button class="btn btn-amber" id="accept">' + (isAuto ? 'Start the job' : 'Accept the quote') + '</button>') + '<a class="btn btn-line" href="mailto:admin@permitsetready.ca?subject=' + encodeURIComponent('Question about ' + (sv.psr || 'my quote')) + '">Ask a question</a></div>';
   } else if (['confirmed', 'measuring', 'drafting', 'review', 'consultant'].indexOf(st) >= 0) card = '<b>Your job is underway.</b><p class="muted" style="margin:6px 0 0">' + (st === 'measuring' ? 'Our measuring partner will contact you to book the site visit. ' : '') + 'You\'ll get a watermarked draft to check' + (j.admin && j.admin.eta ? ' around ' + esc(j.admin.eta) : ' in about 4–7 business days') + '.</p>';
-  else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or mark up what to change: click anywhere on a sheet to drop a numbered pin and type the change.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul>' +
-    '<div style="margin-top:10px"><button type="button" class="btn btn-line btn-sm" id="mkopen">Mark up the draft</button></div><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading the drawings…</p><div id="mkpages"></div></div><ol class="mklist" id="mklist"></ol>' +
-    '<div class="up" data-kind="markup" style="margin-top:10px"><span class="t"><b>Or upload a marked-up PDF</b> <em>· from Bluebeam, Acrobat or a scan</em><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png"></label></div>' +
+  else if (st === 'draftready') card = '<b>Your draft is ready to check.</b><p class="muted" style="margin:6px 0 10px">It\'s watermarked for review only. Approve it, or mark up what to change: drop numbered pins and type each change, or draw on the sheets by hand with a mouse, finger or tablet pen.</p><ul class="flist" id="draftlist"><li class="small">Loading…</li></ul>' +
+    '<div style="margin-top:10px"><button type="button" class="btn btn-line btn-sm" id="mkopen">Mark up the draft</button></div><div class="mk hide" id="mk"><div class="mkbar hide" id="mkbar"><button type="button" class="btn btn-line btn-sm" data-mode="pin">Pin and type</button><button type="button" class="btn btn-line btn-sm" data-mode="draw">Draw by hand</button><button type="button" class="btn btn-line btn-sm" id="mkundo">Undo</button><button type="button" class="btn btn-line btn-sm" id="mkclear">Clear drawing</button><span class="small" id="mkcount"></span></div><p class="small" id="mkmsg">Loading the drawings…</p><div id="mkpages"></div></div><ol class="mklist" id="mklist"></ol>' +
+    '<div class="up" data-kind="markup" style="margin-top:10px"><span class="t"><b>Or upload a marked-up PDF or a photo</b> <em>· from Bluebeam or Acrobat, a scan, or a photo of your hand sketch</em><span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png"></label></div>' +
     '<div class="fd" style="margin-top:12px"><label class="l" for="chg">General notes (optional)</label><textarea id="chg" rows="3" placeholder="e.g. use the client\'s preferred stair layout"></textarea></div><div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px"><button class="btn btn-amber" id="approve">Approve the draft</button><button class="btn btn-line" id="changes">Send changes</button></div>';
   else if (st === 'changes') card = '<b>We\'re making your changes.</b><p class="muted" style="margin:6px 0 0">You\'ll get an updated draft to check.</p>';
   else if (st === 'ready') { var bal = Math.max(0, price - paidDeposit(j)); card = '<b>Draft approved. Balance due: ' + money(bal) + ' + HST.</b><p class="muted" style="margin:6px 0 12px">The final PDF and DWG files are released as soon as it\'s paid.</p><div><button class="btn btn-amber" id="paybal">Pay the balance</button></div>'; }
@@ -636,8 +637,8 @@ function viewJob() {
   if (st === 'screened') schedulePoll();
   if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false, true); }).catch(function () { S.prescreenBusy = false; schedulePoll(); }); }
   var ap = $('#approve'); if (ap) ap.onclick = function () { move('approved', $('#chg').value.trim(), ap); };
-  var mo = $('#mkopen'); if (mo) { if (S.mkJob !== S.job.id) { S.markups = []; S.mkJob = S.job.id; } mo.onclick = function () { mo.disabled = true; openMarkup(S.path, false); }; if (S.markups.length) { mo.disabled = true; openMarkup(S.path, false); } }
-  var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); var mk = (S.markups || []).filter(function (m) { return m.text.trim(); }); var upl = S.files.some(function (f) { return f.kind === 'markup'; }); if (!n && !mk.length && !upl) { msg('Drop a pin on the drawings, upload a marked-up PDF, or write what to change.', true); return; } if ((S.markups || []).some(function (m) { return !m.text.trim(); })) { msg('Type the change for each pin (or remove it).', true); return; } S.sendMarkups = mk; move('changes', n, ch); };
+  var mo = $('#mkopen'); if (mo) { if (S.mkJob !== S.job.id) { S.markups = []; S.strokes = {}; S.mkMode = 'pin'; S.mkJob = S.job.id; } mo.onclick = function () { mo.disabled = true; openMarkup(S.path, false); }; if (S.markups.length || inkPages().length) { mo.disabled = true; openMarkup(S.path, false); } }
+  var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); var mk = (S.markups || []).filter(function (m) { return m.text.trim(); }); var upl = S.files.some(function (f) { return f.kind === 'markup'; }), ink = inkPages(); if (!n && !mk.length && !upl && !ink.length) { msg('Drop a pin or draw on the drawings, upload a marked-up PDF or photo, or write what to change.', true); return; } if ((S.markups || []).some(function (m) { return !m.text.trim(); })) { msg('Type the change for each pin (or remove it).', true); return; } S.sendMarkups = mk; ch.disabled = true; sendInk(ink).then(function () { move('changes', n, ch); }).catch(function (e) { ch.disabled = false; msg('Your drawing could not be sent: ' + e.message, true); }); };
   if ($('#draftlist')) api('files.draft', {path: S.path}).then(function (r) { $('#draftlist').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Open</a></li>'; }).join('') : '<li class="small">The draft file is on its way.</li>'; bindDl('files.draftDownload'); });
   if ($('#finals')) api('files.deliverables', {path: S.path}).then(function (r) { $('#finals').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Download</a></li>'; }).join('') : '<li class="small">Files are being prepared.</li>'; bindDl('files.download'); });
 }
@@ -651,7 +652,7 @@ function openMarkup(path, readOnly, pins, fileId) {
       var bin = atob(r.dataUrl.split(',')[1]), arr = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
       return pdfjsLib.getDocument({data: arr, isEvalSupported: false}).promise;
     }).then(function (pdf) {
-      $('#mkmsg').textContent = readOnly ? 'Pins the client placed on the draft:' : 'Click on a sheet to drop a pin, then type the change below it in the list.';
+      if (readOnly) $('#mkmsg').textContent = 'Pins the client placed on the draft:'; else mkBar();
       var host = $('#mkpages'); host.innerHTML = '';
       var chain = Promise.resolve();
       for (var n = 1; n <= pdf.numPages; n++) (function (n) {
@@ -659,7 +660,8 @@ function openMarkup(path, readOnly, pins, fileId) {
           var vp = page.getViewport({scale: 1.6}), wrap = document.createElement('div'), lab = document.createElement('p'), c = document.createElement('canvas');
           lab.className = 'lbl2'; lab.textContent = 'Sheet ' + n + ' of ' + pdf.numPages; wrap.className = 'pg' + (readOnly ? ' ro' : ''); wrap.setAttribute('data-page', n);
           c.width = vp.width; c.height = vp.height; wrap.appendChild(c); host.appendChild(lab); host.appendChild(wrap);
-          if (!readOnly) wrap.onclick = function (ev) { var b = wrap.getBoundingClientRect(); S.markups.push({page: n, x: (ev.clientX - b.left) / b.width, y: (ev.clientY - b.top) / b.height, text: ''}); drawPins(readOnly); var t = $$('#mklist textarea'); if (t.length) t[t.length - 1].focus(); };
+          if (!readOnly) addInk(wrap, n, c);
+          if (!readOnly) wrap.onclick = function (ev) { if (S.mkMode === 'draw') return; var b = wrap.getBoundingClientRect(); S.markups.push({page: n, x: (ev.clientX - b.left) / b.width, y: (ev.clientY - b.top) / b.height, text: ''}); drawPins(readOnly); var t = $$('#mklist textarea'); if (t.length) t[t.length - 1].focus(); };
           return page.render({canvasContext: c.getContext('2d'), viewport: vp}).promise;
         });
       })(n);
@@ -677,6 +679,59 @@ function drawPins(readOnly) {
   if (readOnly) return;
   $$('#mklist textarea').forEach(function (t) { t.oninput = function () { S.markups[Number(t.getAttribute('data-i'))].text = t.value; }; });
   $$('#mklist [data-rm]').forEach(function (b) { b.onclick = function () { S.markups.splice(Number(b.getAttribute('data-rm')), 1); drawPins(false); }; });
+}
+// ---------- hand markup: freehand strokes over each sheet (mouse, finger or tablet pen). Sent as one image per marked sheet, filed with the uploaded markups.
+function inkPages() { var s = S.strokes || {}; return Object.keys(s).filter(function (k) { return s[k] && s[k].length; }).map(Number).sort(function (a, b) { return a - b; }); }
+function mkBar() {
+  var bar = $('#mkbar'), box = $('#mk'); if (!bar) return; bar.classList.remove('hide'); S.mkMode = S.mkMode || 'pin';
+  var paint = function () {
+    box.classList.toggle('draw', S.mkMode === 'draw');
+    $$('#mkbar [data-mode]').forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-mode') === S.mkMode); });
+    $('#mkmsg').textContent = S.mkMode === 'draw' ? 'Draw on any sheet with your mouse, finger or tablet pen: circle things, cross them out, write dimensions. Switch to "Pin and type" to scroll by touch.' : 'Click on a sheet to drop a pin, then type the change below it in the list.';
+    var n = inkPages().length; $('#mkcount').textContent = n ? 'Hand markup on ' + n + ' sheet' + (n > 1 ? 's' : '') : '';
+  };
+  $$('#mkbar [data-mode]').forEach(function (b) { b.onclick = function () { S.mkMode = b.getAttribute('data-mode'); paint(); }; });
+  $('#mkundo').onclick = function () { var p = S.inkLast && S.inkLast.length ? S.inkLast.pop() : inkPages().pop(); if (p && S.strokes[p] && S.strokes[p].length) { S.strokes[p].pop(); redrawInk(p); paint(); } };
+  $('#mkclear').onclick = function () { S.strokes = {}; S.inkLast = []; $$('#mkpages .ink').forEach(function (k) { k.getContext('2d').clearRect(0, 0, k.width, k.height); }); paint(); };
+  S.mkPaint = paint; paint();
+}
+function inkStroke(ctx, st, w, h) {
+  var pts = st.pts; if (!pts.length) return; ctx.strokeStyle = '#D11A1A'; ctx.fillStyle = '#D11A1A'; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.lineWidth = Math.max(2, w * 0.0022);
+  if (pts.length === 1) { ctx.beginPath(); ctx.arc(pts[0][0] * w, pts[0][1] * h, ctx.lineWidth * 0.6, 0, 6.3); ctx.fill(); return; }
+  ctx.beginPath(); ctx.moveTo(pts[0][0] * w, pts[0][1] * h); for (var i = 1; i < pts.length; i++) ctx.lineTo(pts[i][0] * w, pts[i][1] * h); ctx.stroke();
+}
+function redrawInk(page) { var k = $('#mkpages .pg[data-page="' + page + '"] .ink'); if (!k) return; var ctx = k.getContext('2d'); ctx.clearRect(0, 0, k.width, k.height); ((S.strokes || {})[page] || []).forEach(function (st) { inkStroke(ctx, st, k.width, k.height); }); }
+function addInk(wrap, page, base) {
+  var k = document.createElement('canvas'); k.className = 'ink'; k.width = base.width; k.height = base.height; wrap.appendChild(k);
+  S.strokes = S.strokes || {}; S.inkLast = S.inkLast || [];
+  var cur = null, at = function (ev) { var b = k.getBoundingClientRect(); return [Math.max(0, Math.min(1, (ev.clientX - b.left) / b.width)), Math.max(0, Math.min(1, (ev.clientY - b.top) / b.height))]; };
+  k.addEventListener('pointerdown', function (ev) { if (S.mkMode !== 'draw' || (ev.pointerType === 'mouse' && ev.button !== 0)) return; ev.preventDefault(); try { k.setPointerCapture(ev.pointerId); } catch (e) {} cur = {pts: [at(ev)]}; (S.strokes[page] = S.strokes[page] || []).push(cur); S.inkLast.push(page); redrawInk(page); });
+  k.addEventListener('pointermove', function (ev) { if (!cur) return; ev.preventDefault(); var evs = ev.getCoalescedEvents ? ev.getCoalescedEvents() : [ev]; if (!evs.length) evs = [ev]; var ctx = k.getContext('2d'), a = cur.pts[cur.pts.length - 1]; evs.forEach(function (e2) { var b = at(e2); if (Math.abs(b[0] - a[0]) * k.width + Math.abs(b[1] - a[1]) * k.height < 1.5) return; cur.pts.push(b); inkStroke(ctx, {pts: [a, b]}, k.width, k.height); a = b; }); });
+  var end = function () { if (!cur) return; cur = null; if (S.mkPaint) S.mkPaint(); };
+  k.addEventListener('pointerup', end); k.addEventListener('pointercancel', end);
+  k.addEventListener('click', function (ev) { if (S.mkMode === 'draw') ev.stopPropagation(); });
+  redrawInk(page);
+}
+// One JPEG per marked sheet: the sheet as shown plus the hand markup, saved with the job like an uploaded markup.
+function sendInk(pages) {
+  var chain = Promise.resolve(), dn = new Date(), p2 = function (n) { return ('0' + n).slice(-2); }, stamp = dn.getFullYear() + p2(dn.getMonth() + 1) + p2(dn.getDate()) + '-' + p2(dn.getHours()) + p2(dn.getMinutes());
+  pages.forEach(function (p, i) {
+    chain = chain.then(function () {
+      var base = $('#mkpages .pg[data-page="' + p + '"] canvas'); if (!base) throw new Error('open the drawings again and retry');
+      msg('Sending your hand markup (sheet ' + p + ', ' + (i + 1) + ' of ' + pages.length + ')…');
+      var sc = Math.min(1, 3000 / Math.max(base.width, base.height)), c = document.createElement('canvas'); c.width = Math.round(base.width * sc); c.height = Math.round(base.height * sc);
+      var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(base, 0, 0, c.width, c.height); S.strokes[p].forEach(function (st) { inkStroke(ctx, st, c.width, c.height); });
+      var name = 'Sheet ' + p + ' - hand markup ' + stamp + '.jpg', data = c.toDataURL('image/jpeg', 0.85), id = 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 5);
+      var rec = {kind: 'markup', name: name, size: Math.round(data.length * 0.75), createdAt: now(), use: '', covers: [], issued: '', sheet: p, hand: true};
+      return api('db.set', {path: S.path + '/files/' + id, data: Object.assign({dataUrl: data}, rec)}).then(function () { rec.id = id; S.files.push(rec); delete S.strokes[p]; });
+    });
+  });
+  return chain;
+}
+// Phone photos are often over the size the change-list reader accepts: shrink large markup photos before upload (PDFs and other kinds are sent as they are).
+function shrinkImage(f, data) {
+  if (!/^image\/(jpeg|png)$/.test(f.type) || f.size < 3 * 1048576) return Promise.resolve(data);
+  return new Promise(function (ok) { var im = new Image(); im.onload = function () { try { var sc = Math.min(1, 3200 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc); var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); var q = 0.88, out = c.toDataURL('image/jpeg', q); while (out.length > 4.6 * 1048576 && q > 0.5) { q -= 0.1; out = c.toDataURL('image/jpeg', q); } ok(out.length < data.length ? out : data); } catch (e) { ok(data); } }; im.onerror = function () { ok(data); }; im.src = data; });
 }
 function bindDl(action) {
   $$('#app a.dl').forEach(function (a) { a.onclick = function (ev) { ev.preventDefault(); a.textContent = 'Preparing…';
@@ -853,6 +908,7 @@ function viewAdminJob(path) {
       '<dt>Links</dt><dd>' + (j.docs && j.docs.link ? '<a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared folder</a> ' : '') + (j.docs && j.docs.inspiration ? '<a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Inspiration</a> ' : '') + (sv.folderUrl ? '<a href="' + esc(sv.folderUrl) + '" target="_blank" rel="noopener">Job folder</a>' : '') + '</dd>' +
       '<dt>Notes</dt><dd style="font-weight:400">' + esc((j.docs || {}).notes || '') + '</dd>' + (j.clientNotes ? '<dt>Changes</dt><dd style="font-weight:400">' + esc(j.clientNotes) + '</dd>' : '') + '</dl>' +
       ((j.markups || []).length ? '<b style="display:block;margin-top:14px">Pins on the draft (' + j.markups.length + ')</b><ol class="mklist" id="mklist"></ol><button type="button" class="btn btn-line btn-sm" id="mkview">Show the pins on the draft</button><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading…</p><div id="mkpages"></div></div>' : '') +
+      (files.some(function (f) { return f.kind === 'markup'; }) ? '<b style="display:block;margin-top:14px">Markups from the firm (uploads and hand markup)</b><ul class="flist">' + files.filter(function (f) { return f.kind === 'markup'; }).map(function (f) { return '<li><span>' + esc(f.name) + (f.createdAt ? ' · ' + esc(fmtDate(f.createdAt)) : '') + '</span>' + (f.driveUrl ? '<a href="' + esc(f.driveUrl) + '" target="_blank" rel="noopener">Open</a>' : '') + '</li>'; }).join('') + '</ul>' : '') +
       adminPrescreen(j) + askInfoBox(j) +
       '<b style="display:block;margin-top:14px">Files</b><ul class="flist">' + files.map(function (f) { return '<li><span>' + esc(f.kind) + ' · ' + esc(f.name) + '</span>' + (f.driveUrl ? '<a href="' + esc(f.driveUrl) + '" target="_blank" rel="noopener">Open</a>' : '') + '</li>'; }).join('') + '</ul></div>' +
       (j.job && j.job.rush === 'Yes' ? '<div class="banner" style="margin:0 0 8px"><b>Rush requested</b> (3 business days): add 30% to the price. <a href="#" id="q_rush">Add 30% now</a></div>' : '') + '<div class="card fd"><b>Quote</b><div class="fd2"><div><label class="l">Price (before HST)</label><input id="q_a" type="number" value="' + esc(qd.amount != null ? qd.amount : ((j.quote && j.quote.amount) || lp || '')) + '"></div><div><label class="l">Deposit' + (feasOnly(j) ? ' (feasibility: blank = paid in full)' : '') + '</label><input id="q_d" type="number" value="' + esc(qd.deposit != null ? qd.deposit : dep) + '"></div></div><div><label class="l">Delivery</label><input id="q_t" value="' + esc(qd.days != null ? qd.days : ((j.quote && j.quote.days) || '4–7 business days')) + '"></div><div><label class="l">Note to the client (optional)</label><textarea id="q_n" rows="3">' + esc(qd.note != null ? qd.note : ((j.quote && j.quote.note) || '')) + '</textarea></div><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><button class="btn btn-amber btn-sm" id="q_send">' + (j.quote ? 'Update and resend quote' : 'Send quote') + '</button><button type="button" class="btn btn-line btn-sm" id="q_save">Save draft</button><span class="small" id="q_state">' + (qd.at ? 'Draft saved ' + esc(new Date(qd.at).toLocaleString()) : '') + '</span></div>' +
