@@ -46,6 +46,17 @@
 .addr-wrap{position:relative}.addr-list{position:absolute;left:0;right:0;top:calc(100% + 4px);background:#fff;border:1px solid #E8E0D2;border-radius:12px;box-shadow:0 14px 30px rgba(14,31,54,.18);list-style:none;margin:0;padding:6px;z-index:40;max-height:300px;overflow:auto}.addr-list li{padding:10px 12px;border-radius:8px;cursor:pointer;font-size:15px;line-height:1.35}.addr-list li small{display:block;color:#5B6B7F;font-size:13px}.addr-list li[aria-selected=true],.addr-list li:hover{background:#FBF5E8}.addr-list li.src{cursor:default;font-size:11px;color:#8A97A8;padding:4px 12px}.addr-list li.src:hover{background:none}
 .ovl{position:fixed;inset:0;background:rgba(15,30,50,.6);display:flex;align-items:center;justify-content:center;z-index:200;padding:16px;backdrop-filter:blur(2px)}.ovl .box{background:#fff;border-radius:16px;padding:32px 28px;max-width:420px;width:100%;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}.ovl .big,.bigspin{display:block;width:54px;height:54px;border:5px solid #E8D9B8;border-top-color:var(--amber);border-radius:50%;animation:sp .9s linear infinite;margin:0 auto 18px}.ovl b{display:block;font-size:20px;color:var(--navy)}.ovl p{margin:8px 0 0;color:var(--muted);font-size:15px}.pscard{text-align:center;padding:18px 6px}.pscard .steps{list-style:none;padding:0;margin:14px auto 0;max-width:360px;text-align:left}.pscard .steps li{padding:5px 0;color:var(--muted);font-size:15px}.pscard .steps li.on{color:var(--navy);font-weight:700}.pscard .steps li.done{color:var(--navy)}.pscard .steps li.done:before{content:'\2713  ';color:var(--amber)}.pscard .steps li.on:before{content:'\2022  ';color:var(--amber)}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--navy);color:#fff;padding:10px 18px;border-radius:10px;font-size:14px;z-index:60;box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.linkbtn{background:none;border:0;padding:6px 0;margin:2px 0 0;font:inherit;font-size:14px;color:var(--navy);text-decoration:underline;cursor:pointer;min-height:36px}
+.cov{display:inline-block;background:var(--ok-soft);color:var(--ok);font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;border-radius:6px;padding:1px 6px;margin-left:6px}
+.stepcount{font-size:13px;font-weight:700;color:var(--muted);margin:14px 0 0}.stepbar{height:6px;border-radius:9px;background:var(--line);margin:6px 0 10px;overflow:hidden}.stepbar i{display:block;height:100%;background:var(--amber);border-radius:9px;transition:width .2s}
+.tl div.now{color:var(--ink);font-weight:800}.tl div.now span{display:inline-block;background:var(--amber);color:var(--ink);font-size:10px;font-weight:800;border-radius:999px;padding:1px 7px;margin-top:3px;white-space:nowrap}
+.nextstep{font-size:14px;font-weight:800;color:var(--amber-deep);margin:0 0 8px}
+.loading{display:flex;align-items:center;gap:10px;color:var(--muted)}.btn[disabled]{opacity:.6;cursor:progress}.dl.busy{pointer-events:none;color:var(--muted)}
+.helpfab{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50;background:var(--navy);color:#fff;border:0;border-radius:999px;padding:0 20px;min-height:48px;font:inherit;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer}
+.helpbox{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:50;width:min(380px,calc(100vw - 32px));max-height:min(560px,calc(100vh - 110px));background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 16px 40px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.helpbox header{background:var(--ink);color:#fff;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:8px}.helpbox header small{display:block;color:var(--on-dark-2);font-size:12px}.helpbox header button{background:none;border:0;color:#fff;font-size:24px;line-height:1;width:40px;height:40px;cursor:pointer}
+.helpmsgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:8px}.helpmsgs div{max-width:88%;padding:9px 12px;border-radius:12px;font-size:15px;line-height:1.45}.helpmsgs .bot{background:var(--paper);align-self:flex-start}.helpmsgs .me{background:var(--amber-soft);align-self:flex-end}
+.helpqs{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px}.helpqs button{font:inherit;font-size:13px;border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;cursor:pointer}.helpbox form{display:flex;gap:8px;padding:10px;border-top:1px solid var(--line)}.helpbox form input{flex:1;font:inherit;font-size:16px;padding:10px;border:1px solid var(--line);border-radius:10px;min-width:0}.helpbox .foot{padding:10px 14px;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
 .reflink{display:flex;gap:8px;flex-wrap:wrap}.reflink input{flex:1;min-width:220px}
 </style>
 </head>
@@ -68,7 +79,7 @@
 </header>
 
 <main class="wrap section last app" id="app">
-  <p class="muted">Loading…</p>
+  <p class="muted"><span class="spin" aria-hidden="true"></span>Loading…</p>
 </main>
 
 <footer class="site-footer">
@@ -90,16 +101,26 @@ var store = {get: function (k) { try { return localStorage.getItem(k); } catch (
 function api(action, body) {
   if (!API) return Promise.reject(new Error('The portal is being set up. Email admin@permitsetready.ca.'));
   return fetch(API, {method: 'POST', headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({action: action, token: store.get(KEY) || ''}, body || {}))})
-    .then(function (r) { return r.json(); })
-    .then(function (j) { if (!j.ok) { if (/log in/i.test(j.error || '')) { store.set(KEY, null); S.user = null; } throw new Error(j.error || 'Something went wrong.'); } return j; });
+    .then(function (r) { return r.json(); }, function () { throw new Error(NETERR); })
+    .then(function (j) { if (!j.ok) { if (/log in/i.test(j.error || '')) { store.set(KEY, null); S.user = null; } throw new Error(j.error || 'Something went wrong.'); } return j; }, function (e) { throw new Error(e && e.message === NETERR ? NETERR : 'The server did not answer properly. Please try again in a moment.'); });
 }
+var NETERR = 'That didn\'t go through. Check your internet connection and try again. Nothing was sent twice.';
+function loading(t) { return '<p class="loading"><span class="spin" aria-hidden="true"></span>' + esc(t || 'Loading…') + '</p>'; }
 var $ = function (s, r) { return (r || document).querySelector(s); }, $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]; }); }
 function money(n) { return '$' + Number(n || 0).toLocaleString('en-CA'); }
 function now() { return new Date().toISOString(); }
 function fmtDate(iso) { if (!iso) return ''; return new Date(iso).toLocaleDateString('en-CA', {month: 'short', day: 'numeric', year: 'numeric'}); }
-function overlay(title, sub) { hideOverlay(); var o = document.createElement('div'); o.className = 'ovl'; o.id = 'ovl'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-busy', 'true'); o.innerHTML = '<div class="box"><span class="big" aria-hidden="true"></span><b>' + esc(title) + '</b>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div>'; document.body.appendChild(o); }
-function hideOverlay() { var o = document.getElementById('ovl'); if (o) o.remove(); }
+var ovlT = null;
+function overlay(title, sub) { hideOverlay(); var o = document.createElement('div'); o.className = 'ovl'; o.id = 'ovl'; o.setAttribute('role', 'alertdialog'); o.setAttribute('aria-busy', 'true'); o.setAttribute('aria-live', 'polite'); o.innerHTML = '<div class="box"><span class="big" aria-hidden="true"></span><b>' + esc(title) + '</b><p>' + esc(sub || 'Please keep this page open.') + '</p><p id="ovlslow" class="hide"><b style="display:inline;font-size:15px">Still working.</b> Your click went through, so there\'s no need to click again. Large files or a slow connection can take up to a minute.</p></div>'; document.body.appendChild(o); ovlT = setTimeout(function () { var x = document.getElementById('ovlslow'); if (x) x.classList.remove('hide'); }, 8000); }
+function hideOverlay() { clearTimeout(ovlT); var o = document.getElementById('ovl'); if (o) o.remove(); }
+// one place for "the client clicked something that talks to the server": blocks repeat clicks, shows the overlay, and gives the button back if it fails
+function run(btn, title, sub, fn) {
+  if (S.busy) return; S.busy = true; if (btn) btn.disabled = true; if ($('#fmsg')) msg(''); overlay(title, sub);
+  var end = function () { S.busy = false; hideOverlay(); };
+  var p; try { p = Promise.resolve(fn()); } catch (e) { p = Promise.reject(e); }
+  return p.then(function (r) { end(); return r; }, function (e) { end(); if (btn) btn.disabled = false; msg((e && e.message) || 'Something went wrong. Please try again.', true); });
+}
 function toast(m) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = m; document.body.appendChild(t); setTimeout(function () { t.remove(); }, 2600); }
 function get(o, k) { return k.split('.').reduce(function (a, b) { return a == null ? undefined : a[b]; }, o); }
 function isLower(j) { return scopes(j).indexOf('lower') >= 0; }
@@ -145,6 +166,18 @@ var FUSE = [['latest', 'Latest design: work from this'], ['reference', 'Referenc
 var FCOV = [['', 'Covers…'], ['full', 'Full set'], ['plans', 'Floor plans'], ['elev', 'Elevations'], ['sections', 'Sections'], ['site', 'Site plan'], ['model3d', '3D model'], ['details', 'Details']];
 var FDEF = {design: 'latest', existing: 'latest', survey: 'survey', permits: 'reference', template: 'standards', logo: 'standards', sample: 'standards', engineer: 'reference', notes: 'reference', rules: 'rules', photo: 'photos'};
 var S = {user: null, jobs: [], job: null, path: null, files: [], step: 1, admin: {jobs: []}};
+// measuring visit estimate: the "Existing Fees" formula at PermitSetReady's 20% markup. Travel is one-way km from the measuring partner's office.
+var MFEAT = [['shed', 'Shed'], ['deck', 'Deck'], ['patio', 'Patio'], ['pool', 'Pool'], ['garage', 'Detached garage'], ['other', 'Other']];
+var MKM = {Mississauga: 10, Brampton: 20, Oakville: 20, Caledon: 40, Burlington: 35, Milton: 30, 'Halton Hills': 35, Vaughan: 35, Markham: 50, 'Richmond Hill': 45, Aurora: 55, Newmarket: 60, Pickering: 60, Ajax: 65, Whitby: 75, Oshawa: 85, Toronto: 30, Hamilton: 55, Innisfil: 95, Barrie: 105, Guelph: 70, Kitchener: 90};
+function measEst(j) {
+  var m = j.measure || {}, sq = Number(m.sqft) || 0; if (!m.want || !(sq > 0)) return null;
+  var sc = scopes(j), elev = (sc.indexOf('bge') >= 0 ? 1 : 0) + (sc.indexOf('deck') >= 0 ? 1 : 0);
+  var site = ['bge', 'garage', 'deck', 'shed', 'addition', 'newhome'].some(function (k) { return sc.indexOf(k) >= 0; }) || (m.feat || []).length > 0;
+  var mu = (j.property || {}).municipality || '', km = MKM[mu] != null ? MKM[mu] : 60;
+  var sub = 820 + Math.max(0, sq - 2000) * 0.2 + elev * 125 + 60 + km * 2 * 0.85 + (site ? 400 : 0);
+  return {v: Math.ceil(sub * 1.2 / 100) * 100, elev: elev, site: site, muni: mu};
+}
+var ENGSCOPES = ['lower', 'addition', 'newhome', 'structural'];
 function scopes(it) { var a = (it && it.scopes) || []; return SCOPES.map(function (s) { return s[0]; }).filter(function (k) { return a.indexOf(k) >= 0; }); }
 function quoted(it) { return (it.job && it.job.fromBrief) ? scopes(it) : scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
 function exterior(it) { return scopes(it).some(function (k) { return EXTERIOR.indexOf(k) >= 0; }); }
@@ -210,7 +243,7 @@ function viewLogin() {
   var sent = false, e = $('#lg_e');
   e.value = store.get('psr_email') || '';
   $('#lg_b').onclick = function () {
-    var b = this, m = $('#lg_m'); m.className = 'msg'; m.textContent = ''; b.disabled = true;
+    var b = this, m = $('#lg_m'), bt = b.textContent; if (b.disabled) return; m.className = 'msg'; m.innerHTML = '<span class="spin" aria-hidden="true"></span>' + (sent ? 'Signing you in…' : 'Sending your code…'); b.disabled = true;
     var p = sent ? api('auth.verify', {email: e.value.trim(), code: $('#lg_c').value.trim()}).then(function (j) { store.set(KEY, j.token); store.set('psr_email', e.value.trim()); S.user = j.user; route(); })
       : api('auth.start', {email: e.value.trim()}).then(function () { sent = true; $('#lg_cr').classList.remove('hide'); b.textContent = 'Sign in'; m.textContent = 'Code sent. Check your inbox.'; $('#lg_c').focus(); });
     p.catch(function (err) { m.className = 'msg err'; m.textContent = err.message; }).then(function () { b.disabled = false; });
@@ -221,7 +254,7 @@ $('#signout').onclick = function (ev) { ev.preventDefault(); api('auth.logout').
 // ---------- jobs list
 function loadJobs() { return api('db.get', {path: 'intakes/' + S.user.id}).then(function (j) { S.jobs = (j.data && j.data.projects) || []; return S.jobs; }); }
 function viewJobs() {
-  setMain('<p class="muted">Loading your jobs…</p>');
+  setMain(loading('Loading your jobs…'));
   Promise.all([loadJobs(), api('referral.status').catch(function () { return null; })]).then(function (r) {
     var list = r[0].filter(function (x) { return !(x.status === 'closed' && x.closedFrom === 'draft'); }), ref = r[1];
     var toChoose = ref && ref.rewards.filter(function (x) { return x.reward === 'to choose'; }).length;
@@ -238,10 +271,10 @@ function viewJobs() {
 
 // ---------- job form
 function jobSig(j, files) { var ps = ((j || {}).server || {}).prescreen || {}; return [(j || {}).status, ps.state, ps.round, (files || []).length].join('|'); }
-function openJob(pid, edit, quiet) {
+function openJob(pid, edit, quiet, force) {
   S.lastPid = pid; var path = projPath(S.user.id, pid);
-  if (!quiet) setMain('<p class="muted">Loading…</p>');
-  var before = quiet && S.job && S.job.id === pid ? jobSig(S.job, S.files) : null;
+  if (!quiet) setMain(loading('Opening your job…'));
+  var before = quiet && !force && S.job && S.job.id === pid ? jobSig(S.job, S.files) : null;
   return Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'})]).then(function (r) {
     if (!r[0].exists) throw new Error('Job not found.');
     var files = (r[1].docs || []).map(function (d) { var x = d.data; x.id = d.id; return x; });
@@ -260,7 +293,7 @@ function saveNow() {
 }
 function viewForm(it, preset) {
   if (!it) { S.job = blank(); if (preset) S.job.scopes = [preset]; S.path = projPath(S.user.id, S.job.id); S.files = []; history.replaceState(null, '', '#edit/' + S.job.id); S.lastPid = S.job.id; }
-  S.step = S.step && S.job.id === S.formId ? S.step : 1; S.formId = S.job.id;
+  S.step = S.step && S.job.id === S.formId ? Math.min(S.step, NSTEP) : 1; S.formId = S.job.id; S.addrNote = '';
   var j = S.job;
   if (!j.contact.firm && S.jobs.length) {} // keep blank
   var first = !S.jobs.some(function (x) { return x.id !== j.id && x.status && x.status !== 'draft'; });
@@ -268,16 +301,8 @@ function viewForm(it, preset) {
   var h = '<p class="eyebrow">Book a job</p><h1 style="font-size:clamp(26px,4vw,38px);margin:6px 0 6px">Send us the job.</h1><p class="muted" style="max-width:700px;margin:0">We pre-screen your files and send your price or fixed quote within one business day. Nothing is charged until you start. <span id="savestate" class="small"></span></p>' +
     '<div class="stepnav" id="stepnav"></div><form class="card fd stp" id="f" style="max-width:780px" novalidate onsubmit="return false">' +
     // 1
-    '<div data-step="1" class="fd"><h2><i>1</i>Your firm</h2>' +
-    '<div class="fd2"><div><label class="l">Firm name</label><input data-k="contact.firm" autocomplete="organization"></div><div><label class="l">Contact name</label><input data-k="contact.name" autocomplete="name"></div></div>' +
-    '<div class="fd2"><div><label class="l">Email</label><input data-k="contact.email" type="email" readonly></div><div><label class="l">Phone (optional)</label><input data-k="contact.phone" type="tel" autocomplete="tel"></div></div>' +
-    '<div><span class="lbl">You are</span><div class="chips">' + ['Designer / BCIN', 'Contractor / builder', 'Engineer / consultant', 'Developer / owner', 'Other'].map(function (r) { return '<label><input type="radio" name="role" data-k="contact.role" value="' + r + '"> ' + r + '</label>'; }).join('') + '</div></div>' +
-    '<div><label class="l">Referred by another firm? (optional)</label><input data-k="referral" placeholder="Their email or referral code"></div></div>' +
-    // 2
-    '<div data-step="2" class="fd hide"><h2><i>2</i>Project</h2>' +
-    '<div class="fd2"><div><label class="l" for="p_addr">Project address</label><div class="addr-wrap"><input id="p_addr" data-k="property.address" autocomplete="off" placeholder="Start typing, e.g. 48 Maple Grove Rd, Oakville" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addr-list"><ul id="addr-list" class="addr-list hide" role="listbox"></ul></div></div><div><label class="l" for="p_muni">Municipality</label><input id="p_muni" data-k="property.municipality" list="munis" placeholder="Fills in when you pick an address"><datalist id="munis">' + munis + '</datalist></div></div>' +
-    '<div class="fd2"><div><label class="l" for="p_country">Country</label><select id="p_country" data-k="property.country"><option>Canada</option><option>United States</option><option>Bahamas</option><option>Other</option></select></div><div class="hide" id="p_regbox"><label class="l" for="p_region">Island, state or region</label><input id="p_region" data-k="property.region" placeholder="e.g. Great Exuma"></div></div>' +
-    '<div><span class="lbl">What are we drawing? (pick all that apply)</span><div class="chips" id="scopes">' + SCOPES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"> ' + s[1] + '</label>'; }).join('') + '</div></div>' +
+    '<div data-step="1" class="fd"><h2><i>1</i>Project and address</h2>' +
+    '<div><span class="lbl">What are we drawing? Pick everything in this set</span><div class="chips" id="scopes">' + SCOPES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"> ' + s[1] + '</label>'; }).join('') + '</div></div>' +
     '<div class="card hide" id="lowbox" style="gap:14px;background:var(--paper)"><b>Basement lowering</b>' +
     '<div><span class="lbl">Method</span><div class="chips">' + [['underpin', 'Underpinning'], ['bench', 'Benching'], ['engineer', 'Engineer to decide']].map(function (o) { return '<label><input type="radio" name="lmeth" data-k="lower.method" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
     '<div><span class="lbl">Existing foundation walls</span><div class="chips">' + [['block', 'Concrete block'], ['poured', 'Poured concrete'], ['rubble', 'Rubble stone'], ['unsure', 'Not sure']].map(function (o) { return '<label><input type="radio" name="lfdn" data-k="lower.foundation" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
@@ -300,17 +325,39 @@ function viewForm(it, preset) {
     '<div><span class="lbl">Site status</span><div class="chips">' + [['own', 'Owned'], ['buying', 'Under consideration'], ['keep', 'Owned, existing building to keep or renovate']].map(function (o) { return '<label><input type="radio" name="fhold" data-k="feas.hold" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
     '<div class="fd2"><div><label class="l" for="f_units">Target number of units</label><input id="f_units" data-k="feas.units" placeholder="e.g. 6, or 6 to 8"></div><div><label class="l" for="f_mix">Bedroom mix</label><input id="f_mix" data-k="feas.mix" placeholder="e.g. mostly 2-bed, some 1-bed"></div></div>' +
     '<div class="fd2"><div><label class="l" for="f_budget">Budget (optional)</label><input id="f_budget" data-k="feas.budget" placeholder="e.g. $2.5M all in"></div><div><label class="l" for="f_fin">Financing (optional)</label><input id="f_fin" data-k="feas.financing" placeholder="e.g. existing mortgage, MLI Select"></div></div>' +
-    '<p class="small" style="margin:0">The address is enough to start. Upload the survey and any existing drawings in step 4 if you have them.</p></div>' +
+    '<p class="small" style="margin:0">The address is enough to start. Upload the survey and any existing drawings in step 2 if you have them.</p></div>' +
     '<label class="nfeas" style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" id="brief" style="width:auto;margin-top:4px"> <span><b>No design yet: design it from our description.</b> We prepare a layout for you to approve before drafting. Quoted per job or $85/hour.</span></label>' +
     '<label class="nfeas" style="display:flex;gap:8px;align-items:flex-start;font-weight:400"><input type="checkbox" id="sample" style="width:auto;margin-top:4px"> <span><b>Free sample sheet first.</b> We draft one sheet of this project free (one per firm) and send it as a watermarked draft before you commit to the full set.</span></label>' +
+    '<div><label class="l" for="p_addr">Project address</label><div class="addr-wrap"><input id="p_addr" data-k="property.address" autocomplete="off" placeholder="Start typing, e.g. 48 Maple Grove Rd, Oakville" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="addr-list"><ul id="addr-list" class="addr-list hide" role="listbox"></ul></div><p class="small" id="addrok" style="margin:6px 0 0" role="status"></p><button type="button" class="linkbtn" id="addrman">Can\'t find it? Enter it manually</button></div>' +
+    '<div id="manbox" class="fd hide"><div class="fd2"><div><label class="l" for="p_muni">Municipality</label><input id="p_muni" data-k="property.municipality" list="munis" placeholder="e.g. Brampton"><datalist id="munis">' + munis + '</datalist></div><div><label class="l" for="p_country">Country</label><select id="p_country" data-k="property.country"><option>Canada</option><option>United States</option><option>Bahamas</option><option>Other</option></select></div></div><div class="hide" id="p_regbox"><label class="l" for="p_region">Island, state or region</label><input id="p_region" data-k="property.region" placeholder="e.g. Great Exuma"></div><p class="small" style="margin:0">For a lot with no street number yet, type the lot and plan in the address box above (e.g. Lot 14, Plan 43M-2101).</p></div>' +
     '<div class="fd2 nfeas"><div><label class="l">Existing building</label><input data-k="job.existing" placeholder="e.g. detached house, 1990"></div><div><label class="l">Approx. area of work</label><input data-k="job.area" placeholder="e.g. 85 m² basement"></div></div>' +
-    '<div class="fd2"><div><label class="l">Date you need it</label><input data-k="job.due" type="date"></div><div><label class="l">Rush (3 business days, +30%)</label><select data-k="job.rush"><option>No</option><option>Yes</option></select></div></div></div>' +
-    // 3
-    '<div data-step="3" class="fd hide"><h2><i>3</i>Service</h2>' +
     '<p class="feasonly small hide" style="margin:0">Feasibility packages come in our clean format. We quote the package within one business day.</p><div class="nfeas"><span class="lbl">Title block</span><div class="opt"><label><input type="radio" name="tb" data-k="job.titleblock" value="ours"> <b>Our clean format</b>A plain, unbranded title block with your firm\'s name. Nothing to set up.</label><label><input type="radio" name="tb" data-k="job.titleblock" value="yours"> <b>Your template</b>Drafted in your title block, text and line styles. $300 one-time setup on your first job in your template; after that it\'s on file.</label></div></div>' +
+    '<div class="fd" style="border-top:1px solid var(--line);padding-top:16px"><b>Your firm</b>' +
+    '<div class="fd2"><div><label class="l">Firm name</label><input data-k="contact.firm" autocomplete="organization"></div><div><label class="l">Contact name</label><input data-k="contact.name" autocomplete="name"></div></div>' +
+    '<div class="fd2"><div><label class="l">Email</label><input data-k="contact.email" type="email" readonly></div><div><label class="l">Phone (optional)</label><input data-k="contact.phone" type="tel" autocomplete="tel"></div></div>' +
+    '<div><span class="lbl">You are</span><div class="chips">' + ['Designer / BCIN', 'Contractor / builder', 'Engineer / consultant', 'Developer / owner', 'Other'].map(function (r) { return '<label><input type="radio" name="role" data-k="contact.role" value="' + r + '"> ' + r + '</label>'; }).join('') + '</div></div>' +
+    '<div><label class="l">Referred by another firm? (optional)</label><input data-k="referral" placeholder="Their email or referral code"></div></div></div>' +
+    // 2
+    '<div data-step="2" class="fd hide"><h2><i>2</i>Uploads</h2><p class="small" style="margin:0">Upload what you have. Anything missing, we ask for after the pre-screen.</p>' +
+    '<div class="card nfeas" id="measbox" style="gap:12px;background:var(--amber-wash);border-color:var(--amber-2)"><label style="display:flex;gap:8px;align-items:flex-start;font-weight:400;margin:0"><input type="checkbox" id="mwant" style="width:auto;margin-top:4px"> <span><b>No drawings of the building as it is today? We can measure it.</b> Our trusted measuring partner visits the property and prepares the as-built, and we draft from it. Ticking this lets us share your contact details and the project address with them to book the visit.</span></label>' +
+    '<div id="sqbox" class="fd hide"><div><label class="l" for="m_sq">Approx. size of the house (sq ft, all floors)</label><input id="m_sq" data-k="measure.sqft" type="number" min="200" step="50" placeholder="e.g. 2200"></div>' +
+    '<div><span class="lbl">On the property (tells us if a site plan is needed)</span><div class="chips" id="mfeat">' + MFEAT.map(function (o) { return '<label><input type="checkbox" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
+    '<div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:10px"><span class="small">Measuring estimate, before HST<br><span id="m_why"></span></span><b id="m_est" style="font-size:24px;color:var(--navy);white-space:nowrap">—</b></div><p class="small" style="margin:0">This is an estimate. The confirmed price comes in your quote, before anything is booked. Drafting starts once the measurements are in.</p></div></div>' +
     '<div class="card hide" id="engbox" style="gap:10px;background:var(--paper)"><b>Engineer for the basement lowering</b><p style="margin:0">No engineer\'s design needed to start. We draft the full set from your existing basement layout and our standard underpinning or benching details, for your engineer to stamp or mark up. One round of the engineer\'s markups is included once the job is paid in full, if uploaded within 6 weeks of the final files. A change of method or design is $85/hour.</p>' +
-    '<div id="engcon" class="hide"><span class="lbl">Who will stamp the drawings?</span><div class="chips"><label><input type="radio" name="leng" data-k="lower.engineer" value="have"> We have a project engineer</label><label><input type="radio" name="leng" data-k="lower.engineer" value="refer"> Please refer one</label></div><p class="small" style="margin:6px 0 0">A referral is quoted by the engineer directly.</p></div>' +
-    '<p class="small" style="margin:0">Already have the engineer\'s design or notes' + '<span id="engme">, or you are the engineer</span>? Upload them in the next step and we\'ll draft to them.</p></div>' +
+    '<p class="small" style="margin:0">Already have the engineer\'s design or notes' + '<span id="engme">, or you are the engineer</span>? Upload them below and we\'ll draft to them.</p></div>' +
+    KINDS.map(function (k) {
+      if ((k[0] === 'template' || k[0] === 'logo') && !first) return '';
+      return '<div class="up' + (k[0] === 'template' || k[0] === 'logo' ? ' tbonly' : '') + (k[0] === 'engineer' ? ' lowonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'existing' ? '<span class="req hide" id="exreq">Required for basement lowering</span><span class="cov hide" id="excov">Covered by the measuring visit</span>' : '') + (k[0] === 'engineer' ? ' <em>· optional: pin layout and sequence, footing or bench sizes, new slab level, soil notes. If you have them we draft to them; if not we use our standard details.</em>' : '') + (k[0] === 'template' ? '<span class="req">Needed once, with your first job in your template</span><br><em>Your title block or template in Revit or AutoCAD (a .rte/.rvt, or DWG sheets), ideally with 1–2 recent permit sets and your text, dimension and line styles. Add your logo in the next row. We set it up and send a sample sheet to approve.</em>' : '') + (k[0] === 'logo' ? '<br><em>For your title block: a PNG with a transparent background, or a vector file (SVG, PDF or AI) if you have one. Needed once, with your first job in your template.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.dxf,.3dm,.rvt,.rte,.skp,.ifc,.zip,.svg,.ai,.eps"></label></div>';
+    }).join('') +
+    '<div class="card hide" id="ftags" style="gap:10px;background:var(--paper)"><b>What is each file?</b><p class="small" style="margin:0">So we work from the right drawings: mark the latest design to work from, and anything that is for reference only (older sets, inspiration, your sample set).</p><div id="ftaglist" style="display:grid;gap:8px"></div><p class="small" id="ftagwarn" style="margin:0;color:var(--warn)"></p></div>' +
+    '<div><label class="l">Or share a folder (Drive, Dropbox, WeTransfer). Best for DWG, Rhino and Revit files over 25 MB.</label><input data-k="docs.link" type="url" placeholder="https://"></div>' +
+    '<div id="linkguide" class="hide"><label class="l" for="d_guide">Which files in the folder are the latest design to work from, and which are reference only?</label><textarea id="d_guide" data-k="docs.linkGuide" rows="3" placeholder="e.g. LATEST: Marina-Latest.pdf (plans + elevations) and Marina.dwg (Oct 2). REFERENCE: DD1 set (March), Rhino model. OUR STANDARDS: 8 Daniels set."></textarea></div>' +
+    '<div><label class="l">Inspiration: Pinterest board or photo link (optional)</label><input data-k="docs.inspiration" type="url" placeholder="https://pinterest.com/…  or a link to photos"><p class="small" style="margin:6px 0 0">Helps us match the finishes, details and look you and your client expect.</p></div>' +
+    '</div>' +
+    // 3
+    '<div data-step="3" class="fd hide"><h2><i>3</i>Notes</h2>' +
+    '<div><label class="l" for="d_notes">Comments, concerns or anything we should know</label><textarea id="d_notes" data-k="docs.notes" rows="4" placeholder="e.g. client wants the entrance on the east side; existing beam to stay"></textarea></div>' +
+    '<div class="fd2"><div><label class="l">Date you need it</label><input data-k="job.due" type="date"></div><div><label class="l">Rush (3 business days, +30%)</label><select data-k="job.rush"><option>No</option><option>Yes</option></select></div></div>' +
     '<div class="card nfeas" id="drawbox" style="gap:14px;background:var(--paper)"><b>About your drawings</b><p class="small" style="margin:0">A minute here saves a round of changes: we draw it your way the first time. Anything you skip, we ask before we start.</p>' +
     '<div><label class="l" for="w_agree">Do your latest plans and elevations agree?</label><select id="w_agree" data-k="draw.agree"><option value="">Choose…</option><option value="yes">Yes</option><option value="plans">Not fully: follow the plans</option><option value="elev">Not fully: follow the elevations</option><option value="ask">Not sure: ask us before drawing</option></select></div>' +
     '<div class="fd2"><div><label class="l" for="w_datum">Floor levels</label><input id="w_datum" data-k="draw.datum" placeholder="e.g. GF 14\'-6\", floor-to-floor 14/12/12, or: from my elevations"></div><div><label class="l" for="w_walls">Wall build-up</label><input id="w_walls" data-k="draw.walls" placeholder="e.g. 8\" block + stucco; 2x6 wood frame"></div></div>' +
@@ -321,20 +368,7 @@ function viewForm(it, preset) {
     '<div class="quoted hide nfeas" id="qbox"><span class="small" style="display:block;margin-bottom:8px">Quoted work: <span id="qlist"></span></span><span class="lbl">How should we price it?</span><div class="chips"><label><input type="radio" name="pricing" data-k="job.pricing" value="fixed"> Fixed quote</label><label><input type="radio" name="pricing" data-k="job.pricing" value="hourly"> $85/hour</label></div>' +
     '<label class="l" style="margin-top:12px">Your budget for this job (optional)</label><div class="fd2"><input data-k="job.budget" placeholder="e.g. $2,500"><select data-k="job.budgetType"><option>Firm budget</option><option>Rough idea</option><option>Prefer not to say</option></select></div><p class="small" style="margin:6px 0 0">Helps us scope the set to fit: if your number is tight, we\'ll say what fits in it before quoting.</p></div></div>' +
     // 4
-    '<div data-step="4" class="fd hide"><h2><i>4</i>Files &amp; inspiration</h2>' + KINDS.map(function (k) {
-      if ((k[0] === 'template' || k[0] === 'logo') && !first) return '';
-      return '<div class="up' + (k[0] === 'template' || k[0] === 'logo' ? ' tbonly' : '') + (k[0] === 'engineer' ? ' lowonly' : '') + '" data-kind="' + k[0] + '"><span class="t"><b>' + k[1] + '</b>' + (k[0] === 'existing' ? '<span class="req hide" id="exreq">Required for basement lowering</span>' : '') + (k[0] === 'engineer' ? ' <em>· optional: pin layout and sequence, footing or bench sizes, new slab level, soil notes. If you have them we draft to them; if not we use our standard details.</em>' : '') + (k[0] === 'template' ? '<span class="req">Needed once, with your first job in your template</span><br><em>Your title block or template in Revit or AutoCAD (a .rte/.rvt, or DWG sheets), ideally with 1–2 recent permit sets and your text, dimension and line styles. Add your logo in the next row. We set it up and send a sample sheet to approve.</em>' : '') + (k[0] === 'logo' ? '<br><em>For your title block: a PNG with a transparent background, or a vector file (SVG, PDF or AI) if you have one. Needed once, with your first job in your template.</em>' : '') + (k[0] === 'survey' ? '<span class="req hide" id="svreq">Required for this job</span><br><em>Needed for any permit set with exterior work. Not needed for interior-only alterations, structural drawings, 3D models or shop drawings.</em>' : (k[2] ? ' <em>· ' + k[2] + '</em>' : '')) + '<span class="names"></span></span><label class="btn btn-line btn-sm" style="margin:0">Upload<input type="file" multiple class="hide" accept=".pdf,.jpg,.jpeg,.png,.heic,.dwg,.dxf,.3dm,.rvt,.rte,.skp,.ifc,.zip,.svg,.ai,.eps"></label></div>';
-    }).join('') +
-    '<div class="card hide" id="ftags" style="gap:10px;background:var(--paper)"><b>What is each file?</b><p class="small" style="margin:0">So we work from the right drawings: mark the latest design to work from, and anything that is for reference only (older sets, inspiration, your sample set).</p><div id="ftaglist" style="display:grid;gap:8px"></div><p class="small" id="ftagwarn" style="margin:0;color:var(--warn)"></p></div>' +
-    '<div><label class="l">Or share a folder (Drive, Dropbox, WeTransfer). Best for DWG, Rhino and Revit files over 25 MB.</label><input data-k="docs.link" type="url" placeholder="https://"></div>' +
-    '<div id="linkguide" class="hide"><label class="l" for="d_guide">Which files in the folder are the latest design to work from, and which are reference only?</label><textarea id="d_guide" data-k="docs.linkGuide" rows="3" placeholder="e.g. LATEST: Marina-Latest.pdf (plans + elevations) and Marina.dwg (Oct 2). REFERENCE: DD1 set (March), Rhino model. OUR STANDARDS: 8 Daniels set."></textarea></div>' +
-    '<div><label class="l">Inspiration: Pinterest board or photo link (optional)</label><input data-k="docs.inspiration" type="url" placeholder="https://pinterest.com/…  or a link to photos"><p class="small" style="margin:6px 0 0">Helps us match the finishes, details and look you and your client expect.</p></div>' +
-    '<div><label class="l">Anything we should know</label><textarea data-k="docs.notes" rows="3" placeholder="e.g. client wants the entrance on the east side; existing beam to stay"></textarea></div></div>' +
-    // 5
-    '<div data-step="5" class="fd hide"><h2><i>5</i>Site visit</h2><div class="opt"><label><input type="radio" name="mw" data-k="measure.want" value="no"> <b>I have what\'s needed</b>Existing drawings or an as-built are uploaded or linked.</label><label><input type="radio" name="mw" data-k="measure.want" value="yes"> <b>Measure it for me</b>Our measuring partner visits and prepares the as-built. Priced in your quote.</label></div>' +
-    '<div id="sqbox" class="hide"><label class="l">Approx. size of the house (sq ft, all floors)</label><input data-k="measure.sqft" type="number" min="200" step="50" placeholder="e.g. 2200"></div></div>' +
-    // 6
-    '<div data-step="6" class="fd hide"><h2><i>6</i>Review &amp; book</h2><dl class="sum" id="sum"></dl><div class="agree" id="agree">' +
+    '<div data-step="4" class="fd hide"><h2><i>4</i>Review &amp; send</h2><dl class="sum" id="sum"></dl><div class="agree" id="agree">' +
     '<label class="nfeas"><input type="checkbox" data-ack="revisions"> Code revisions from City comments are included at no extra cost. Design changes after delivery are $85/hour.</label>' +
     '<label class="nfeas"><input type="checkbox" data-ack="zoning"> We check zoning, but approval rests with the municipality. Examiners can interpret the by-law differently and by-laws change, so zoning approval can\'t be guaranteed. Minor variances aren\'t included.</label>' +
     '<label class="nfeas"><input type="checkbox" data-ack="finals"> You check a watermarked draft first; final files are released once the balance is paid.</label>' +
@@ -358,6 +392,8 @@ function fillForm() {
   $$('#lwalls input').forEach(function (i) { i.checked = ((j.lower || {}).walls || []).indexOf(i.value) >= 0; });
   $('#l_party').checked = !!(j.lower || {}).party;
   $('#brief').checked = !!(j.job || {}).fromBrief;
+  $('#mwant').checked = !!(j.measure || {}).want;
+  $$('#mfeat input').forEach(function (i) { i.checked = ((j.measure || {}).feat || []).indexOf(i.value) >= 0; });
   if ($('#sample')) $('#sample').checked = !!(j.job || {}).sampleSheet;
   $$('#deliver input').forEach(function (i) { i.checked = ((j.job || {}).deliver || []).indexOf(i.value) >= 0; });
   $$('#wshow input').forEach(function (i) { i.checked = ((j.draw || {}).show || []).indexOf(i.value) >= 0; });
@@ -371,11 +407,17 @@ function sync() {
   var sv = $('#svreq'); if (sv) sv.classList.toggle('hide', !surveyNeeded(j));
   $$('#f .tbonly').forEach(function (e) { e.classList.toggle('hide', (j.job || {}).titleblock !== 'yours'); });
   $('#sqbox').classList.toggle('hide', !(j.measure && j.measure.want));
+  var me = measEst(j); if (j.measure) j.measure.estimate = me ? me.v : null;
+  $('#m_est').textContent = me ? money(me.v) : '—';
+  $('#m_why').textContent = me ? (me.elev + ' elevation' + (me.elev === 1 ? '' : 's') + (me.site ? ' · site plan' : '') + ' · travel' + (me.muni ? ' to ' + me.muni : '')) : 'Enter the house size to see the estimate.';
+  var pr = j.property || {}, ctry0 = pr.country || 'Canada', man = !!pr.manual || ctry0 !== 'Canada' || (!!pr.municipality && pr.lat == null);
+  $('#manbox').classList.toggle('hide', !man); $('#addrman').classList.toggle('hide', man);
+  if (!S.addrNote) $('#addrok').textContent = (!man && pr.address && pr.municipality) ? '✓ Address confirmed · Municipality: ' + pr.municipality + (pr.community ? ' (' + pr.community + ')' : '') : (man ? '' : 'Pick your address from the list so it\'s exact.');
   var lw = isLower(j), lo = j.lower || {};
   $('#lowbox').classList.toggle('hide', !lw); $('#engbox').classList.toggle('hide', !lw);
   $('#l_partyrow').classList.toggle('hide', !(lo.house === 'semi' || lo.house === 'town'));
   $('#l_neigh').classList.toggle('hide', !(lo.close === 'yes' || lo.close === 'unsure'));
-  $('#engcon').classList.toggle('hide', !isContractor(j)); $('#engme').classList.toggle('hide', isContractor(j));
+  $('#engme').classList.toggle('hide', isContractor(j));
   $$('#f .lowonly').forEach(function (e) { e.classList.toggle('hide', !lw); });
   var sh = isShed(j), sa = shedArea(j), sm = smallOut(j); $('#shedbox').classList.toggle('hide', !sh);
   $('#o_note').textContent = !sa ? 'Enter the size to see the price. Over 15 m² or with plumbing needs a permit set ($750). 15 m² or less with no plumbing: build drawings, no permit needed ($350).' : (sa + ' m². ' + (sm ? 'Build drawings, no permit needed: $350. Zoning still applies.' : 'Needs a building permit: full permit set, $750.'));
@@ -383,7 +425,7 @@ function sync() {
   var fz = isFeas(j), fo = feasOnly(j); $('#feasbox').classList.toggle('hide', !fz);
   $$('#f .feasonly').forEach(function (e) { e.classList.toggle('hide', !(e.tagName === 'LABEL' ? fz : fo)); }); $$('#f .nfeas').forEach(function (e) { if (e.id !== 'qbox') e.classList.toggle('hide', fo); });
   $('#qbox').classList.toggle('hide', !q.length || fo);
-  var ex = $('#exreq'); if (ex) ex.classList.toggle('hide', !lw);
+  var mw = !!(j.measure && j.measure.want), ex = $('#exreq'); if (ex) ex.classList.toggle('hide', !lw || mw); var xc = $('#excov'); if (xc) xc.classList.toggle('hide', !mw);
   var ctry = (j.property || {}).country || 'Canada'; if ($('#p_regbox')) $('#p_regbox').classList.toggle('hide', ctry === 'Canada');
   if ($('#linkguide')) $('#linkguide').classList.toggle('hide', !/^https?:\/\//.test((j.docs || {}).link || ''));
   ftags();
@@ -406,12 +448,17 @@ function addrSetup() {
     if (c) { setv(S.job, 'property.lat', c[1]); setv(S.job, 'property.lon', c[0]); }
     var cands = [p.city, p.town, p.village, p.locality, p.district, p.county].filter(Boolean).map(function (x) { return String(x).replace(/^(City|Town|Township|Municipality) of /i, ''); });
     var m = MUNIS.filter(function (o) { return cands.some(function (x) { return x.toLowerCase() === o.toLowerCase(); }); })[0] || cands[0] || '';
-    if (m) { setv(S.job, 'property.municipality', m); $('#p_muni').value = m; }
+    var comm = [p.district, p.locality].filter(Boolean).filter(function (x) { return m && String(x).toLowerCase() !== m.toLowerCase(); })[0] || '';
+    setv(S.job, 'property.municipality', m); $('#p_muni').value = m; setv(S.job, 'property.community', comm); setv(S.job, 'property.manual', false); S.addrNote = '';
+    if (!c || !m) { setv(S.job, 'property.manual', true); }
     close(); sync(); queueSave();
   };
   inp.addEventListener('input', function () {
-    clearTimeout(timer); var q = inp.value.trim(); if (q.length < 4) { items = []; close(); return; }
-    timer = setTimeout(function () { var my = ++seq; var abroad = ((S.job.property || {}).country || 'Canada') !== 'Canada'; fetch('https://photon.komoot.io/api/?limit=6&lang=en' + (abroad ? '' : '&bbox=-95.16,41.67,-74.34,56.86') + '&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) { if (my !== seq) return; items = (j.features || []).filter(function (f) { var p = f.properties || {}; return (abroad || (p.countrycode === 'CA' && (!p.state || /ontario/i.test(p.state)))) && (p.street || p.housenumber || p.name); }); sel = -1; render(); }).catch(function () { items = []; close(); }); }, 300);
+    clearTimeout(timer); var q = inp.value.trim(), pp = S.job.property || {};
+    if (!pp.manual && (pp.country || 'Canada') === 'Canada' && pp.lat != null) { setv(S.job, 'property.lat', null); setv(S.job, 'property.lon', null); setv(S.job, 'property.municipality', ''); setv(S.job, 'property.community', ''); $('#p_muni').value = ''; }
+    S.addrNote = ''; sync();
+    if (q.length < 4) { items = []; close(); return; }
+    timer = setTimeout(function () { var my = ++seq; var abroad = ((S.job.property || {}).country || 'Canada') !== 'Canada'; fetch('https://photon.komoot.io/api/?limit=6&lang=en' + (abroad ? '' : '&bbox=-95.16,41.67,-74.34,56.86') + '&q=' + encodeURIComponent(q)).then(function (r) { return r.json(); }).then(function (j) { if (my !== seq) return; items = (j.features || []).filter(function (f) { var p = f.properties || {}; return (abroad || (p.countrycode === 'CA' && (!p.state || /ontario/i.test(p.state)))) && (p.street || p.housenumber || p.name); }); sel = -1; render(); if (!items.length && !(S.job.property || {}).manual) { S.addrNote = 'x'; $('#addrok').textContent = 'No match yet. Keep typing, or use "Enter it manually" below.'; } }).catch(function () { items = []; close(); if (!(S.job.property || {}).manual) { S.addrNote = 'x'; $('#addrok').textContent = 'The address search isn\'t answering. Use "Enter it manually" below.'; } }); }, 300);
   });
   inp.addEventListener('keydown', function (e) { if (list.classList.contains('hide')) return; if (e.key === 'ArrowDown') { e.preventDefault(); sel = Math.min(items.length - 1, sel + 1); render(); } else if (e.key === 'ArrowUp') { e.preventDefault(); sel = Math.max(0, sel - 1); render(); } else if (e.key === 'Enter' && sel >= 0) { e.preventDefault(); pick(sel); } else if (e.key === 'Escape') close(); });
   list.addEventListener('mousedown', function (e) { var li = e.target.closest('[data-i]'); if (li) { e.preventDefault(); pick(Number(li.getAttribute('data-i'))); } });
@@ -432,32 +479,35 @@ function bindForm() {
   $('#l_party').onchange = function () { S.job.lower = S.job.lower || {}; S.job.lower.party = $('#l_party').checked; sync(); queueSave(); };
   $('#brief').onchange = function () { S.job.job.fromBrief = $('#brief').checked; sync(); queueSave(); };
   $('#sample').onchange = function () { S.job.job.sampleSheet = $('#sample').checked; sync(); queueSave(); };
+  $('#mwant').onchange = function () { S.job.measure = S.job.measure || {}; S.job.measure.want = $('#mwant').checked; S.job.measure.shareOk = $('#mwant').checked; sync(); queueSave(); };
+  $$('#mfeat input').forEach(function (i) { i.onchange = function () { S.job.measure = S.job.measure || {}; S.job.measure.feat = $$('#mfeat input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
+  $('#addrman').onclick = function () { setv(S.job, 'property.manual', true); S.addrNote = ''; sync(); queueSave(); $('#p_muni').focus(); };
   $$('#wshow input').forEach(function (i) { i.onchange = function () { S.job.draw = S.job.draw || {}; S.job.draw.show = $$('#wshow input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
   $$('#deliver input').forEach(function (i) { i.onchange = function () { S.job.job.deliver = $$('#deliver input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
   $$('#agree input').forEach(function (i) { i.onchange = function () { S.job.ack = S.job.ack || {}; S.job.ack[i.getAttribute('data-ack')] = i.checked; queueSave(); }; });
   $$('#f .up input[type=file]').forEach(function (inp) { inp.onchange = function () { upload(inp.closest('.up').getAttribute('data-kind'), inp.files); inp.value = ''; }; });
   $('#back').onclick = function () { if (S.step > 1) { S.step--; showStep(); } else location.hash = 'jobs'; };
-  $('#next').onclick = function () { var e = check(S.step); if (e) { msg(e, true); return; } if (S.step < 6) { S.step++; showStep(); } else submit(); };
+  $('#next').onclick = function () { var e = check(S.step); if (e) { msg(e, true); return; } if (S.step < NSTEP) { S.step++; showStep(); } else submit(); };
 }
 function msg(t, err) { var m = $('#fmsg'); if (!m) return toast(t); m.className = 'msg' + (err ? ' err' : ''); m.textContent = t || ''; }
 function showStep() {
   msg('');
   $$('#f [data-step]').forEach(function (d) { d.classList.toggle('hide', Number(d.getAttribute('data-step')) !== S.step); });
-  var names = ['Your firm', 'Project', 'Service', 'Files & inspiration', 'Site visit', 'Review & book'];
-  $('#stepnav').innerHTML = names.map(function (n, i) { return '<button type="button" data-s="' + (i + 1) + '" class="' + (i + 1 === S.step ? 'on' : (i + 1 < S.step ? 'done' : '')) + '">' + (i + 1) + ' ' + esc(n) + '</button>'; }).join('');
+  var names = STEPS;
+  $('#stepnav').innerHTML = '<p class="stepcount" style="flex-basis:100%">Step ' + S.step + ' of ' + NSTEP + ': ' + esc(names[S.step - 1]) + '</p><div class="stepbar" style="flex-basis:100%" role="progressbar" aria-valuemin="1" aria-valuemax="' + NSTEP + '" aria-valuenow="' + S.step + '"><i style="width:' + Math.round(S.step / NSTEP * 100) + '%"></i></div>' + names.map(function (n, i) { return '<button type="button" data-s="' + (i + 1) + '" class="' + (i + 1 === S.step ? 'on' : (i + 1 < S.step ? 'done' : '')) + '"' + (i + 1 === S.step ? ' aria-current="step"' : '') + '>' + (i + 1 < S.step ? '✓ ' : '') + (i + 1) + '. ' + esc(n) + '</button>'; }).join('');
   $$('#stepnav button').forEach(function (b) { b.onclick = function () { var t = Number(b.getAttribute('data-s')); for (var s = 1; s < t; s++) { var e = check(s); if (e) { S.step = s; showStep(); msg(e, true); return; } } S.step = t; showStep(); }; });
   $('#back').textContent = S.step === 1 ? 'Cancel' : 'Back';
-  $('#next').textContent = S.step === 6 ? (quoted(S.job).length || (S.job.measure && S.job.measure.want) ? 'Send for a fixed quote' : 'Send for pre-screening') : 'Continue';
-  if (S.step === 6) summary();
+  $('#next').textContent = S.step === NSTEP ? (quoted(S.job).length || (S.job.measure && S.job.measure.want) ? 'Send for a fixed quote' : 'Send for pre-screening') : 'Next: ' + STEPS[S.step].toLowerCase() + ' →';
+  if (S.step === NSTEP) summary();
   window.scrollTo(0, 0);
 }
+var STEPS = ['Project and address', 'Uploads', 'Notes', 'Review and send'], NSTEP = 4;
 function firstJob(j) { return !S.jobs.some(function (x) { return x.id !== j.id && x.status && x.status !== 'draft' && x.status !== 'declined'; }); }
 function check(step) {
   var j = S.job;
-  if (step === 1 && (!j.contact.firm || !j.contact.name)) return 'Add your firm and contact name.';
-  if (step === 2 && (!j.property.address || !j.property.municipality)) return 'Add the project address and municipality (or town / settlement outside Canada).';
-  if (step === 2 && !scopes(j).length) return 'Pick at least one thing for us to draw.';
-  if (step === 2 && isLower(j)) {
+  if (step === 1 && !scopes(j).length) return 'Pick at least one thing for us to draw.';
+  if (step === 1 && (!j.property.address || !j.property.municipality)) return (j.property.manual || (j.property.country || 'Canada') !== 'Canada') ? 'Add the project address and municipality (or town / settlement outside Canada).' : 'Pick the project address from the list, or use "Enter it manually".';
+  if (step === 1 && isLower(j)) {
     var lo = j.lower || {};
     if (!lo.method || !lo.foundation) return 'Basement lowering: pick the method and the existing foundation walls.';
     if (!(lo.walls || []).length) return 'Basement lowering: pick the walls being lowered.';
@@ -466,21 +516,21 @@ function check(step) {
     if (!lo.close) return 'Basement lowering: tell us if a lowered wall is close to the lot line or the neighbour\'s house.';
     if ((lo.close === 'yes' || lo.close === 'unsure') && (!lo.nDist || !lo.nType)) return 'Add the distance to the neighbour\'s house and their lower level (basement, crawl space or slab).';
   }
-  if (step === 2 && isShed(j)) { var oo = j.out || {}; if (!oo.type) return 'Shed, cabana, gazebo or pergola: pick the type.'; if (!(Number(oo.width) > 0 && Number(oo.length) > 0)) return 'Shed, cabana, gazebo or pergola: add the width and length in feet.'; }
-  if (step === 2 && isFeas(j)) { var fe = j.feas || {}; if (!fe.level) return 'Feasibility: pick the level you want.'; if (!fe.hold) return 'Feasibility: pick the site status.'; if (!String(fe.units || '').trim()) return 'Feasibility: add the target number of units.'; }
-  if (step === 3 && isLower(j) && isContractor(j) && !(j.lower || {}).engineer) return 'Tell us who will stamp the drawings: your project engineer, or we refer one.';
-  if (step === 4) {
-    var has = function (k) { return S.files.some(function (f) { return f.kind === k; }); }, link = /^https:\/\//.test((j.docs || {}).link || '');
-    if (j.job && j.job.fromBrief) { if (String((j.docs || {}).notes || '').trim().length < 40) return 'Describe what your client wants in "Anything we should know": rooms, sizes, style, anything fixed.'; }
-    else if (!feasOnly(j) && !has('design') && !link) return 'Upload the design (or share a folder link) so we can quote.';
+  if (step === 1 && isShed(j)) { var oo = j.out || {}; if (!oo.type) return 'Shed, cabana, gazebo or pergola: pick the type.'; if (!(Number(oo.width) > 0 && Number(oo.length) > 0)) return 'Shed, cabana, gazebo or pergola: add the width and length in feet.'; }
+  if (step === 1 && isFeas(j)) { var fe = j.feas || {}; if (!fe.level) return 'Feasibility: pick the level you want.'; if (!fe.hold) return 'Feasibility: pick the site status.'; if (!String(fe.units || '').trim()) return 'Feasibility: add the target number of units.'; }
+  if (step === 1 && (!j.contact.firm || !j.contact.name)) return 'Add your firm and contact name (bottom of this step).';
+  if (step === 2) {
+    var has = function (k) { return S.files.some(function (f) { return f.kind === k; }); }, link = /^https:\/\//.test((j.docs || {}).link || ''), mw = !!(j.measure && j.measure.want);
+    if (mw && !(Number(j.measure.sqft) > 0)) return 'Add the approximate house size so we can estimate the measuring visit.';
+    if (!(j.job && j.job.fromBrief) && !feasOnly(j) && !has('design') && !link) return 'Upload the design (or share a folder link) so we can quote.';
     if (surveyNeeded(j) && !has('survey') && !link) return 'A survey is required for this job. Upload it or share a folder link.';
-    if (isLower(j) && !has('existing') && !link) return 'Basement lowering needs the existing basement layout. Upload the existing drawings or share a folder link.';
-    if ((j.job || {}).titleblock === 'yours' && firstJob(j) && !has('template') && !link) return 'Add your title block or template (or share a folder link), or choose our clean format.';
+    if (isLower(j) && !mw && !has('existing') && !link) return 'Basement lowering needs the existing basement layout. Upload the existing drawings, share a folder link, or tick the measuring visit.';
+    if ((j.job || {}).titleblock === 'yours' && firstJob(j) && !has('template') && !link) return 'Add your title block or template (or share a folder link), or choose our clean format in step 1.';
     var untagged = S.files.filter(function (f) { return !f.use; }); if (untagged.length) return 'Tell us what each file is (latest design, reference only, and so on): ' + untagged[0].name + '.';
     if (link && String((j.docs || {}).linkGuide || '').trim().length < 10) return 'Tell us which files in the shared folder are the latest design to work from, and which are reference only.';
   }
-  if (step === 5 && j.measure && j.measure.want && !(Number(j.measure.sqft) > 0)) return 'Add the approximate house size so we can price the visit.';
-  if (step === 6) { var a = j.ack || {}; if (!((feasOnly(j) || (a.revisions && a.zoning && a.finals && a.responsible)) && a.terms && (!isLower(j) || a.lower) && (!smallOut(j) || a.small) && (!isFeas(j) || a.feas))) return 'Tick all the boxes to send the job.'; }
+  if (step === 3 && j.job && j.job.fromBrief && String((j.docs || {}).notes || '').trim().length < 40) return 'Describe what your client wants in the comments box: rooms, sizes, style, anything fixed.';
+  if (step === 4) { var a = j.ack || {}; if (!((feasOnly(j) || (a.revisions && a.zoning && a.finals && a.responsible)) && a.terms && (!isLower(j) || a.lower) && (!smallOut(j) || a.small) && (!isFeas(j) || a.feas))) return 'Tick all the boxes to send the job.'; }
   return '';
 }
 function engCard(j) {
@@ -501,8 +551,8 @@ function summary() {
   var j = S.job, lp = listPrice(j), q = quoted(j);
   $('#sum').innerHTML = '<dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd><dt>Project</dt><dd>' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</dd>' +
     '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job.rush === 'Yes' ? ' · rush' : '') + '</dd>' + (isLower(j) ? lowerSummary(j) : '') + (isShed(j) ? '<dt>Structure</dt><dd>' + esc(((j.out || {}).type || 'Structure') + ' · ' + ((j.out || {}).width || '?') + ' × ' + ((j.out || {}).length || '?') + ' ft (' + shedArea(j) + ' m²) · plumbing: ' + ((j.out || {}).plumbing || 'None')) + (smallOut(j) ? '<br><span class="small">Build drawings, no permit needed</span>' : '') + '</dd>' : '') + (isFeas(j) ? feasSummary(j) : '') + (feasOnly(j) ? '' : '<dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'Your template' + (templateFee(j) ? ' (includes the $300 one-time template setup)' : ' (on file)') : 'Our clean format') + '</dd>') +
-    '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST' + (j.measure && j.measure.want ? ' + site visit (priced in your quote)' : ' (list price; pre-screened as soon as you send it)')) + '</dd>' +
-    '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes, priced in the quote' : 'No') + '</dd>' +
+    '<dt>Price</dt><dd>' + (q.length ? 'Quoted within one business day' + (j.job.pricing === 'hourly' ? ' ($85/hour)' : '') : money(lp) + ' + HST' + (j.measure && j.measure.want ? ' + measuring visit' + (measEst(j) ? ' (estimate ' + money(measEst(j).v) + ' + HST)' : '') + ', both confirmed in your quote' : ' (list price; pre-screened as soon as you send it)')) + '</dd>' +
+    '<dt>Measuring visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes' + (measEst(j) ? ' · estimate ' + money(measEst(j).v) + ' + HST' : '') + ', confirmed in your quote before it\'s booked' : 'No') + '</dd>' +
     '<dt>Delivery</dt><dd>' + (feasOnly(j) ? 'Set in your quote' : (j.job.rush === 'Yes' ? '3 business days' : '4–7 business days') + ' from your go-ahead') + '</dd>' +
     '<dt>Payment</dt><dd>' + (feasOnly(j) ? 'Paid in full when you accept the quote.' : 'Deposit to start: 25% on every job. Balance due when you approve the draft.') + '</dd><dt>Before finals</dt><dd>Watermarked draft for your check</dd>';
 }
@@ -543,14 +593,15 @@ function upload(kind, list) {
   }).catch(function (e) { done(); if (names) names.textContent = 'Upload failed: ' + e.message; msg(e.message, true); });
 }
 function submit() {
-  var b = $('#next'); b.disabled = true; msg(''); clearTimeout(saveT);
-  overlay('Sending your job…', 'Saving the details and starting the pre-screen. Please keep this page open; it takes a few seconds.');
-  S.job.status = 'screened'; S.job.submittedAt = now();
-  saveNow().then(function () { return api('db.get', {path: S.path}); }).then(function (r) {
-    S.job = r.data; store.set('psr_ref', null);
-    if (S.job.status !== 'screened' && S.job.status !== 'quoted') throw new Error('The job could not be sent. Please try again.');
-    hideOverlay(); location.hash = 'job/' + S.job.id;
-  }).catch(function (e) { hideOverlay(); S.job.status = 'draft'; b.disabled = false; msg(e.message, true); });
+  var b = $('#next'); clearTimeout(saveT);
+  run(b, 'Sending your job…', 'Saving the details and starting the pre-screen. Please keep this page open.', function () {
+    S.job.status = 'screened'; S.job.submittedAt = now(); S.job.updatedAt = now();
+    return api('db.set', {path: S.path, data: S.job}).then(function () { return api('db.get', {path: S.path}); }).then(function (r) {
+      S.job = r.data; store.set('psr_ref', null);
+      if (S.job.status !== 'screened' && S.job.status !== 'quoted') throw new Error('The job could not be sent. Please try again.');
+      location.hash = 'job/' + S.job.id;
+    }).catch(function (e) { S.job.status = 'draft'; throw e; });
+  });
 }
 
 // ---------- job view
@@ -560,7 +611,9 @@ function viewJob() {
   var auto = !quoted(j).length && !(j.measure && j.measure.want);
   var steps = ['Sent', auto ? 'Pre-screen' : 'Quote', 'Underway', 'Draft check', 'Balance', 'Final files'];
   var h = '<p><a href="#jobs">← All jobs</a></p><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap"><div><p class="eyebrow">' + esc((sv.psr ? sv.psr + ' · ' : '') + pkg(j)) + '</p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 0">' + esc(j.property.address || '') + '</h1><p class="muted" style="margin:4px 0 0">' + esc(j.property.municipality || '') + '</p></div>' + statusPill(st) + '</div>' +
-    '<div class="tl">' + steps.map(function (s, i) { return '<div class="' + (i <= stg ? 'on' : '') + '">' + s + '</div>'; }).join('') + '</div>';
+    '<div class="tl" role="list" aria-label="Job progress">' + steps.map(function (s, i) { var done = i < stg || st === 'delivered', here = i === stg && !done && STAGE[st] != null; return '<div role="listitem" class="' + (i <= stg ? 'on' : '') + (here ? ' now' : '') + '"' + (here ? ' aria-current="step"' : '') + '>' + (done ? '✓ ' : '') + (i + 1) + '. ' + s + (here ? '<br><span>You are here</span>' : '') + '</div>'; }).join('') + '</div>';
+  var NEXT = {info: 'Your next step: answer the questions below', questions: 'Your next step: answer the questions below', quoted: 'Your next step: review the price and start the job', draftready: 'Your next step: check the draft, then approve it or send changes', ready: 'Your next step: pay the balance', delivered: 'Your next step: download your final files', closed: '', declined: ''};
+  var nextLine = NEXT[st] != null ? NEXT[st] : 'Nothing needed from you right now';
   var card = '';
   var ps = sv.prescreen || {}, pr = ps.result || {}, prescreening = st === 'screened' && (ps.state === 'pending' || ps.state === 'running');
   var understood = pr.understood ? '<div class="banner" style="margin:12px 0 0"><b>What we understood:</b> ' + esc(pr.understood) + ((pr.concerns || []).length ? '<br><b>Early notes</b> (we confirm these while drafting): ' + pr.concerns.map(function (c) { return esc(c.note); }).join(' · ') : '') + '</div>' : '';
@@ -593,7 +646,7 @@ function viewJob() {
   else if (st === 'closed') { var until = new Date(new Date(sv.closedAt || Date.now()).getTime() + 183 * 864e5), canRe = Date.now() < until.getTime();
     card = '<b>This job is closed.</b><p class="muted" style="margin:6px 0 12px">We closed it because we didn\'t hear back. ' + (canRe ? 'You can reopen it until ' + until.toLocaleDateString('en-CA', {month: 'long', day: 'numeric', year: 'numeric'}) + ' and carry on from where you left off' + (paidDeposit(j) > 0 ? ', with your deposit applied' : '') + '.' : 'It was closed more than 6 months ago, so please book it as a new job.') + '</p>' + (canRe ? '<div><button class="btn btn-amber" id="reopen">Reopen this job</button></div>' : '<div><a class="btn btn-amber" href="#new">Book a new job</a></div>'); }
   else if (st === 'declined') card = '<b>We can\'t take this job.</b><p class="muted" style="margin:6px 0 0">' + esc((j.admin && j.admin.declineNote) || 'We\'ve emailed you the reason.') + '</p>';
-  h += '<div class="card" style="max-width:780px;margin-top:18px">' + card + '<p class="msg" id="fmsg" role="status"></p></div>';
+  h += '<div class="card" style="max-width:780px;margin-top:18px">' + (nextLine ? '<p class="nextstep">' + esc(nextLine) + (STAGE[st] != null ? ' · step ' + (stg + 1) + ' of 6' : '') + '</p>' : '') + card + '<p class="msg" id="fmsg" role="status"></p></div>';
   if (st === 'delivered' || st === 'revising') h += fbCard(j);
   var lp = listPrice(j);
   h += '<div class="card" style="max-width:780px;margin-top:18px"><b>' + (sv.adminCreated ? 'The job' : 'What you sent') + '</b><dl class="sum" style="margin-top:10px"><dt>Scope</dt><dd>' + esc(pkg(j)) + '</dd>' + (sv.adminCreated && j.docs && j.docs.notes ? '<dt>Details</dt><dd style="font-weight:400">' + esc(j.docs.notes) + '</dd>' : '') + '<dt>Firm</dt><dd>' + esc(j.contact.firm || '') + '</dd>' + (j.docs && j.docs.link ? '<dt>Folder</dt><dd><a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared link</a></dd>' : '') + (j.docs && j.docs.inspiration ? '<dt>Inspiration</dt><dd><a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Board / photos</a></dd>' : '') + '<dt>Files</dt><dd>' + (S.files.length ? S.files.map(function (f) { var u = FUSE.filter(function (x) { return x[0] === f.use; })[0]; return esc(f.name) + (u ? ' <span class="small">(' + esc(u[1]) + ')</span>' : ''); }).join('<br>') : 'none') + '</dd></dl>' +
@@ -608,37 +661,35 @@ function viewJob() {
     var fbe = $('#fb_edit'); if (fbe) fbe.onclick = function () { $('#fbdone').classList.add('hide'); $('#fbform').classList.remove('hide'); };
     fbs.onclick = function () {
       if (!S.fbRating) { $('#fb_msg').textContent = 'Pick a rating from 1 to 5 stars.'; return; }
-      fbs.disabled = true; $('#fb_msg').textContent = 'Sending…';
+      if (fbs.disabled) return; fbs.disabled = true; $('#fb_msg').innerHTML = '<span class="spin" aria-hidden="true"></span>Sending…';
       api('job.feedback', {path: S.path, rating: S.fbRating, good: $('#fb_good').value, better: $('#fb_better').value, quote: $('#fb_quote').value, showAs: (document.querySelector('input[name=fbshow]:checked') || {}).value, publish: $('#fb_pub').checked})
         .then(function (r) { S.job.feedback = r.feedback; toast('Thank you for the feedback'); openJob(S.job.id, false); })
         .catch(function (e) { fbs.disabled = false; $('#fb_msg').textContent = e.message; });
     };
   }
-  var ro = $('#reopen'); if (ro) ro.onclick = function () { ro.disabled = true; api('job.reopen', {path: S.path}).then(function () { toast('Reopened'); openJob(S.job.id, false); }).catch(function (e) { ro.disabled = false; msg(e.message, true); }); };
+  var ro = $('#reopen'); if (ro) ro.onclick = function () { run(ro, 'Reopening your job…', '', function () { return api('job.reopen', {path: S.path}).then(function () { toast('Reopened'); return reopenJob(); }); }); };
   var pb = $('#paybal'); if (pb) pb.onclick = function () { pay('balance', pb); };
   var ac = $('#accept'); if (ac) ac.onclick = function () { var qt = $('#qterms'); if (qt && !qt.checked) { msg('Tick the box to accept the terms.', true); return; } if (qt) S.job.ack = Object.assign({}, S.job.ack || {}, {terms: true}); move('accepted', '', ac); };
   if ($('#psteps')) { var pli = $$('#psteps li'), started = new Date(((sv.prescreen || {}).startedAt) || ((sv.prescreen || {}).at) || Date.now()).getTime(); var tick = function () { if (!document.body.contains(pli[0])) return; var e = (Date.now() - started) / 1000, k = e < 8 ? 1 : e < 30 ? 2 : 3; pli.forEach(function (li, i) { li.className = i < k ? 'done' : i === k ? 'on' : ''; }); setTimeout(tick, 2000); }; tick(); }
   var spq = $('#sendpq'); if (spq) spq.onclick = function () {
     var qs = ((S.job.server || {}).predraft || {}).questions || [];
     var ans = $$('#pq textarea[data-q]').map(function (t, i) { return {q: t.getAttribute('data-q'), a: t.value.trim() || ('Use the default: ' + ((qs[i] || {}).def || 'as you proposed'))}; });
-    spq.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = 'confirmed'; d.answers = ans;
-    overlay('Sending your answers…', 'One moment.');
-    api('db.set', {path: S.path, data: d}).then(function () { hideOverlay(); return openJob(S.job.id, false); }).catch(function (e) { hideOverlay(); spq.disabled = false; msg(e.message, true); });
+    var d = JSON.parse(JSON.stringify(S.job)); d.status = 'confirmed'; d.answers = ans;
+    run(spq, 'Sending your answers…', '', function () { return api('db.set', {path: S.path, data: d}).then(function () { return reopenJob(); }); });
   };
   if ($('#qfiles')) api('files.questions', {path: S.path}).then(function (r) { $('#qfiles').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Open</a></li>'; }).join('') : ''; bindDl('files.questionsDownload'); });
   var si = $('#sendinfo'); if (si) si.onclick = function () {
     var ans = $$('#qa textarea[data-q]').map(function (t) { return {q: t.getAttribute('data-q'), a: t.value.trim()}; });
     if ($('#qa_more').value.trim()) ans.push({q: 'Anything else', a: $('#qa_more').value.trim()});
     if (ans.some(function (x) { return x.q !== 'Anything else' && !x.a; })) { msg('Answer each question (or write "see uploaded file").', true); return; }
-    si.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = 'screened'; d.answers = ans;
-    overlay('Sending your answers…', 'One moment.');
-    api('db.set', {path: S.path, data: d}).then(function () { hideOverlay(); return openJob(S.job.id, false); }).catch(function (e) { hideOverlay(); si.disabled = false; msg(e.message, true); });
+    var d = JSON.parse(JSON.stringify(S.job)); d.status = 'screened'; d.answers = ans;
+    run(si, 'Sending your answers…', '', function () { return api('db.set', {path: S.path, data: d}).then(function () { return reopenJob(); }); });
   };
   if (st === 'screened') schedulePoll();
   if (prescreening && !S.prescreenBusy) { S.prescreenBusy = true; var pid = S.job.id; api('job.prescreen', {path: S.path}).then(function () { S.prescreenBusy = false; if (S.job && S.job.id === pid && /^#job\//.test(location.hash)) openJob(pid, false, true); }).catch(function () { S.prescreenBusy = false; schedulePoll(); }); }
   var ap = $('#approve'); if (ap) ap.onclick = function () { move('approved', $('#chg').value.trim(), ap); };
   var mo = $('#mkopen'); if (mo) { if (S.mkJob !== S.job.id) { S.markups = []; S.strokes = {}; S.mkMode = 'pin'; S.mkJob = S.job.id; } mo.onclick = function () { mo.disabled = true; openMarkup(S.path, false); }; if (S.markups.length || inkPages().length) { mo.disabled = true; openMarkup(S.path, false); } }
-  var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); var mk = (S.markups || []).filter(function (m) { return m.text.trim(); }); var upl = S.files.some(function (f) { return f.kind === 'markup'; }), ink = inkPages(); if (!n && !mk.length && !upl && !ink.length) { msg('Drop a pin or draw on the drawings, upload a marked-up PDF or photo, or write what to change.', true); return; } if ((S.markups || []).some(function (m) { return !m.text.trim(); })) { msg('Type the change for each pin (or remove it).', true); return; } S.sendMarkups = mk; ch.disabled = true; sendInk(ink).then(function () { move('changes', n, ch); }).catch(function (e) { ch.disabled = false; msg('Your drawing could not be sent: ' + e.message, true); }); };
+  var ch = $('#changes'); if (ch) ch.onclick = function () { var n = $('#chg').value.trim(); var mk = (S.markups || []).filter(function (m) { return m.text.trim(); }); var upl = S.files.some(function (f) { return f.kind === 'markup'; }), ink = inkPages(); if (!n && !mk.length && !upl && !ink.length) { msg('Drop a pin or draw on the drawings, upload a marked-up PDF or photo, or write what to change.', true); return; } if ((S.markups || []).some(function (m) { return !m.text.trim(); })) { msg('Type the change for each pin (or remove it).', true); return; } S.sendMarkups = mk; run(ch, 'Sending your changes…', ink.length ? 'Uploading your hand markups. Please keep this page open.' : '', function () { return sendInk(ink).then(function () { return moveNow('changes', n); }, function (e) { throw new Error('Your drawing could not be sent: ' + e.message); }); }); };
   if ($('#draftlist')) api('files.draft', {path: S.path}).then(function (r) { $('#draftlist').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Open</a></li>'; }).join('') : '<li class="small">The draft file is on its way.</li>'; bindDl('files.draftDownload'); });
   if ($('#finals')) api('files.deliverables', {path: S.path}).then(function (r) { $('#finals').innerHTML = r.files.length ? r.files.map(function (f) { return '<li><span>' + esc(f.name) + '</span><a href="#" data-f="' + f.id + '" data-n="' + esc(f.name) + '" class="dl">Download</a></li>'; }).join('') : '<li class="small">Files are being prepared.</li>'; bindDl('files.download'); });
 }
@@ -734,24 +785,40 @@ function shrinkImage(f, data) {
   return new Promise(function (ok) { var im = new Image(); im.onload = function () { try { var sc = Math.min(1, 3200 / Math.max(im.width, im.height)), c = document.createElement('canvas'); c.width = Math.round(im.width * sc); c.height = Math.round(im.height * sc); var x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height); var q = 0.88, out = c.toDataURL('image/jpeg', q); while (out.length > 4.6 * 1048576 && q > 0.5) { q -= 0.1; out = c.toDataURL('image/jpeg', q); } ok(out.length < data.length ? out : data); } catch (e) { ok(data); } }; im.onerror = function () { ok(data); }; im.src = data; });
 }
 function bindDl(action) {
-  $$('#app a.dl').forEach(function (a) { a.onclick = function (ev) { ev.preventDefault(); a.textContent = 'Preparing…';
+  $$('#app a.dl').forEach(function (a) { a.onclick = function (ev) { ev.preventDefault(); if (a.classList.contains('busy')) return; a.classList.add('busy'); a.innerHTML = '<span class="spin" aria-hidden="true"></span>Preparing…';
     api(action, {path: S.path, fileId: a.getAttribute('data-f')}).then(function (r) {
       var b64 = r.dataUrl.split(',')[1], mime = r.dataUrl.slice(5, r.dataUrl.indexOf(';')), bin = atob(b64), arr = new Uint8Array(bin.length);
       for (var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
       var url = URL.createObjectURL(new Blob([arr], {type: mime}));
       if (action === 'files.draftDownload') window.open(url, '_blank'); else { var x = document.createElement('a'); x.href = url; x.download = r.name; document.body.appendChild(x); x.click(); x.remove(); }
-      a.textContent = action === 'files.draftDownload' ? 'Open' : 'Download';
-    }).catch(function (e) { a.textContent = 'Try again'; msg(e.message, true); }); }; });
+      a.classList.remove('busy'); a.textContent = action === 'files.draftDownload' ? 'Open' : 'Download';
+    }).catch(function (e) { a.classList.remove('busy'); a.textContent = 'Try again'; msg(e.message, true); }); }; });
 }
-function pay(kind, btn) { var qt = document.getElementById('qterms'); if (qt && !qt.checked) { msg('Tick the box to accept the terms.', true); return; } btn.disabled = true; msg('Opening secure payment…'); api('pay.checkout', {path: S.path, kind: kind, terms: !!(qt && qt.checked)}).then(function (r) { if (r.amount === 0) { toast('Paid with your credit.'); openJob(S.job.id, false); } else location.href = r.url; }).catch(function (e) { btn.disabled = false; msg(e.message, true); }); }
+function pay(kind, btn) {
+  var qt = document.getElementById('qterms'); if (qt && !qt.checked) { msg('Tick the box to accept the terms.', true); return; }
+  run(btn, 'Opening secure payment…', 'You\'ll be taken to the payment page in a moment. Please don\'t click again.', function () {
+    return api('pay.checkout', {path: S.path, kind: kind, terms: !!(qt && qt.checked)}).then(function (r) {
+      if (r.amount === 0) { toast('Paid with your credit.'); return reopenJob(); }
+      location.href = r.url; return new Promise(function (ok) { setTimeout(ok, 15000); }); // keep the overlay up until the payment page loads
+    });
+  });
+}
+// redraw the job after an action, keeping the overlay up until the new state is on screen
+function reopenJob() { return openJob(S.job.id, false, true, true); }
+function moveNow(status, notes) {
+  var d = JSON.parse(JSON.stringify(S.job)); d.status = status; d.clientNotes = notes || ''; if (status === 'changes') { d.markups = S.sendMarkups || []; }
+  return api('db.set', {path: S.path, data: d}).then(function () { return reopenJob(); });
+}
 function move(status, notes, btn) {
-  btn.disabled = true; var d = JSON.parse(JSON.stringify(S.job)); d.status = status; d.clientNotes = notes || ''; if (status === 'changes') { d.markups = S.sendMarkups || []; }
-  api('db.set', {path: S.path, data: d}).then(function () { return openJob(S.job.id, false); }).catch(function (e) { btn.disabled = false; msg(e.message, true); });
+  var T = {approved: 'Approving your draft…', changes: 'Sending your changes…', accepted: 'Starting your job…'};
+  run(btn, T[status] || 'Saving…', '', function () { return moveNow(status, notes); });
 }
+// back from the payment page with the browser's Back button: the page is restored as it was, so clear the overlay
+window.addEventListener('pageshow', function (e) { if (e.persisted) { S.busy = false; hideOverlay(); route(); } });
 
 // ---------- referrals
 function viewRefer() {
-  setMain('<p class="muted">Loading…</p>');
+  setMain(loading());
   api('referral.status').then(function (r) {
     var h = '<p class="eyebrow">Referral program</p><h1 style="font-size:clamp(26px,4vw,38px);margin:6px 0 8px">Refer a firm. You both pick a reward.</h1><p class="muted" style="max-width:680px">When a firm you send our way pays for its first review or drafting job, you each choose a free set review or $150 off a drafting job.</p>' +
       '<div class="card fd" style="max-width:700px;margin-top:18px"><label class="l">Your referral link</label><div class="reflink"><input class="inp" id="rl" readonly value="' + esc(r.link) + '"><button class="btn btn-line btn-sm" id="cp" type="button">Copy</button></div><p class="small" style="margin:0">Or give them your code: <b>' + esc(r.code) + '</b>. They enter it (or your email) when they book or buy a review.</p></div>' +
@@ -761,7 +828,7 @@ function viewRefer() {
       }).join('') + '</ul>' : '<p class="muted" style="margin:6px 0 0">No rewards yet. Share your link with a firm you trust.</p>') + '<p class="msg" id="fmsg"></p></div>';
     setMain(h);
     $('#cp').onclick = function () { var i = $('#rl'); i.select(); try { navigator.clipboard.writeText(i.value); } catch (e) { document.execCommand('copy'); } toast('Copied'); };
-    $$('#app [data-c]').forEach(function (b) { b.onclick = function () { b.disabled = true; api('referral.choose', {id: Number(b.getAttribute('data-id')), choice: b.getAttribute('data-c')}).then(function () { toast('Reward added'); viewRefer(); }).catch(function (e) { b.disabled = false; msg(e.message, true); }); }; });
+    $$('#app [data-c]').forEach(function (b) { b.onclick = function () { if (b.disabled) return; b.disabled = true; api('referral.choose', {id: Number(b.getAttribute('data-id')), choice: b.getAttribute('data-c')}).then(function () { toast('Reward added'); viewRefer(); }).catch(function (e) { b.disabled = false; msg(e.message, true); }); }; });
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
 
@@ -787,7 +854,7 @@ function viewAdmin() {
 }
 // Admin: create a job under an existing firm's account (add-ons, work agreed by phone or email). Nothing is emailed until you send the quote or questions.
 function viewAdminNew() {
-  if (!(S.admin.jobs || []).length) { setMain('<p class="muted">Loading…</p>'); return api('admin.jobs').then(function (r) { S.admin.jobs = r.jobs || []; if (!S.admin.jobs.length) S.admin.jobs = [{}]; viewAdminNew(); }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); }); }
+  if (!(S.admin.jobs || []).length) { setMain(loading()); return api('admin.jobs').then(function (r) { S.admin.jobs = r.jobs || []; if (!S.admin.jobs.length) S.admin.jobs = [{}]; viewAdminNew(); }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); }); }
   var rows = S.admin.jobs.filter(function (x) { return x && x.Email && x.Path; }), emails = [];
   rows.forEach(function (x) { var e = String(x.Email).toLowerCase(); if (emails.indexOf(e) < 0) emails.push(e); });
   var opt = function (v, t, sel) { return '<option value="' + esc(v) + '"' + (sel ? ' selected' : '') + '>' + esc(t) + '</option>'; };
@@ -836,7 +903,7 @@ function cad(n) { n = Number(n) || 0; return (n < 0 ? '−' : '') + '$' + Math.a
 function kpi(label, v, sub) { return '<div class="kpi"><div class="s">' + esc(label) + '</div><div class="v' + (/^−/.test(v) ? ' neg' : '') + '">' + esc(v) + '</div>' + (sub ? '<div class="s">' + esc(sub) + '</div>' : '') + '</div>'; }
 function viewBusiness() {
   if (!isOwner()) return viewJobs();
-  setMain('<p class="muted">Loading…</p>');
+  setMain(loading());
   api('admin.business').then(function (b) {
     var P = [b.month, b.lastMonth, b.all], st = b.settings;
     var line = function (label, k, opt) { opt = opt || {}; return '<tr' + (opt.b ? ' style="font-weight:700"' : '') + '><td>' + label + '</td>' + P.map(function (p) { var v = p[k]; return '<td class="n' + (opt.sign && v < 0 ? ' neg' : '') + '">' + (v == null ? '–' : opt.fmt ? opt.fmt(v) : (opt.minus && Math.round(v) ? '−' : '') + cad(v)) + '</td>'; }).join('') + '</tr>'; };
@@ -881,7 +948,7 @@ function bindCalib() {
 }
 function viewCosts() {
   if (!S.user.isAdmin) return viewJobs();
-  setMain('<p class="muted">Loading…</p>');
+  setMain(loading());
   api('admin.jobcosts').then(function (r) {
     var h = '<p><a href="#admin">← All jobs</a></p><h1 style="font-size:clamp(26px,4vw,36px);margin:6px 0 4px">Costs and averages</h1><p class="muted" style="margin:0 0 16px">Per project type, from every job on the Job Costs tab. AI cost is the list-price equivalent of the Claude usage (pre-screen + drafting runner). Averages firm up after three or more jobs of a type.</p>' + calibCard(r) +
       '<div class="card" style="overflow:auto"><table class="tbl"><thead><tr><th>Service · type</th><th>Jobs</th><th>Avg days to deliver</th><th>Avg AI cost</th><th>Avg drafting h</th><th>Avg your h</th><th>Avg price</th>' + (r.planWeeklyUsd ? '<th>% of weekly plan per job</th><th>Jobs/week at 60%</th>' : '') + '</tr></thead><tbody>' +
@@ -893,18 +960,19 @@ function viewCosts() {
   }).catch(function (e) { setMain('<p class="msg err">' + esc(e.message) + '</p>'); });
 }
 function viewAdminJob(path) {
-  setMain('<p class="muted">Loading…</p>');
+  setMain(loading());
   Promise.all([api('db.get', {path: path}), api('db.list', {path: path + '/files'}), api('files.draft', {path: path})]).then(function (r) {
     var j = r[0].data, files = (r[1].docs || []).map(function (d) { return d.data; }), drafts = r[2].files || [], sv = j.server || {}, row = S.admin.jobs.filter(function (x) { return x.Path === path; })[0] || {};
     var lp = listPrice(j), dep = j.quote && j.quote.deposit != null ? j.quote.deposit : (feasOnly(j) ? '' : (typeof row.Deposit === 'number' ? row.Deposit : Math.round((lp || 0) * 0.25)));
     var qd = (j.admin || {}).quoteDraft || {}, jc = (j.admin || {}).costs || {};
     var h = '<p><a href="#admin">← All jobs</a></p><div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:flex-end"><div><p class="eyebrow">' + esc((sv.psr || '') + ' · ' + pkg(j)) + '</p><h1 style="font-size:clamp(24px,4vw,34px);margin:6px 0 0">' + esc(j.property.address || '') + ', ' + esc(j.property.municipality || '') + '</h1></div>' + jobPill(j) + '</div>' +
       ((j.tier === 'wl' || j.tier === 'cs') && ['delivered', 'revising'].indexOf(j.status) >= 0 && (jc.reviewerHours == null || jc.reviewerHours === '') ? '<div class="msg" id="timeask" style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span><b>How much of your time went into this job?</b> Enter it under Job costs (0 if none) so the averages stay right.</span><button type="button" class="btn btn-line btn-sm" id="timego">Enter my time</button></div>' : '') +
+      (scopes(j).some(function (k) { return ENGSCOPES.indexOf(k) >= 0; }) ? '<div class="banner" style="margin-top:12px"><b>Internal note:</b> an engineer may be required for this scope. The firm decides what is needed; the portal does not ask them.</div>' : '') +
       '<div class="grid-2" style="margin-top:16px;align-items:start"><div class="card"><b>Job</b><dl class="sum" style="margin-top:8px"><dt>Firm</dt><dd>' + esc(j.contact.firm || '') + ' · ' + esc(j.contact.name || '') + '</dd><dt>Email</dt><dd>' + esc(j.contact.email || '') + ' ' + esc(j.contact.phone || '') + '</dd><dt>Role</dt><dd>' + esc(j.contact.role || '') + '</dd>' +
       '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + (j.job && j.job.sampleSheet ? ' · <b>FREE SAMPLE SHEET FIRST</b> (one sheet, watermarked, your review before it goes out)' : '') + (sv.adminCreated ? '<br><span class="small">Created from the admin page' + (sv.linkedPsr ? ' · add-on to <a href="#admin/' + encodeURIComponent(sv.linkedTo) + '">' + esc(sv.linkedPsr) + '</a>' : '') + (j.ack && j.ack.terms ? ' · terms accepted' : ' · terms not yet accepted (asked at accept or deposit)') + '</span>' : '') + '</dd><dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'THEIR template' + (sv.templateSetup ? ' · FIRST TIME: $300 setup' + (lp ? ' (in the list price)' : ' (add it to the quote)') : ' · on file') : 'Our clean format') + '</dd>' + (j.feedback ? '<dt>Feedback</dt><dd>' + '★★★★★'.slice(0, j.feedback.rating) + '☆☆☆☆☆'.slice(0, 5 - j.feedback.rating) + (j.feedback.good ? '<br><span style="font-weight:400">Good: ' + esc(j.feedback.good) + '</span>' : '') + (j.feedback.better ? '<br><span style="font-weight:400">Better: ' + esc(j.feedback.better) + '</span>' : '') + (j.feedback.quote ? '<br><span style="font-weight:400">Quote' + (j.feedback.publish ? ' (may publish)' : ' (private)') + ': "' + esc(j.feedback.quote) + '"</span>' : '') + '</dd>' : (sv.feedbackAskAt ? '<dt>Feedback</dt><dd>Asked ' + esc(fmtDate(sv.feedbackAskAt)) + (sv.feedbackRemindAt ? ', reminded ' + esc(fmtDate(sv.feedbackRemindAt)) : '') + '</dd>' : '')) + (isFeas(j) ? feasSummary(j) : '') + (isLower(j) ? lowerSummary(j) + (sv.engRevAt ? '<dt>Engineer markups</dt><dd>' + (sv.engRevPaid ? 'Received · $85/hour revision to quote' : 'Received · included round') + '</dd>' : '') : '') + '<dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
       (j.job && j.job.budget ? '<dt>Their budget</dt><dd>' + esc(j.job.budget) + ' (' + esc(j.job.budgetType || '') + ')</dd>' : '') + (j.job && j.job.pricing === 'hourly' ? '<dt>Pricing</dt><dd>$85/hour requested</dd>' : '') +
       '<dt>Needed by</dt><dd>' + esc((j.job || {}).due || '') + '</dd><dt>Building</dt><dd>' + esc((j.job || {}).existing || '') + ' · ' + esc((j.job || {}).area || '') + '</dd><dt>Deliver</dt><dd>' + esc(((j.job || {}).deliver || []).join(', ')) + '</dd>' +
-      '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
+      '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' + ((j.measure.feat || []).length ? ' · on site: ' + esc(j.measure.feat.join(', ')) : '') + (measEst(j) ? '<br><span class="small">Estimate shown to the firm: ' + money(measEst(j).v) + ' + HST (fee formula, +20%). Confirm with the measuring partner and put the final figure in the quote.' + (j.measure.shareOk ? ' Firm agreed to share contact details and address with the partner.' : '') + '</span>' : '') : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
       '<dt>Links</dt><dd>' + (j.docs && j.docs.link ? '<a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared folder</a> ' : '') + (j.docs && j.docs.inspiration ? '<a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Inspiration</a> ' : '') + (sv.folderUrl ? '<a href="' + esc(sv.folderUrl) + '" target="_blank" rel="noopener">Job folder</a>' : '') + '</dd>' +
       '<dt>Notes</dt><dd style="font-weight:400">' + esc((j.docs || {}).notes || '') + '</dd>' + (j.clientNotes ? '<dt>Changes</dt><dd style="font-weight:400">' + esc(j.clientNotes) + '</dd>' : '') + '</dl>' +
       ((j.markups || []).length ? '<b style="display:block;margin-top:14px">Pins on the draft (' + j.markups.length + ')</b><ol class="mklist" id="mklist"></ol><button type="button" class="btn btn-line btn-sm" id="mkview">Show the pins on the draft</button><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading…</p><div id="mkpages"></div></div>' : '') +
@@ -994,13 +1062,45 @@ function adminPrescreen(j) {
     ((r.concerns || []).length ? '<p class="small" style="margin:6px 0 2px"><b>Early flags</b></p><ul style="margin:0">' + r.concerns.map(function (c) { return '<li class="small">' + esc(c.type) + ': ' + esc(c.note) + '</li>'; }).join('') + '</ul>' : '');
 }
 
+// ---------- help: portal questions only. The quick answers work on their own; typed questions are answered by the backend (help.ask) once PSR_CONFIG.helpChat is switched on.
+var HELP = [
+  ['A button seems stuck', 'When you click a button you\'ll see a spinner and a "please keep this page open" note. Your click went through, so there\'s no need to click again. Big uploads can take up to a minute. If you see "That didn\'t go through", check your connection and try once more.'],
+  ['Where is my job?', ''],
+  ['How do I send a new job?', 'Choose "Book a job". There are four steps: 1. project and address, 2. uploads, 3. notes, 4. review and send. Your draft saves as you go, so you can stop and pick it up later from "My jobs".'],
+  ['How do I mark up the draft?', 'Open the job and choose "Mark up the draft". Use "Pin and type" to click a spot and type the change, or "Draw by hand" to sketch on the sheet. You can also upload a marked-up PDF or a photo. Then press "Send changes".'],
+  ['What files can I upload?', 'PDF, JPG, PNG, HEIC, DWG, DXF, Rhino, Revit, SketchUp, IFC and ZIP files, up to 25 MB each. For anything bigger, paste a shared folder link in step 2. If you upload a DWG, please add a PDF of the same sheets.'],
+  ['I didn\'t get my sign-in code', 'Codes usually arrive within a minute. Check your junk folder, make sure the email address is typed correctly, then press "Email me a code" again.']
+];
+function helpWhere() {
+  if (S.user && S.job && /^#job\//.test(location.hash)) return 'This job (' + ((S.job.property || {}).address || 'no address yet') + ') is at: ' + (LABEL[S.job.status] || S.job.status) + '. The numbered bar at the top of the page shows the six stages, and the card under it says what, if anything, is needed from you.';
+  return S.user ? 'Open "My jobs" in the menu. Each job shows its status; open one to see the numbered progress bar and your next step.' : 'Sign in with your work email first. Your jobs and their status are listed as soon as you\'re in.';
+}
+function helpSetup() {
+  if ($('#helpfab')) return;
+  var ai = !!(window.PSR_CONFIG && window.PSR_CONFIG.helpChat);
+  var fab = document.createElement('button'); fab.type = 'button'; fab.id = 'helpfab'; fab.className = 'helpfab'; fab.textContent = 'Need help?'; fab.setAttribute('aria-expanded', 'false'); fab.setAttribute('aria-controls', 'helpbox');
+  var box = document.createElement('div'); box.id = 'helpbox'; box.className = 'helpbox hide'; box.setAttribute('role', 'dialog'); box.setAttribute('aria-label', 'Portal help');
+  box.innerHTML = '<header><div><b>Portal help</b><small>How to use this page</small></div><button type="button" id="helpx" aria-label="Close help">×</button></header><div class="helpmsgs" id="helpmsgs" aria-live="polite"></div><div class="helpqs" id="helpqs">' + HELP.map(function (q, i) { return '<button type="button" data-q="' + i + '">' + esc(q[0]) + '</button>'; }).join('') + '</div>' +
+    (ai ? '<form id="helpf"><input id="helpi" maxlength="400" placeholder="Ask about the portal…" autocomplete="off" aria-label="Your question"><button class="btn btn-amber btn-sm" id="helps">Send</button></form>' : '') +
+    '<div class="foot">Prices, timing or drawing questions? Email <a href="mailto:admin@permitsetready.ca">admin@permitsetready.ca</a>.</div>';
+  document.body.appendChild(box); document.body.appendChild(fab);
+  var msgs = $('#helpmsgs'), add = function (t, c) { var d = document.createElement('div'); d.className = c; d.textContent = t; msgs.appendChild(d); msgs.scrollTop = msgs.scrollHeight; return d; };
+  var open = function (v) { box.classList.toggle('hide', !v); fab.setAttribute('aria-expanded', v ? 'true' : 'false'); fab.textContent = v ? 'Close help' : 'Need help?'; if (v && !msgs.children.length) add('Hi! I can help with using the portal. Pick a question below' + (ai ? ', or type your own.' : '.'), 'bot'); };
+  fab.onclick = function () { open(box.classList.contains('hide')); }; $('#helpx').onclick = function () { open(false); fab.focus(); };
+  $('#helpqs').onclick = function (e) { var b = e.target.closest('[data-q]'); if (!b) return; var q = HELP[Number(b.getAttribute('data-q'))]; add(q[0], 'me'); add(q[1] || helpWhere(), 'bot'); };
+  var f = $('#helpf'); if (f) f.onsubmit = function (e) {
+    e.preventDefault(); var i = $('#helpi'), q = i.value.trim(), sb = $('#helps'); if (!q || sb.disabled) return; i.value = ''; add(q, 'me'); sb.disabled = true;
+    var w = add('…', 'bot');
+    api('help.ask', {q: q, path: (S.job && /^#job\//.test(location.hash)) ? S.path : ''}).then(function (r) { w.textContent = r.answer || 'I couldn\'t answer that one. Please email admin@permitsetready.ca.'; }).catch(function () { w.textContent = 'I couldn\'t answer just now. Please try again, or email admin@permitsetready.ca.'; }).then(function () { sb.disabled = false; msgs.scrollTop = msgs.scrollHeight; });
+  };
+}
 // ---------- boot
 function boot() {
   var q = new URLSearchParams(location.search), paid = q.get('paid');
   var start = store.get(KEY) ? api('auth.me').then(function (j) { S.user = j.user; }).catch(function () { S.user = null; }) : Promise.resolve();
   start.then(function () {
     if (paid) { history.replaceState(null, '', location.pathname + location.hash); return api('pay.confirm', {session: paid}).then(function () { toast('Payment received. Thank you.'); }).catch(function () {}); }
-  }).then(function () { if (S.user) return loadJobs().catch(function () {}); }).then(route);
+  }).then(function () { if (S.user) return loadJobs().catch(function () {}); }).then(route).then(helpSetup, helpSetup);
 }
 boot();
 })();
