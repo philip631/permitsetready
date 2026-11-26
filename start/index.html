@@ -166,17 +166,18 @@ var FUSE = [['latest', 'Latest design: work from this'], ['reference', 'Referenc
 var FCOV = [['', 'Covers…'], ['full', 'Full set'], ['plans', 'Floor plans'], ['elev', 'Elevations'], ['sections', 'Sections'], ['site', 'Site plan'], ['model3d', '3D model'], ['details', 'Details']];
 var FDEF = {design: 'latest', existing: 'latest', survey: 'survey', permits: 'reference', template: 'standards', logo: 'standards', sample: 'standards', engineer: 'reference', notes: 'reference', rules: 'rules', photo: 'photos'};
 var S = {user: null, jobs: [], job: null, path: null, files: [], step: 1, admin: {jobs: []}};
-// measuring visit estimate: the "Existing Fees" formula at PermitSetReady's 20% markup. Travel is one-way km from the measuring partner's office.
+// measuring visit estimate: mirrors measEst_ in the backend (the "Existing Fees" formula at 20% markup), so the firm sees the figure the Jobs sheet and summary show.
 var MFEAT = [['shed', 'Shed'], ['deck', 'Deck'], ['patio', 'Patio'], ['pool', 'Pool'], ['garage', 'Detached garage'], ['other', 'Other']];
 var MKM = {Mississauga: 10, Brampton: 20, Oakville: 20, Caledon: 40, Burlington: 35, Milton: 30, 'Halton Hills': 35, Vaughan: 35, Markham: 50, 'Richmond Hill': 45, Aurora: 55, Newmarket: 60, Pickering: 60, Ajax: 65, Whitby: 75, Oshawa: 85, Toronto: 30, Hamilton: 55, Innisfil: 95, Barrie: 105, Guelph: 70, Kitchener: 90};
 function measEst(j) {
   var m = j.measure || {}, sq = Number(m.sqft) || 0; if (!m.want || !(sq > 0)) return null;
   var sc = scopes(j), elev = (sc.indexOf('bge') >= 0 ? 1 : 0) + (sc.indexOf('deck') >= 0 ? 1 : 0);
-  var site = ['bge', 'garage', 'deck', 'shed', 'addition', 'newhome'].some(function (k) { return sc.indexOf(k) >= 0; }) || (m.feat || []).length > 0;
-  var mu = (j.property || {}).municipality || '', km = MKM[mu] != null ? MKM[mu] : 60;
+  var site = exterior(j) || featList(m).length > 0;
+  var mu = (j.property || {}).municipality || '', pk = Number((j.property || {}).km), km = pk > 0 ? pk : (MKM[mu] != null ? MKM[mu] : 60);
   var sub = 820 + Math.max(0, sq - 2000) * 0.2 + elev * 125 + 60 + km * 2 * 0.85 + (site ? 400 : 0);
   return {v: Math.ceil(sub * 1.2 / 100) * 100, elev: elev, site: site, muni: mu};
 }
+function featList(m) { var f = (m || {}).feat || {}; return Array.isArray(f) ? f : Object.keys(f).filter(function (k) { return f[k]; }); }
 var ENGSCOPES = ['lower', 'addition', 'newhome', 'structural'];
 function scopes(it) { var a = (it && it.scopes) || []; return SCOPES.map(function (s) { return s[0]; }).filter(function (k) { return a.indexOf(k) >= 0; }); }
 function quoted(it) { return (it.job && it.job.fromBrief) ? scopes(it) : scopes(it).filter(function (k) { return QUOTED.indexOf(k) >= 0; }); }
@@ -393,7 +394,7 @@ function fillForm() {
   $('#l_party').checked = !!(j.lower || {}).party;
   $('#brief').checked = !!(j.job || {}).fromBrief;
   $('#mwant').checked = !!(j.measure || {}).want;
-  $$('#mfeat input').forEach(function (i) { i.checked = ((j.measure || {}).feat || []).indexOf(i.value) >= 0; });
+  $$('#mfeat input').forEach(function (i) { i.checked = featList(j.measure).indexOf(i.value) >= 0; });
   if ($('#sample')) $('#sample').checked = !!(j.job || {}).sampleSheet;
   $$('#deliver input').forEach(function (i) { i.checked = ((j.job || {}).deliver || []).indexOf(i.value) >= 0; });
   $$('#wshow input').forEach(function (i) { i.checked = ((j.draw || {}).show || []).indexOf(i.value) >= 0; });
@@ -480,7 +481,7 @@ function bindForm() {
   $('#brief').onchange = function () { S.job.job.fromBrief = $('#brief').checked; sync(); queueSave(); };
   $('#sample').onchange = function () { S.job.job.sampleSheet = $('#sample').checked; sync(); queueSave(); };
   $('#mwant').onchange = function () { S.job.measure = S.job.measure || {}; S.job.measure.want = $('#mwant').checked; S.job.measure.shareOk = $('#mwant').checked; sync(); queueSave(); };
-  $$('#mfeat input').forEach(function (i) { i.onchange = function () { S.job.measure = S.job.measure || {}; S.job.measure.feat = $$('#mfeat input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
+  $$('#mfeat input').forEach(function (i) { i.onchange = function () { S.job.measure = S.job.measure || {}; var o = {}; $$('#mfeat input').forEach(function (x) { if (x.checked) o[x.value] = true; }); S.job.measure.feat = o; sync(); queueSave(); }; });
   $('#addrman').onclick = function () { setv(S.job, 'property.manual', true); S.addrNote = ''; sync(); queueSave(); $('#p_muni').focus(); };
   $$('#wshow input').forEach(function (i) { i.onchange = function () { S.job.draw = S.job.draw || {}; S.job.draw.show = $$('#wshow input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
   $$('#deliver input').forEach(function (i) { i.onchange = function () { S.job.job.deliver = $$('#deliver input').filter(function (x) { return x.checked; }).map(function (x) { return x.value; }); sync(); queueSave(); }; });
@@ -972,7 +973,7 @@ function viewAdminJob(path) {
       '<dt>Scope</dt><dd>' + esc(pkg(j)) + (j.job && j.job.rush === 'Yes' ? ' · RUSH' : '') + (j.job && j.job.sampleSheet ? ' · <b>FREE SAMPLE SHEET FIRST</b> (one sheet, watermarked, your review before it goes out)' : '') + (sv.adminCreated ? '<br><span class="small">Created from the admin page' + (sv.linkedPsr ? ' · add-on to <a href="#admin/' + encodeURIComponent(sv.linkedTo) + '">' + esc(sv.linkedPsr) + '</a>' : '') + (j.ack && j.ack.terms ? ' · terms accepted' : ' · terms not yet accepted (asked at accept or deposit)') + '</span>' : '') + '</dd><dt>Title block</dt><dd>' + ((j.job || {}).titleblock === 'yours' ? 'THEIR template' + (sv.templateSetup ? ' · FIRST TIME: $300 setup' + (lp ? ' (in the list price)' : ' (add it to the quote)') : ' · on file') : 'Our clean format') + '</dd>' + (j.feedback ? '<dt>Feedback</dt><dd>' + '★★★★★'.slice(0, j.feedback.rating) + '☆☆☆☆☆'.slice(0, 5 - j.feedback.rating) + (j.feedback.good ? '<br><span style="font-weight:400">Good: ' + esc(j.feedback.good) + '</span>' : '') + (j.feedback.better ? '<br><span style="font-weight:400">Better: ' + esc(j.feedback.better) + '</span>' : '') + (j.feedback.quote ? '<br><span style="font-weight:400">Quote' + (j.feedback.publish ? ' (may publish)' : ' (private)') + ': "' + esc(j.feedback.quote) + '"</span>' : '') + '</dd>' : (sv.feedbackAskAt ? '<dt>Feedback</dt><dd>Asked ' + esc(fmtDate(sv.feedbackAskAt)) + (sv.feedbackRemindAt ? ', reminded ' + esc(fmtDate(sv.feedbackRemindAt)) : '') + '</dd>' : '')) + (isFeas(j) ? feasSummary(j) : '') + (isLower(j) ? lowerSummary(j) + (sv.engRevAt ? '<dt>Engineer markups</dt><dd>' + (sv.engRevPaid ? 'Received · $85/hour revision to quote' : 'Received · included round') + '</dd>' : '') : '') + '<dt>List price</dt><dd>' + (lp ? money(lp) : 'quote (' + esc(quoted(j).map(function (k) { return SNAME[k]; }).join(', ')) + ')') + '</dd>' +
       (j.job && j.job.budget ? '<dt>Their budget</dt><dd>' + esc(j.job.budget) + ' (' + esc(j.job.budgetType || '') + ')</dd>' : '') + (j.job && j.job.pricing === 'hourly' ? '<dt>Pricing</dt><dd>$85/hour requested</dd>' : '') +
       '<dt>Needed by</dt><dd>' + esc((j.job || {}).due || '') + '</dd><dt>Building</dt><dd>' + esc((j.job || {}).existing || '') + ' · ' + esc((j.job || {}).area || '') + '</dd><dt>Deliver</dt><dd>' + esc(((j.job || {}).deliver || []).join(', ')) + '</dd>' +
-      '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' + ((j.measure.feat || []).length ? ' · on site: ' + esc(j.measure.feat.join(', ')) : '') + (measEst(j) ? '<br><span class="small">Estimate shown to the firm: ' + money(measEst(j).v) + ' + HST (fee formula, +20%). Confirm with the measuring partner and put the final figure in the quote.' + (j.measure.shareOk ? ' Firm agreed to share contact details and address with the partner.' : '') + '</span>' : '') : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
+      '<dt>Site visit</dt><dd>' + (j.measure && j.measure.want ? 'Yes · ' + esc(j.measure.sqft || '?') + ' sq ft' + (featList(j.measure).length ? ' · on site: ' + esc(featList(j.measure).join(', ')) : '') + (measEst(j) ? '<br><span class="small">Estimate shown to the firm: ' + money(measEst(j).v) + ' + HST (fee formula, +20%). Confirm with the measuring partner and put the final figure in the quote.' + (j.measure.shareOk ? ' Firm agreed to share contact details and address with the partner.' : '') + '</span>' : '') : 'No') + '</dd><dt>Referral</dt><dd>' + esc(j.referral || '') + '</dd>' +
       '<dt>Links</dt><dd>' + (j.docs && j.docs.link ? '<a href="' + esc(j.docs.link) + '" target="_blank" rel="noopener">Shared folder</a> ' : '') + (j.docs && j.docs.inspiration ? '<a href="' + esc(j.docs.inspiration) + '" target="_blank" rel="noopener">Inspiration</a> ' : '') + (sv.folderUrl ? '<a href="' + esc(sv.folderUrl) + '" target="_blank" rel="noopener">Job folder</a>' : '') + '</dd>' +
       '<dt>Notes</dt><dd style="font-weight:400">' + esc((j.docs || {}).notes || '') + '</dd>' + (j.clientNotes ? '<dt>Changes</dt><dd style="font-weight:400">' + esc(j.clientNotes) + '</dd>' : '') + '</dl>' +
       ((j.markups || []).length ? '<b style="display:block;margin-top:14px">Pins on the draft (' + j.markups.length + ')</b><ol class="mklist" id="mklist"></ol><button type="button" class="btn btn-line btn-sm" id="mkview">Show the pins on the draft</button><div class="mk hide" id="mk"><p class="small" id="mkmsg">Loading…</p><div id="mkpages"></div></div>' : '') +
