@@ -149,9 +149,10 @@ function setv(o, k, v) { var p = k.split('.'), x = o; for (var i = 0; i < p.leng
 
 // ---------- data
 var PRO = {wl: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750, shed: 750, lower: 650}, cs: {finish: 1050, unit: 1400, bge: 850, garage: 850, deck: 750, shed: 750, lower: 650}, shedSmall: 350, addon: 0.6, rush: 0.3, template: 300}; // one permit-set price list (cs kept for older jobs)
-var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['shed', 'Shed, cabana, gazebo or pergola'], ['lower', 'Basement lowering (underpinning or benching)'], ['addition', 'Addition'], ['newhome', 'New home'], ['drafting', 'General drafting'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['feasibility', 'Schematic Design feasibility package (Beta)'], ['other', 'Other']];
+var SCOPES = [['unit', 'Second unit (ARU)'], ['finish', 'Basement finish'], ['bge', 'Below-grade entrance'], ['garage', 'Detached garage'], ['deck', 'Deck'], ['shed', 'Shed, cabana, gazebo or pergola'], ['lower', 'Basement lowering (underpinning or benching)'], ['addition', 'Addition'], ['newhome', 'New home'], ['drafting', 'Simple drafting (any project)'], ['ddtocd', 'Design package to permit / construction set'], ['interior', 'Interior alteration'], ['structural', 'Structural drawings'], ['model3d', '3D model'], ['shop', 'Shop drawings'], ['feasibility', 'Schematic Design feasibility package (Beta)'], ['other', 'Other']];
 var SNAME = {}; SCOPES.forEach(function (s) { SNAME[s[0]] = s[1]; });
-var QUOTED = ['addition', 'newhome', 'drafting', 'structural', 'model3d', 'shop', 'interior', 'feasibility', 'other'];
+if (!(window.PSR_CONFIG && window.PSR_CONFIG.scopeDdToCd)) SCOPES = SCOPES.filter(function (x) { return x[0] !== 'ddtocd'; });
+var QUOTED = ['addition', 'newhome', 'drafting', 'ddtocd', 'structural', 'model3d', 'shop', 'interior', 'feasibility', 'other'];
 var EXTERIOR = ['unit', 'bge', 'garage', 'deck', 'shed', 'addition', 'newhome', 'lower'];
 function isShed(j) { return scopes(j).indexOf('shed') >= 0; }
 function shedArea(j) { var o = j.out || {}; return Math.round((Number(o.width) || 0) * (Number(o.length) || 0) * 0.0929 * 10) / 10; }
@@ -304,6 +305,7 @@ function viewForm(it, preset) {
     // 1
     '<div data-step="1" class="fd"><h2><i>1</i>Project and address</h2>' +
     '<div><span class="lbl">What are we drawing? Pick everything in this set</span><div class="chips" id="scopes">' + SCOPES.map(function (s) { return '<label><input type="checkbox" value="' + s[0] + '"> ' + s[1] + '</label>'; }).join('') + '</div></div>' +
+    '<p class="small hide" id="ddhint" style="margin:0"><b>Design package to permit / construction set:</b> you\'ve done the design (schematic or design development). We produce the full permit or construction drawings from it. Upload the design package in step 2. Quoted per job.</p>' +
     '<div class="card hide" id="lowbox" style="gap:14px;background:var(--paper)"><b>Basement lowering</b>' +
     '<div><span class="lbl">Method</span><div class="chips">' + [['underpin', 'Underpinning'], ['bench', 'Benching'], ['engineer', 'Engineer to decide']].map(function (o) { return '<label><input type="radio" name="lmeth" data-k="lower.method" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
     '<div><span class="lbl">Existing foundation walls</span><div class="chips">' + [['block', 'Concrete block'], ['poured', 'Poured concrete'], ['rubble', 'Rubble stone'], ['unsure', 'Not sure']].map(function (o) { return '<label><input type="radio" name="lfdn" data-k="lower.foundation" value="' + o[0] + '"> ' + o[1] + '</label>'; }).join('') + '</div></div>' +
@@ -408,6 +410,7 @@ function sync() {
   var sv = $('#svreq'); if (sv) sv.classList.toggle('hide', !surveyNeeded(j));
   $$('#f .tbonly').forEach(function (e) { e.classList.toggle('hide', (j.job || {}).titleblock !== 'yours'); });
   $('#sqbox').classList.toggle('hide', !(j.measure && j.measure.want));
+  $('#ddhint').classList.toggle('hide', scopes(j).indexOf('ddtocd') < 0);
   if (j.measure) delete j.measure.estimate; // no price is shown to the firm: the measuring partner quotes it first
   var pr = j.property || {}, ctry0 = pr.country || 'Canada', man = !!pr.manual || ctry0 !== 'Canada' || (!!pr.municipality && pr.lat == null);
   $('#manbox').classList.toggle('hide', !man); $('#addrman').classList.toggle('hide', man);
